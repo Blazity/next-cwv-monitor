@@ -1,0 +1,4 @@
+{
+  "eslint.workingDirectories": [{ "pattern": "apps/*" }],
+  "eslint.useFlatConfig": false
+}

@@ -1,0 +1,9 @@
+{
+  "name": "next-cwv-monitor-monorepo",
+  "private": false,
+  "workspaces": [],
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">10.1"
+  }
+}

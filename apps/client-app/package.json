@@ -1,0 +1,31 @@
+{
+  "name": "blazity-client-app",
+  "version": "0.1.0",
+  "private": false,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "next": "16.0.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.6",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.7.4",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
