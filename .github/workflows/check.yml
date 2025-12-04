@@ -35,11 +35,33 @@ jobs:
       - name: Install deps
         run: pnpm install
 
-      - name: Check sdk
+      - name: Determine changed parts
+        id: changes
         run: |
-          if git diff --name-only HEAD^ HEAD | grep "^packages/client-sdk/"; then
-            pnpm --filter cwv-monitor-sdk build
+          git fetch origin $GITHUB_BASE_REF --depth=1
+          CHANGED_FILES=$(git diff --name-only origin/$GITHUB_BASE_REF...HEAD)
+
+          if echo "$CHANGED_FILES" | grep -q "^packages/client-sdk/"; then
+           echo "sdk_changed=true" >> $GITHUB_OUTPUT
+          else
+           echo "sdk_changed=false" >> $GITHUB_OUTPUT
           fi
+
+           if echo "$CHANGED_FILES" | grep -q "^apps/monitor-app/"; then
+             echo "monitor_changed=true" >> $GITHUB_OUTPUT
+           else
+            echo "monitor_changed=false" >> $GITHUB_OUTPUT
+           fi
+
+          if echo "$CHANGED_FILES" | grep -q "^apps/client-app/"; then
+            echo "client_changed=true" >> $GITHUB_OUTPUT
+           else
+            echo "client_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check sdk
+        if: steps.changes.outputs.sdk_changed == 'true'
+        run: pnpm --filter cwv-monitor-sdk build
 
       - name: Check monitor
         run: |
