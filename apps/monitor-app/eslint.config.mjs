@@ -14,7 +14,8 @@ const eslintConfig = defineConfig([
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
       'unicorn/prevent-abbreviations': 'off',
-      'react/no-unescaped-entities': 'off'
+      'react/no-unescaped-entities': 'off',
+      'unicorn/no-null': 'off'
     }
   },
   // Override default ignores of eslint-config-next.
