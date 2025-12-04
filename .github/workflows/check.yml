@@ -37,18 +37,18 @@ jobs:
 
       - name: Check sdk
         run: |
-          if git diff --name0only HEAD^ HEAD | grep "^packages/client-sdk/"; then
+          if git diff --name-only HEAD^ HEAD | grep "^packages/client-sdk/"; then
             pnpm --filter cwv-monitor-sdk build
           fi
 
       - name: Check monitor
         run: |
-          if git diff --name0only HEAD^ HEAD | grep "^apps/monitor-app/"; then
+          if git diff --name-only HEAD^ HEAD | grep "^apps/monitor-app/"; then
             SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
           fi
 
       - name: Check demo
         run: |
-          if git diff --name0only HEAD^ HEAD | grep "^apps/client-app/"; then
+          if git diff --name-only HEAD^ HEAD | grep "^apps/client-app/"; then
             SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
           fi
