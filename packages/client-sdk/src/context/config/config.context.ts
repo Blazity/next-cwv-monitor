@@ -1,20 +1,15 @@
 import { createContext, use } from 'react';
 import { invariant } from '../../utils/invariant.js';
+import type { Fetcher } from '../../utils/call-monitor.js';
 
-interface ConfigContext {
-  monitorUrl: string;
+export interface ConfigContext {
+  fetcher: Fetcher;
 }
 
 export const ConfigContext = createContext<ConfigContext | undefined>(undefined);
 
-// TODO: should throw warning
-export const Provider: React.FC = () => {
-  return null;
-};
-
 export const useConfig = () => {
   const context = use(ConfigContext);
   invariant(context, 'To use config, you have to use ConfigContext.Provider');
-
   return context;
 };

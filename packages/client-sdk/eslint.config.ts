@@ -2,7 +2,7 @@ import js from '@eslint/js';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import pluginReact from 'eslint-plugin-react';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import prettier from 'eslint-config-prettier/flat';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
@@ -31,5 +31,6 @@ export default defineConfig([
     }
   },
   prettier,
-  reactRefresh.configs.recommended
+  reactRefresh.configs.recommended,
+  globalIgnores(['dist/**'])
 ]);
