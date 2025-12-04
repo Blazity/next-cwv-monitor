@@ -4,17 +4,17 @@
   "private": false,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "eslint && next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.8",
+    "cwv-monitor-sdk": "workspace:*",
     "next": "16.0.6",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "zod": "^4.1.13",
-    "cwv-monitor-sdk": "workspace:*"
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -24,6 +24,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.6",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unicorn": "^62.0.0",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4",

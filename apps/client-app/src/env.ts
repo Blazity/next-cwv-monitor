@@ -7,6 +7,7 @@ export const env = createEnv({
     NEXT_PUBLIC_MONITOR_API: z.string(),
     NEXT_PUBLIC_MONITOR_API_KEY: z.string()
   },
+  skipValidation: process.env.SKIP_VALIDATION === 'true',
   runtimeEnv: {
     NEXT_PUBLIC_MONITOR_API: process.env.NEXT_PUBLIC_MONITOR_API,
     NEXT_PUBLIC_MONITOR_API_KEY: process.env.NEXT_PUBLIC_MONITOR_API_KEY

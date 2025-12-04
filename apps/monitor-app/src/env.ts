@@ -7,6 +7,7 @@ export const env = createEnv({
     CLIENT_APP_ORIGIN: z.url()
   },
   client: {},
+  skipValidation: process.env.SKIP_VALIDATION === 'true',
   runtimeEnv: {
     API_TOKEN: process.env.API_TOKEN,
     CLIENT_APP_ORIGIN: process.env.CLIENT_APP_ORIGIN
