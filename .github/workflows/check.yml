@@ -1,0 +1,54 @@
+name: Check monitor build
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/monitor-app/**"
+      - "apps/client-app/**"
+      - "packages/client-sdk"
+
+permissions:
+  contents: read
+jobs:
+  check_pull_request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify commits behind
+        run: |
+          git fetch
+          COMMITS_BEHIND=$(git rev-list --left-only --count origin/$GITHUB_BASE_REF...origin/$GITHUB_HEAD_REF)
+          if [ $COMMITS_BEHIND -gt 0 ]; then echo "source branch is $COMMITS_BEHIND commit(s) behind target branch" && exit 1; fi
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install deps
+        run: pnpm install
+
+      - name: Check sdk
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep "^packages/client-sdk/"; then
+            pnpm --filter cwv-monitor-sdk build
+          fi
+
+      - name: Check monitor
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep "^apps/monitor-app/"; then
+            SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
+          fi
+
+      - name: Check demo
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep "^apps/client-app/"; then
+            SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
+          fi

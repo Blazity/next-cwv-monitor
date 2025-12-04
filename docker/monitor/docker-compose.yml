@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  monitor-app:
+    build:
+      context: ../../
+      dockerfile: apps/monitor-app/Dockerfile
+    ports:
+      - "3000:3000"
+    restart: always

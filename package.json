@@ -1,0 +1,13 @@
+{
+  "name": "next-cwv-monitor-monorepo",
+  "private": false,
+  "workspaces": [],
+  "scripts": {
+    "build:prod": "pnpm --filter cwv-monitor-app run build",
+    "build:demo": "pnpm --filter cwv-monitor-sdk run build && pnpm --filter cwv-monitor-app run build && pnpm --filter cwv-monitor-client run build"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">10.1"
+  }
+}
