@@ -1,11 +1,11 @@
-name: Check monitor build
+name: Check application build
 on:
   pull_request:
     branches: [main]
     paths:
       - "apps/monitor-app/**"
       - "apps/client-app/**"
-      - "packages/client-sdk"
+      - "packages/client-sdk/**"
 
 permissions:
   contents: read
