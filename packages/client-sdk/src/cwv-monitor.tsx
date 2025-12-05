@@ -9,7 +9,6 @@ const HookCaller: React.FC = () => {
 };
 
 export const CWVMonitor: React.FC<Props> = ({ ...props }) => {
-  console.log('TEST');
   return (
     <ConfigProvider {...props}>
       <HookCaller />

@@ -1,11 +1,11 @@
-name: Check monitor build
+name: Check application build
 on:
   pull_request:
     branches: [main]
     paths:
       - "apps/monitor-app/**"
       - "apps/client-app/**"
-      - "packages/client-sdk"
+      - "packages/client-sdk/**"
 
 permissions:
   contents: read
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Verify commits behind
         run: |
@@ -35,20 +37,44 @@ jobs:
       - name: Install deps
         run: pnpm install
 
-      - name: Check sdk
+      - name: Determine changed parts
+        id: changes
         run: |
-          if git diff --name-only HEAD^ HEAD | grep "^packages/client-sdk/"; then
-            pnpm --filter cwv-monitor-sdk build
+          git fetch origin $GITHUB_BASE_REF --depth=1
+
+          MERGE_BASE=$(git merge-base origin/$GITHUB_BASE_REF HEAD || echo "")
+
+          if [ -z "$MERGE_BASE" ]; then
+            CHANGED_FILES=$(git diff --name-only HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only $MERGE_BASE HEAD)
           fi
+
+
+          echo "sdk_changed=false" >> $GITHUB_OUTPUT
+          echo "monitor_changed=false" >> $GITHUB_OUTPUT
+          echo "client_changed=false" >> $GITHUB_OUTPUT
+
+          if echo "$CHANGED_FILES" | grep -q "^packages/client-sdk/"; then
+            echo "sdk_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^apps/monitor-app/"; then
+            echo "monitor_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+          if echo "$CHANGED_FILES" | grep -q "^apps/client-app/"; then
+            echo "client_changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check sdk
+        if: steps.changes.outputs.sdk_changed == 'true'
+        run: pnpm --filter cwv-monitor-sdk build
 
       - name: Check monitor
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep "^apps/monitor-app/"; then
-            SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
-          fi
+        if: steps.changes.outputs.monitor_changed == 'true'
+        run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
 
       - name: Check demo
-        run: |
-          if git diff --name-only HEAD^ HEAD | grep "^apps/client-app/"; then
-            SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
-          fi
+        if: steps.changes.outputs.client_changed == 'true'
+        run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
