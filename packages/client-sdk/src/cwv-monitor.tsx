@@ -1,10 +1,11 @@
 import { ConfigProvider } from './context/config/config.provider.js';
-import { useCallAuthorized } from './hooks/use-call-authorized.js';
+import { useMetrics } from './hooks/use-metrics.js';
 
 type Props = Omit<React.ComponentProps<typeof ConfigProvider>, 'children'>;
 
 const HookCaller: React.FC = () => {
-  useCallAuthorized();
+  useMetrics();
+
   return null;
 };
 

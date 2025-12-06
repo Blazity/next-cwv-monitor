@@ -1,5 +1,5 @@
 import type z from 'zod';
-import qs from 'qs';
+import { stringify } from 'qs';
 
 interface Fetch<T extends z.ZodTypeAny> {
   schema: T;
@@ -16,7 +16,7 @@ export class Fetcher {
   ) {}
 
   fetch = async <T extends z.ZodTypeAny>({ endpoint, queryParams, schema, config }: Fetch<T>) => {
-    const params = qs.stringify({ ...queryParams }, { addQueryPrefix: true });
+    const params = stringify({ ...queryParams }, { addQueryPrefix: true });
     const fullUrl = `${this.apiUrl}${endpoint}${params}`;
     let abortController: AbortController | undefined;
     let abortTimeout: number | undefined;
@@ -26,28 +26,23 @@ export class Fetcher {
         abortController?.abort();
       }, this.abortTime);
     }
-    let response;
-    try {
-      response = await fetch(fullUrl, {
-        ...(abortController && { signal: abortController.signal }),
-        ...config,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-          ...config?.headers
-        }
-      });
-    } catch {
-      // Never throw error to client
-      return null;
-    }
+    const response = await fetch(fullUrl, {
+      keepalive: true,
+      ...(abortController && { signal: abortController.signal }),
+      ...config,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.apiKey}`,
+        ...config?.headers
+      }
+    });
 
     if (typeof abortTimeout !== 'undefined') {
       clearTimeout(abortTimeout);
     }
     // Never throw error to client
     if (!response.ok) {
-      return null;
+      throw new Error('Failed to receive data');
     }
 
     const data: unknown = await response.json();

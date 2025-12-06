@@ -5,9 +5,13 @@
     "jsx": "react-jsx",
     "moduleResolution": "node",
     "module": "ESNext",
-    "target": "ES6",
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "target": "es2018",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "types": ["vitest/globals"]
   },
   "include": ["src"]
 }
