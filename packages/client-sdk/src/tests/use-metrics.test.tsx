@@ -185,7 +185,7 @@ describe('Test useMetric hook', () => {
     expect(fetcher.fetch).toHaveBeenCalledTimes(4);
   });
 
-  it('Should not stop interval on retries', async () => {
+  it('Should stop interval on retries', async () => {
     renderHook(() => useMetrics());
     const { fetcher } = useConfig();
 
@@ -199,7 +199,7 @@ describe('Test useMetric hook', () => {
 
     (fetcher.fetch as Mock).mockResolvedValue({ ok: true });
     await vi.advanceTimersByTimeAsync(9300);
-    expect(fetcher.fetch).toHaveBeenCalledTimes(5);
+    expect(fetcher.fetch).toHaveBeenCalledTimes(4);
   });
 
   it('Should increase size of metric when event called', async () => {
@@ -254,7 +254,7 @@ describe('Test useMetric hook', () => {
     expect(result.current.metrics.current.size).toBe(3);
   });
 
-  it('Should return metrics to stock after failed retries', async () => {
+  it('Should stop working after 3 failures', async () => {
     const { result } = renderHook(() => useMetrics());
     const { fetcher } = useConfig();
 
@@ -266,6 +266,9 @@ describe('Test useMetric hook', () => {
     expect(result.current.metrics.current.size).toBe(3);
     add({ name: 'CLS', i: -1 });
     await vi.advanceTimersByTimeAsync(700);
-    expect(result.current.metrics.current.size).toBe(14);
+    expect(result.current.metrics.current.size).toBe(4);
+
+    add({ name: 'CLS', i: -1 });
+    expect(result.current.metrics.current.size).toBe(4);
   });
 });

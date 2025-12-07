@@ -11,8 +11,10 @@ export const useMetrics = () => {
   const metrics = useRef(new Set<Metric>());
   const intervalRef = useRef<number>(null);
   const isFlushing = useRef(false);
+  const disableWork = useRef(false);
 
   const flush = useCallback(() => {
+    if (disableWork.current === true) return;
     isFlushing.current = true;
     const shallowCopy = new Set([...metrics.current]);
     metrics.current.clear();
@@ -39,10 +41,8 @@ export const useMetrics = () => {
             }, delay);
           } else {
             // TODO: Verify whether we need to chunk data if size is > 64KB
-            for (const item of shallowCopy) {
-              metrics.current.add(item);
-            }
             isFlushing.current = false;
+            disableWork.current = true;
           }
         });
     };
@@ -51,6 +51,7 @@ export const useMetrics = () => {
 
   const addToMetric = useCallback(
     (metric: Metric) => {
+      if (disableWork.current === true) return;
       metrics.current.add(metric);
       if (metrics.current.size >= 10 && isFlushing.current === false) {
         flush();
