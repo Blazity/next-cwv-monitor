@@ -353,6 +353,6 @@ describe('Test useMetric, simple tests', () => {
     expect(addedValue).toBeDefined();
 
     // REFERENCE EQUALITY!
-    expect(addedValue?.customDimensions).to.be.undefined;
+    expect(addedValue?.customDimensions).to.be.eq(undefined);
   });
 });
