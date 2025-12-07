@@ -69,7 +69,7 @@ jobs:
 
       - name: Check sdk
         if: steps.changes.outputs.sdk_changed == 'true'
-        run: pnpm --filter cwv-monitor-sdk build && SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
+        run: pnpm --filter cwv-monitor-sdk build
 
       - name: Check monitor
         if: steps.changes.outputs.monitor_changed == 'true'
