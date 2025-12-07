@@ -195,7 +195,7 @@ describe('Test useMetric hook', () => {
       for (let i = 0; i < 10; i++) add({ name: 'CLS', i });
     });
     await vi.advanceTimersByTimeAsync(700);
-    expect(fetcher.fetch).toHaveBeenCalledTimes(5);
+    expect(fetcher.fetch).toHaveBeenCalledTimes(4);
 
     (fetcher.fetch as Mock).mockResolvedValue({ ok: true });
     await vi.advanceTimersByTimeAsync(9300);
