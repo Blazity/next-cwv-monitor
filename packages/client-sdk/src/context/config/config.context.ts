@@ -1,6 +1,6 @@
 import { createContext, use } from 'react';
 import { invariant } from '../../utils/invariant.js';
-import type { Fetcher } from '../../utils/call-monitor.js';
+import type { Fetcher } from '../../utils/fetcher.js';
 
 export interface ConfigContext {
   fetcher: Fetcher;

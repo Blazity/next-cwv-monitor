@@ -37,3 +37,7 @@ To develop client-sdk you can run
   - monitor app - `cd apps/monitor-app && pnpm dev`
   - client app - `cd apps/client-app && pnpm dev`
   - client sdk - `cd packages/client-sdk && pnpm build`
+
+# SDK Features
+
+- A custom sendBeacon method that was created using the native fetch API. Thanks to this, the application supports cases where a server-side error occurs and allows you to ensure that the data has been sent.

@@ -75,6 +75,7 @@ jobs:
         if: steps.changes.outputs.monitor_changed == 'true'
         run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
 
+        # SDK can destroy client build, so let's verify it here too
       - name: Check demo
-        if: steps.changes.outputs.client_changed == 'true'
+        if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
         run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build

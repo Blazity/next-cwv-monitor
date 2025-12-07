@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ConfigContext } from './config.context.js';
-import { Fetcher } from '../../utils/call-monitor.js';
+import { Fetcher } from '../../utils/fetcher.js';
 
 interface Props {
   children: React.ReactNode;
