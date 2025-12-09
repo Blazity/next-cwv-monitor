@@ -3,9 +3,9 @@ version: "3.9"
 x-clickhouse-env: &clickhouse-env
   CLICKHOUSE_HOST: &clickhouse-host ${CLICKHOUSE_HOST:-clickhouse}
   CLICKHOUSE_PORT: &clickhouse-port ${CLICKHOUSE_PORT:-8123}
-  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:?CLICKHOUSE_DB must be set}
-  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:?CLICKHOUSE_USER must be set}
-  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set}
+  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:-cwv_monitor}
+  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:-default}
+  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:-secret}
   CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
 services:

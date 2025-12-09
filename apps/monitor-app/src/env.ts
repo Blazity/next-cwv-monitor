@@ -1,16 +1,24 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import z from 'zod';
 
+const CLICKHOUSE_DEFAULTS = {
+  host: 'clickhouse',
+  port: '8123',
+  user: 'default',
+  password: 'secret',
+  db: 'cwv_monitor'
+} as const;
+
 export const env = createEnv({
   server: {
     API_TOKEN: z.string(),
     CLIENT_APP_ORIGIN: z.url(),
     CLICKHOUSE_URL: z.string().url().optional(),
-    CLICKHOUSE_HOST: z.string(),
-    CLICKHOUSE_PORT: z.string(),
-    CLICKHOUSE_USER: z.string(),
-    CLICKHOUSE_PASSWORD: z.string().optional().default(''),
-    CLICKHOUSE_DB: z.string()
+    CLICKHOUSE_HOST: z.string().default(CLICKHOUSE_DEFAULTS.host),
+    CLICKHOUSE_PORT: z.string().default(CLICKHOUSE_DEFAULTS.port),
+    CLICKHOUSE_USER: z.string().default(CLICKHOUSE_DEFAULTS.user),
+    CLICKHOUSE_PASSWORD: z.string().default(CLICKHOUSE_DEFAULTS.password),
+    CLICKHOUSE_DB: z.string().default(CLICKHOUSE_DEFAULTS.db)
   },
   client: {},
   skipValidation: process.env.SKIP_VALIDATION === 'true',
