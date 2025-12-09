@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "pnpm -r --parallel --filter \"./(apps|packages)/*\" dev",
     "build:prod": "pnpm --filter cwv-monitor-app run build",
-    "build:demo": "pnpm --filter cwv-monitor-sdk run build && pnpm --filter cwv-monitor-app run build && pnpm --filter cwv-monitor-client run build"
+    "build:demo": "pnpm --filter cwv-monitor-sdk run build && pnpm --filter cwv-monitor-app run build && pnpm --filter cwv-monitor-client run build",
+    "docker:dev": "cd docker/monitor && docker compose -f docker-compose.dev.yml up --build"
   },
   "engines": {
     "node": ">=20",
