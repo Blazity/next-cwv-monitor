@@ -2,30 +2,34 @@
 import { spawn } from 'node:child_process';
 
 const {
-  CH_MIGRATIONS_HOST = 'localhost',
-  CH_MIGRATIONS_PORT = '8123',
+  CH_MIGRATIONS_HOST,
+  CH_MIGRATIONS_PORT,
   CH_MIGRATIONS_DATABASE = 'cwv_monitor',
   CH_MIGRATIONS_USER = 'default',
-  CH_MIGRATIONS_PASSWORD = '',
-  CH_MIGRATIONS_DIR = 'clickhouse/migrations'
+  CH_MIGRATIONS_PASSWORD = ''
 } = process.env;
+
+const rawHost = CH_MIGRATIONS_HOST ?? process.env.CLICKHOUSE_HOST ?? 'localhost';
+const port = CH_MIGRATIONS_PORT ?? process.env.CLICKHOUSE_PORT ?? '8123';
+const hostHasProtocol = /^https?:\/\//.test(rawHost);
+const resolvedHost = hostHasProtocol ? rawHost : `http://${rawHost}:${port}`;
+
+const CH_MIGRATIONS_HOME = process.env.CH_MIGRATIONS_HOME ?? process.env.CH_MIGRATIONS_DIR ?? 'clickhouse/migrations';
 
 const extraArgs = process.argv.slice(2);
 
 const args = [
   'migrate',
   '--host',
-  CH_MIGRATIONS_HOST,
-  '--port',
-  CH_MIGRATIONS_PORT,
+  resolvedHost,
   '--db',
   CH_MIGRATIONS_DATABASE,
   '--user',
   CH_MIGRATIONS_USER,
   '--password',
   CH_MIGRATIONS_PASSWORD,
-  '--dir',
-  CH_MIGRATIONS_DIR,
+  '--migrations-home',
+  CH_MIGRATIONS_HOME,
   ...extraArgs
 ];
 
