@@ -1,27 +1,22 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import z from 'zod';
 
-const CLICKHOUSE_DEFAULTS = {
-  host: 'clickhouse',
-  port: '8123',
-  user: 'default',
-  password: 'secret',
-  db: 'cwv_monitor'
-} as const;
+const lifecycleEvent = process.env.npm_lifecycle_event ?? '';
+const isBuildCommand = lifecycleEvent === 'build' || lifecycleEvent.startsWith('build:');
 
 export const env = createEnv({
   server: {
     API_TOKEN: z.string(),
     CLIENT_APP_ORIGIN: z.url(),
     CLICKHOUSE_URL: z.string().url().optional(),
-    CLICKHOUSE_HOST: z.string().default(CLICKHOUSE_DEFAULTS.host),
-    CLICKHOUSE_PORT: z.string().default(CLICKHOUSE_DEFAULTS.port),
-    CLICKHOUSE_USER: z.string().default(CLICKHOUSE_DEFAULTS.user),
-    CLICKHOUSE_PASSWORD: z.string().default(CLICKHOUSE_DEFAULTS.password),
-    CLICKHOUSE_DB: z.string().default(CLICKHOUSE_DEFAULTS.db)
+    CLICKHOUSE_HOST: z.string().min(1, 'CLICKHOUSE_HOST is required'),
+    CLICKHOUSE_PORT: z.string().min(1, 'CLICKHOUSE_PORT is required'),
+    CLICKHOUSE_USER: z.string().min(1, 'CLICKHOUSE_USER is required'),
+    CLICKHOUSE_PASSWORD: z.string(),
+    CLICKHOUSE_DB: z.string().min(1, 'CLICKHOUSE_DB is required')
   },
   client: {},
-  skipValidation: process.env.SKIP_VALIDATION === 'true',
+  skipValidation: process.env.SKIP_VALIDATION === 'true' || isBuildCommand,
   runtimeEnv: {
     API_TOKEN: process.env.API_TOKEN,
     CLIENT_APP_ORIGIN: process.env.CLIENT_APP_ORIGIN,
