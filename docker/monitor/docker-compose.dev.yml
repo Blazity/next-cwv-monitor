@@ -3,14 +3,15 @@ version: "3.9"
 x-clickhouse-env: &clickhouse-env
   CLICKHOUSE_HOST: &clickhouse-host ${CLICKHOUSE_HOST:-clickhouse}
   CLICKHOUSE_PORT: &clickhouse-port ${CLICKHOUSE_PORT:-8123}
-  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:?CLICKHOUSE_DB must be set}
-  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:?CLICKHOUSE_USER must be set}
-  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD must be set}
+  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:-cwv_monitor}
+  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:-default}
+  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:-secret}
   CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
 
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:24.8
+    container_name: cwv-clickhouse-dev
     restart: unless-stopped
     environment:
       <<: *clickhouse-env
@@ -18,23 +19,16 @@ services:
       - "8123:8123" # HTTP API
       - "9000:9000" # Native TCP
     healthcheck:
-      test:
-        [
-          "CMD",
-          "clickhouse-client",
-          "--host",
-          "localhost",
-          "--query",
-          "SELECT 1",
-        ]
+      test: ["CMD", "clickhouse-client", "--host", "localhost", "--query", "SELECT 1"]
       interval: 5s
       retries: 10
     volumes:
-      - clickhouse-data:/var/lib/clickhouse
-      - clickhouse-logs:/var/log/clickhouse-server
+      - clickhouse-dev-data:/var/lib/clickhouse
+      - clickhouse-dev-logs:/var/log/clickhouse-server
 
   migrations:
     image: node:20-alpine
+    container_name: cwv-clickhouse-migrations-dev
     working_dir: /workspace
     volumes:
       - ../../:/workspace
@@ -48,11 +42,7 @@ services:
       CH_MIGRATIONS_DATABASE: *clickhouse-db
       CH_MIGRATIONS_DIR: ${CH_MIGRATIONS_DIR:-clickhouse/migrations}
     command: >
-      sh -c "
-        corepack enable pnpm &&
-        pnpm install --filter cwv-monitor-app --prod &&
-        pnpm --filter cwv-monitor-app clickhouse:migrate
-      "
+      sh -c "corepack enable pnpm && pnpm install --filter cwv-monitor-app && pnpm --filter cwv-monitor-app clickhouse:migrate"
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -61,13 +51,18 @@ services:
   monitor-app:
     build:
       context: ../../
-      dockerfile: docker/monitor/dockerfiles/monitor-app.prod.Dockerfile
+      dockerfile: docker/monitor/dockerfiles/monitor-app.dev.Dockerfile
+    container_name: cwv-monitor-app-dev
     environment:
+      NODE_ENV: development
+      <<: *clickhouse-env
       API_TOKEN: ${API_TOKEN:-changeme}
       CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3000}
-      <<: *clickhouse-env
     ports:
       - "3000:3000"
+    volumes:
+      - ../../:/app
+      - monitor-app-dev-node-modules:/app/node_modules
     depends_on:
       clickhouse:
         condition: service_healthy
@@ -76,5 +71,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  clickhouse-data:
-  clickhouse-logs:
+  clickhouse-dev-data:
+  clickhouse-dev-logs:
+  monitor-app-dev-node-modules:
