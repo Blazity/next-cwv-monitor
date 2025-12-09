@@ -1,0 +1,1 @@
+-- Placeholder migration. Replace with real schema once finalized.

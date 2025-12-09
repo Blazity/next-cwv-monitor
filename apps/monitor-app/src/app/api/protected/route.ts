@@ -1,4 +1,4 @@
-import { env } from '@/src/env';
+import { env } from '@/env';
 import { NextRequest } from 'next/server';
 import crypto from 'node:crypto';
 

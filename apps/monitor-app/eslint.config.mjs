@@ -18,6 +18,16 @@ const eslintConfig = defineConfig([
       'unicorn/no-null': 'off'
     }
   },
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: ['../*']
+        }
+      ]
+    }
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
