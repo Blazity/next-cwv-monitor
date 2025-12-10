@@ -12,7 +12,8 @@ export const env = createEnv({
     CLICKHOUSE_PORT: z.string().min(1, 'CLICKHOUSE_PORT is required'),
     CLICKHOUSE_USER: z.string().min(1, 'CLICKHOUSE_USER is required'),
     CLICKHOUSE_PASSWORD: z.string(),
-    CLICKHOUSE_DB: z.string().min(1, 'CLICKHOUSE_DB is required')
+    CLICKHOUSE_DB: z.string().min(1, 'CLICKHOUSE_DB is required'),
+    BETTER_AUTH_SECRET: z.string(),
   },
   client: {},
   skipValidation: process.env.SKIP_VALIDATION === 'true' || isBuildCommand,
@@ -23,6 +24,7 @@ export const env = createEnv({
     CLICKHOUSE_PORT: process.env.CLICKHOUSE_PORT,
     CLICKHOUSE_USER: process.env.CLICKHOUSE_USER,
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
-    CLICKHOUSE_DB: process.env.CLICKHOUSE_DB
+    CLICKHOUSE_DB: process.env.CLICKHOUSE_DB,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET
   }
 });
