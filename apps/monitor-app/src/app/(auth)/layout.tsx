@@ -3,10 +3,14 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/src/lib/auth';
 import { db } from '@/src/lib/db';
 
-export default async function HomePage() {
-  // Check if any users exist
-  let requiresSetup = true; // Default to true for safety
-  
+export default async function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // First check if setup is required (no users exist)
+  // If setup is required, allow access to auth pages without session check
+  let requiresSetup = false;
   try {
     const result = await db.query({
       query: 'SELECT count() as count FROM user',
@@ -15,17 +19,17 @@ export default async function HomePage() {
     const rows = (await result.json()) as { count: string }[];
     const userCount = Number(rows[0]?.count) || 0;
     requiresSetup = userCount === 0;
-  } catch (error) {
-    // If table doesn't exist or error, assume setup is required
-    console.error('Error checking user count:', error);
+  } catch {
+    // If table doesn't exist or error, setup is required
     requiresSetup = true;
   }
 
+  // If setup is required, just render children (allow access to setup page)
   if (requiresSetup) {
-    redirect('/setup');
+    return <>{children}</>;
   }
 
-  // Check if user is authenticated
+  // If users exist, check if already authenticated
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -34,9 +38,10 @@ export default async function HomePage() {
     if (session) {
       redirect('/dashboard');
     }
-  } catch (error) {
-    console.error('Error checking session:', error);
+  } catch {
+    // If session check fails, just render children (login page)
   }
-  
-  redirect('/login');
+
+  return <>{children}</>;
 }
+

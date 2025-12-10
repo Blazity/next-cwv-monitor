@@ -14,6 +14,16 @@ type VitestProvider = NonNullable<NonNullable<UserConfig['test']>['browser']>['p
 export default defineConfig({
   test: {
     projects: [
+      // Unit tests
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+          environment: 'node',
+        }
+      },
+      // Storybook tests
       {
         extends: true,
         plugins: [
@@ -22,6 +32,7 @@ export default defineConfig({
           storybookTest({ configDir: path.join(__dirname, '.storybook') })
         ],
         test: {
+          name: 'storybook',
           browser: {
             enabled: true,
             headless: true,
