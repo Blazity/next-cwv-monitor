@@ -71,6 +71,13 @@ jobs:
 
       - name: Check monitor
         if: steps.changes.outputs.monitor_changed == 'true'
+        env:
+          CLICKHOUSE_HOST: ${{ secrets.CLICKHOUSE_HOST }}
+          CLICKHOUSE_PORT: ${{ secrets.CLICKHOUSE_PORT }}
+          CLICKHOUSE_USER: ${{ secrets.CLICKHOUSE_USER }}
+          CLICKHOUSE_PASSWORD: ${{ secrets.CLICKHOUSE_PASSWORD }}
+          CLICKHOUSE_DB: ${{ secrets.CLICKHOUSE_DB }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
         run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
 
         # SDK can destroy client build, so let's verify it here too
