@@ -1,5 +1,5 @@
 import { createAdapterFactory, type DBAdapterDebugLogOption } from 'better-auth/adapters';
-import { sql } from './clickhouse/client';
+import { sql } from '@/app/server/lib/clickhouse/client';
 
 interface ClickHouseAdapterConfig {
   debugLogs?: DBAdapterDebugLogOption;

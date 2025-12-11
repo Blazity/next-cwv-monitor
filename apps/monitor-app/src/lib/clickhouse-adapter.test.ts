@@ -1,7 +1,7 @@
 import { describe, afterAll, beforeAll } from "vitest";
 import { runAdapterTest } from "better-auth/adapters/test";
 import { clickHouseAdapter } from "./clickhouse-adapter";
-import { sql } from "./clickhouse/client";
+import { sql } from "@/app/server/lib/clickhouse/client";
 
 describe("ClickHouse Adapter Tests", async () => {
   const cleanupTables = async () => {
