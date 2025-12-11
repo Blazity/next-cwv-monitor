@@ -1,53 +1,53 @@
 -- Auth tables migration
 -- Using ReplacingMergeTree for auth tables since they require updates/upserts
--- The updatedAt column is used as the version to keep the most recent row
+-- The updated_at column is used as the version to keep the most recent row
 
 CREATE TABLE IF NOT EXISTS user (
   id String,
   name String,
   email String,
-  emailVerified UInt8 DEFAULT 0,
+  email_verified Bool DEFAULT false,
   image Nullable(String),
-  createdAt DateTime DEFAULT now(),
-  updatedAt DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(updatedAt)
+  created_at DateTime DEFAULT now(),
+  updated_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS session (
   id String,
-  expiresAt DateTime,
+  expires_at DateTime,
   token String,
-  createdAt DateTime DEFAULT now(),
-  updatedAt DateTime DEFAULT now(),
-  ipAddress Nullable(String),
-  userAgent Nullable(String),
-  userId String
-) ENGINE = ReplacingMergeTree(updatedAt)
+  created_at DateTime DEFAULT now(),
+  updated_at DateTime DEFAULT now(),
+  ip_address Nullable(String),
+  user_agent Nullable(String),
+  user_id String
+) ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS account (
   id String,
-  accountId String,
-  providerId String,
-  userId String,
-  accessToken Nullable(String),
-  refreshToken Nullable(String),
-  idToken Nullable(String),
-  accessTokenExpiresAt Nullable(DateTime),
-  refreshTokenExpiresAt Nullable(DateTime),
+  account_id String,
+  provider_id String,
+  user_id String,
+  access_token Nullable(String),
+  refresh_token Nullable(String),
+  id_token Nullable(String),
+  access_token_expires_at Nullable(DateTime),
+  refresh_token_expires_at Nullable(DateTime),
   scope Nullable(String),
   password Nullable(String),
-  createdAt DateTime DEFAULT now(),
-  updatedAt DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(updatedAt)
+  created_at DateTime DEFAULT now(),
+  updated_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY id;
 
 CREATE TABLE IF NOT EXISTS verification (
   id String,
   identifier String,
   value String,
-  expiresAt DateTime,
-  createdAt DateTime DEFAULT now(),
-  updatedAt DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(updatedAt)
+  expires_at DateTime,
+  created_at DateTime DEFAULT now(),
+  updated_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY id;

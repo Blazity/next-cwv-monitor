@@ -1,4 +1,4 @@
-import { createAdapterFactory, type DBAdapterDebugLogOption } from 'better-auth/adapters';
+import { createAdapterFactory, type CustomAdapter, type DBAdapterDebugLogOption } from 'better-auth/adapters';
 import { sql } from '@/app/server/lib/clickhouse/client';
 
 interface ClickHouseAdapterConfig {
@@ -13,6 +13,8 @@ interface WhereCondition {
   connector: 'AND' | 'OR';
 }
 
+type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
+
 export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
   createAdapterFactory({
     config: {
@@ -26,131 +28,199 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       supportsNumericIds: false,
     },
     adapter: ({ getFieldName }) => {
-      const escapeValue = (value: unknown): string => {
-        if (value === null || value === undefined) return 'NULL';
-        if (typeof value === 'number') return String(value);
-        if (typeof value === 'boolean') return value ? '1' : '0';
+      const formatDateValue = (value: unknown): unknown => {
         if (value instanceof Date) {
-          return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`;
+          return value.toISOString().slice(0, 19).replace('T', ' ');
         }
-        return `'${String(value).replace(/'/g, "''")}'`;
+        return value;
       };
 
-      const buildCondition = (cond: WhereCondition, model: string): string => {
+      const buildCondition = (cond: WhereCondition, model: string): SqlFragment => {
         const { value, operator } = cond;
-        const field = getFieldName({ model, field: cond.field });
-        
+        const fieldName = getFieldName({ model, field: cond.field });
+        const formattedValue = formatDateValue(value);
+
         switch (operator) {
           case 'eq':
-            return `${field} = ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} = ${sql.param(formattedValue, 'String')}`;
           case 'ne':
-            return `${field} != ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} != ${sql.param(formattedValue, 'String')}`;
           case 'gt':
-            return `${field} > ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} > ${sql.param(formattedValue, 'String')}`;
           case 'gte':
-            return `${field} >= ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} >= ${sql.param(formattedValue, 'String')}`;
           case 'lt':
-            return `${field} < ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} < ${sql.param(formattedValue, 'String')}`;
           case 'lte':
-            return `${field} <= ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} <= ${sql.param(formattedValue, 'String')}`;
           case 'contains':
-            return `${field} ILIKE '%${String(value).replace(/'/g, "''")}%'`;
+            return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`%${String(value)}%`, 'String')}`;
           case 'startsWith':
           case 'starts_with':
-            return `${field} ILIKE '${String(value).replace(/'/g, "''")}%'`;
+            return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`${String(value)}%`, 'String')}`;
           case 'endsWith':
           case 'ends_with':
-            return `${field} ILIKE '%${String(value).replace(/'/g, "''")}'`;
+            return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`%${String(value)}`, 'String')}`;
           case 'in': {
-            const vals = Array.isArray(value) ? value : [value];
-            if (vals.length === 0) return '1=1';
-            return `${field} IN (${vals.map(escapeValue).join(', ')})`;
+            const vals = Array.isArray(value) ? value.map(formatDateValue) : [formatDateValue(value)];
+            if (vals.length === 0) return sql`1=1`;
+            return sql`${sql.identifier(fieldName)} IN (${sql.param(vals, 'String')})`;
           }
           case 'notIn':
           case 'not_in': {
-            const vals = Array.isArray(value) ? value : [value];
-            if (vals.length === 0) return '1=1';
-            return `${field} NOT IN (${vals.map(escapeValue).join(', ')})`;
+            const vals = Array.isArray(value) ? value.map(formatDateValue) : [formatDateValue(value)];
+            if (vals.length === 0) return sql`1=1`;
+            return sql`${sql.identifier(fieldName)} NOT IN (${sql.param(vals, 'String')})`;
           }
           default:
-            return `${field} = ${escapeValue(value)}`;
+            return sql`${sql.identifier(fieldName)} = ${sql.param(formattedValue, 'String')}`;
         }
       };
 
-      const whereClause = (where: WhereCondition[] | undefined, model: string): string => {
-        if (!where || !Array.isArray(where) || where.length === 0) return '1=1';
-        
-        return where.map((cond, i) => {
+      const buildWhereClause = (where: WhereCondition[] | undefined, model: string): SqlFragment => {
+        if (!where || !Array.isArray(where) || where.length === 0) {
+          return sql`1=1`;
+        }
+
+        const clause = buildCondition(where[0], model);
+
+        for (let i = 1; i < where.length; i++) {
+          const cond = where[i];
           const condition = buildCondition(cond, model);
-          if (i === 0) return condition;
-          return `${cond.connector || 'AND'} ${condition}`;
-        }).join(' ');
+          if (cond.connector === 'OR') {
+            clause.append(sql` OR `);
+            clause.append(condition);
+          } else {
+            clause.append(sql` AND `);
+            clause.append(condition);
+          }
+        }
+
+        return clause;
       };
 
       const formatDataForInsert = (data: Record<string, unknown>): Record<string, unknown> => {
         const formatted: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(data)) {
-          if (value instanceof Date) {
-            formatted[key] = value.toISOString().slice(0, 19).replace('T', ' ');
-          } else {
-            formatted[key] = value;
-          }
+          formatted[key] = formatDateValue(value);
         }
         return formatted;
       };
 
-      const formatUpdateSet = (data: Record<string, unknown>, model: string): string => {
-        return Object.entries(data)
-          .map(([k, v]) => `${getFieldName({ model, field: k })} = ${escapeValue(v)}`)
-          .join(', ');
+      const buildInsertQuery = (model: string, data: Record<string, unknown>): SqlFragment => {
+        const formatted = formatDataForInsert(data);
+        const entries = Object.entries(formatted);
+        
+        if (entries.length === 0) {
+          throw new Error('No fields to insert');
+        }
+
+        const [firstKey, firstValue] = entries[0];
+        const columns = sql`${sql.identifier(getFieldName({ model, field: firstKey }))}`;
+        const values = sql`${sql.param(firstValue, 'String')}`;
+
+        for (let i = 1; i < entries.length; i++) {
+          const [key, value] = entries[i];
+          columns.append(sql`, ${sql.identifier(getFieldName({ model, field: key }))}`);
+          values.append(sql`, ${sql.param(value, 'String')}`);
+        }
+
+        const query = sql`INSERT INTO ${sql.identifier(model)} (`;
+        query.append(columns);
+        query.append(sql`) VALUES (`);
+        query.append(values);
+        query.append(sql`)`);
+        return query;
+      };
+
+      const buildUpdateSet = (data: Record<string, unknown>, model: string): SqlFragment => {
+        const entries = Object.entries(data);
+        if (entries.length === 0) {
+          throw new Error('No fields to update');
+        }
+
+        const [firstKey, firstValue] = entries[0];
+        const setClause = sql`${sql.identifier(getFieldName({ model, field: firstKey }))} = ${sql.param(formatDateValue(firstValue), 'String')}`;
+
+        for (let i = 1; i < entries.length; i++) {
+          const [key, value] = entries[i];
+          setClause.append(sql`, ${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`);
+        }
+
+        return setClause;
       };
 
       return {
         create: async ({ model, data }: any) => {
-          const formatted = formatDataForInsert(data);
-          const originalColumns = Object.keys(formatted);
-          const mappedColumns = originalColumns.map(col => getFieldName({ model, field: col }));
-          const values = originalColumns.map(col => escapeValue(formatted[col]));
-          await sql.unsafe(`INSERT INTO ${model} (${mappedColumns.join(', ')}) VALUES (${values.join(', ')})`).command();
+          const query = buildInsertQuery(model, data);
+          await query.command();
           return data;
         },
-        
+
         findOne: async ({ model, where }: any) => {
-          const rows = await sql.unsafe(`SELECT * FROM ${model} FINAL WHERE ${whereClause(where, model)} LIMIT 1`);
+          const whereClause = buildWhereClause(where, model);
+          const query = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
+          query.append(whereClause);
+          query.append(sql` LIMIT 1`);
+          const rows = await query;
           return rows[0] || null;
         },
-        
+
         findMany: async ({ model, where, limit, offset, sortBy }: any) => {
-          let query = `SELECT * FROM ${model} FINAL WHERE ${whereClause(where, model)}`;
+          const whereClause = buildWhereClause(where, model);
+          const query = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
+          query.append(whereClause);
+
           if (sortBy) {
-            query += ` ORDER BY ${sortBy.field} ${sortBy.direction === 'desc' ? 'DESC' : 'ASC'}`;
+            query.append(sql` ORDER BY ${sql.identifier(sortBy.field)}`);
+            query.append(sortBy.direction === 'desc' ? sql` DESC` : sql` ASC`);
           } else if (offset) {
-            query += ` ORDER BY id`;
+            query.append(sql` ORDER BY ${sql.identifier('id')}`);
           }
+
           if (limit) {
-            query += ` LIMIT ${limit}`;
+            query.append(sql` LIMIT ${sql.param(limit, 'UInt32')}`);
           } else if (offset) {
-            query += ` LIMIT 1000000`;
+            query.append(sql` LIMIT ${sql.param(1000000, 'UInt32')}`);
           }
-          if (offset) query += ` OFFSET ${offset}`;
-          
-          return sql.unsafe(query);
+
+          if (offset) {
+            query.append(sql` OFFSET ${sql.param(offset, 'UInt32')}`);
+          }
+
+          return query;
         },
-        
+
         count: async ({ model, where }: any) => {
-          const rows = await sql.unsafe(`SELECT count() as count FROM ${model} FINAL WHERE ${whereClause(where, model)}`) as { count: string }[];
+          const whereClause = buildWhereClause(where, model);
+          const query = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
+          query.append(whereClause);
+          const rows = await query as { count: string }[];
           return Number(rows[0]?.count) || 0;
         },
-        
+
         update: async ({ model, where, update: updateData }: any) => {
           const safeData = Object.fromEntries(
             Object.entries(updateData as Record<string, unknown>)
               .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
           );
+
+          const whereClause = buildWhereClause(where, model);
+
           if (Object.keys(safeData).length > 0) {
-            await sql.unsafe(`ALTER TABLE ${model} UPDATE ${formatUpdateSet(safeData, model)} WHERE ${whereClause(where, model)} SETTINGS mutations_sync=1`).command();
+            const setClause = buildUpdateSet(safeData, model);
+            const updateQuery = sql`ALTER TABLE ${sql.identifier(model)} UPDATE `;
+            updateQuery.append(setClause);
+            updateQuery.append(sql` WHERE `);
+            updateQuery.append(whereClause);
+            updateQuery.append(sql` SETTINGS mutations_sync=1`);
+            await updateQuery.command();
           }
-          const rows = await sql.unsafe(`SELECT * FROM ${model} FINAL WHERE ${whereClause(where, model)} LIMIT 1`);
+
+          const selectQuery = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
+          selectQuery.append(buildWhereClause(where, model));
+          selectQuery.append(sql` LIMIT 1`);
+          const rows = await selectQuery;
           return rows[0] || null;
         },
 
@@ -159,31 +229,50 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
             Object.entries(updateData as Record<string, unknown>)
               .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
           );
-          
-          const rows = await sql.unsafe(`SELECT count() as count FROM ${model} FINAL WHERE ${whereClause(where, model)}`) as { count: string }[];
+
+          const whereClause = buildWhereClause(where, model);
+          const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
+          countQuery.append(whereClause);
+          const rows = await countQuery as { count: string }[];
           const count = Number(rows[0]?.count) || 0;
 
           if (Object.keys(safeData).length > 0 && count > 0) {
-            await sql.unsafe(`ALTER TABLE ${model} UPDATE ${formatUpdateSet(safeData, model)} WHERE ${whereClause(where, model)} SETTINGS mutations_sync=1`).command();
+            const setClause = buildUpdateSet(safeData, model);
+            const updateQuery = sql`ALTER TABLE ${sql.identifier(model)} UPDATE `;
+            updateQuery.append(setClause);
+            updateQuery.append(sql` WHERE `);
+            updateQuery.append(buildWhereClause(where, model));
+            updateQuery.append(sql` SETTINGS mutations_sync=1`);
+            await updateQuery.command();
           }
-          
+
           return count;
         },
-        
+
         delete: async ({ model, where }: any) => {
-          await sql.unsafe(`ALTER TABLE ${model} DELETE WHERE ${whereClause(where, model)} SETTINGS mutations_sync=1`).command();
+          const whereClause = buildWhereClause(where, model);
+          const query = sql`ALTER TABLE ${sql.identifier(model)} DELETE WHERE `;
+          query.append(whereClause);
+          query.append(sql` SETTINGS mutations_sync=1`);
+          await query.command();
         },
 
         deleteMany: async ({ model, where }: any) => {
-          const rows = await sql.unsafe(`SELECT count() as count FROM ${model} FINAL WHERE ${whereClause(where, model)}`) as { count: string }[];
+          const whereClause = buildWhereClause(where, model);
+          const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
+          countQuery.append(whereClause);
+          const rows = await countQuery as { count: string }[];
           const count = Number(rows[0]?.count) || 0;
 
           if (count > 0) {
-            await sql.unsafe(`ALTER TABLE ${model} DELETE WHERE ${whereClause(where, model)} SETTINGS mutations_sync=1`).command();
+            const deleteQuery = sql`ALTER TABLE ${sql.identifier(model)} DELETE WHERE `;
+            deleteQuery.append(buildWhereClause(where, model));
+            deleteQuery.append(sql` SETTINGS mutations_sync=1`);
+            await deleteQuery.command();
           }
-          
+
           return count;
         },
-      };
+      } as CustomAdapter;
     }
   });
