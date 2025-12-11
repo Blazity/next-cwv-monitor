@@ -3,18 +3,18 @@ import { runAdapterTest } from "better-auth/adapters/test";
 import { clickHouseAdapter } from "./clickhouse-adapter";
 import { sql } from "@/app/server/lib/clickhouse/client";
 
-describe("ClickHouse Adapter Tests", async () => {
-  const cleanupTables = async () => {
-    const tables = ['user', 'session', 'account', 'verification'];
-    for (const table of tables) {
-      try {
-        await sql.unsafe(`TRUNCATE TABLE IF EXISTS ${table}`).command();
-      } catch {
-        // Table might not exist yet, that's ok
-      }
+const cleanupTables = async () => {
+  const tables = ['user', 'session', 'account', 'verification'];
+  for (const table of tables) {
+    try {
+      await sql.unsafe(`TRUNCATE TABLE IF EXISTS ${table}`).command();
+    } catch {
+      // Table might not exist yet, that's ok
     }
-  };
+  }
+};
 
+describe("ClickHouse Adapter Tests", async () => {
   beforeAll(async () => {
     await cleanupTables();
   });

@@ -15,6 +15,21 @@ interface WhereCondition {
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
+const formatDateValue = (value: unknown): unknown => {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 19).replace('T', ' ');
+  }
+  return value;
+};
+
+const formatDataForInsert = (data: Record<string, unknown>): Record<string, unknown> => {
+  const formatted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    formatted[key] = formatDateValue(value);
+  }
+  return formatted;
+};
+
 export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
   createAdapterFactory({
     config: {
@@ -28,52 +43,55 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       supportsNumericIds: false,
     },
     adapter: ({ getFieldName }) => {
-      const formatDateValue = (value: unknown): unknown => {
-        if (value instanceof Date) {
-          return value.toISOString().slice(0, 19).replace('T', ' ');
-        }
-        return value;
-      };
-
       const buildCondition = (cond: WhereCondition, model: string): SqlFragment => {
         const { value, operator } = cond;
         const fieldName = getFieldName({ model, field: cond.field });
         const formattedValue = formatDateValue(value);
 
         switch (operator) {
-          case 'eq':
+          case 'eq': {
             return sql`${sql.identifier(fieldName)} = ${sql.param(formattedValue, 'String')}`;
-          case 'ne':
+          }
+          case 'ne': {
             return sql`${sql.identifier(fieldName)} != ${sql.param(formattedValue, 'String')}`;
-          case 'gt':
+          }
+          case 'gt': {
             return sql`${sql.identifier(fieldName)} > ${sql.param(formattedValue, 'String')}`;
-          case 'gte':
+          }
+          case 'gte': {
             return sql`${sql.identifier(fieldName)} >= ${sql.param(formattedValue, 'String')}`;
-          case 'lt':
+          }
+          case 'lt': {
             return sql`${sql.identifier(fieldName)} < ${sql.param(formattedValue, 'String')}`;
-          case 'lte':
+          }
+          case 'lte': {
             return sql`${sql.identifier(fieldName)} <= ${sql.param(formattedValue, 'String')}`;
-          case 'contains':
+          }
+          case 'contains': {
             return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`%${String(value)}%`, 'String')}`;
+          }
           case 'startsWith':
-          case 'starts_with':
+          case 'starts_with': {
             return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`${String(value)}%`, 'String')}`;
+          }
           case 'endsWith':
-          case 'ends_with':
+          case 'ends_with': {
             return sql`${sql.identifier(fieldName)} ILIKE ${sql.param(`%${String(value)}`, 'String')}`;
+          }
           case 'in': {
-            const vals = Array.isArray(value) ? value.map(formatDateValue) : [formatDateValue(value)];
+            const vals = Array.isArray(value) ? value.map((v) => formatDateValue(v)) : [formatDateValue(value)];
             if (vals.length === 0) return sql`1=1`;
             return sql`${sql.identifier(fieldName)} IN (${sql.param(vals, 'String')})`;
           }
           case 'notIn':
           case 'not_in': {
-            const vals = Array.isArray(value) ? value.map(formatDateValue) : [formatDateValue(value)];
+            const vals = Array.isArray(value) ? value.map((v) => formatDateValue(v)) : [formatDateValue(value)];
             if (vals.length === 0) return sql`1=1`;
             return sql`${sql.identifier(fieldName)} NOT IN (${sql.param(vals, 'String')})`;
           }
-          default:
+          default: {
             return sql`${sql.identifier(fieldName)} = ${sql.param(formattedValue, 'String')}`;
+          }
         }
       };
 
@@ -97,14 +115,6 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         }
 
         return clause;
-      };
-
-      const formatDataForInsert = (data: Record<string, unknown>): Record<string, unknown> => {
-        const formatted: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(data)) {
-          formatted[key] = formatDateValue(value);
-        }
-        return formatted;
       };
 
       const buildInsertQuery = (model: string, data: Record<string, unknown>): SqlFragment => {
@@ -151,14 +161,14 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       };
 
       return {
-        create: async ({ model, data }: any) => {
+        create: async ({ model, data }: Parameters<CustomAdapter['create']>[0]) => {
           const query = buildInsertQuery(model, data);
           await query.command();
           return data;
         },
 
-        findOne: async ({ model, where }: any) => {
-          const whereClause = buildWhereClause(where, model);
+        findOne: async ({ model, where }: Parameters<CustomAdapter['findOne']>[0]) => {
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const query = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
           query.append(whereClause);
           query.append(sql` LIMIT 1`);
@@ -166,8 +176,8 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           return rows[0] || null;
         },
 
-        findMany: async ({ model, where, limit, offset, sortBy }: any) => {
-          const whereClause = buildWhereClause(where, model);
+        findMany: async ({ model, where, limit, offset, sortBy }: Parameters<CustomAdapter['findMany']>[0]) => {
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const query = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
           query.append(whereClause);
 
@@ -181,7 +191,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           if (limit) {
             query.append(sql` LIMIT ${sql.param(limit, 'UInt32')}`);
           } else if (offset) {
-            query.append(sql` LIMIT ${sql.param(1000000, 'UInt32')}`);
+            query.append(sql` LIMIT ${sql.param(1_000_000, 'UInt32')}`);
           }
 
           if (offset) {
@@ -191,21 +201,21 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           return query;
         },
 
-        count: async ({ model, where }: any) => {
-          const whereClause = buildWhereClause(where, model);
+        count: async ({ model, where }: Parameters<CustomAdapter['count']>[0]) => {
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const query = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           query.append(whereClause);
           const rows = await query as { count: string }[];
           return Number(rows[0]?.count) || 0;
         },
 
-        update: async ({ model, where, update: updateData }: any) => {
+        update: async ({ model, where, update: updateData }: Parameters<CustomAdapter['update']>[0]) => {
           const safeData = Object.fromEntries(
             Object.entries(updateData as Record<string, unknown>)
               .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
           );
 
-          const whereClause = buildWhereClause(where, model);
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
 
           if (Object.keys(safeData).length > 0) {
             const setClause = buildUpdateSet(safeData, model);
@@ -218,19 +228,19 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           }
 
           const selectQuery = sql`SELECT * FROM ${sql.identifier(model)} FINAL WHERE `;
-          selectQuery.append(buildWhereClause(where, model));
+          selectQuery.append(buildWhereClause(where as WhereCondition[], model));
           selectQuery.append(sql` LIMIT 1`);
           const rows = await selectQuery;
           return rows[0] || null;
         },
 
-        updateMany: async ({ model, where, update: updateData }: any) => {
+        updateMany: async ({ model, where, update: updateData }: Parameters<CustomAdapter['updateMany']>[0]) => {
           const safeData = Object.fromEntries(
             Object.entries(updateData as Record<string, unknown>)
               .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
           );
 
-          const whereClause = buildWhereClause(where, model);
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           countQuery.append(whereClause);
           const rows = await countQuery as { count: string }[];
@@ -241,7 +251,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
             const updateQuery = sql`ALTER TABLE ${sql.identifier(model)} UPDATE `;
             updateQuery.append(setClause);
             updateQuery.append(sql` WHERE `);
-            updateQuery.append(buildWhereClause(where, model));
+            updateQuery.append(buildWhereClause(where as WhereCondition[], model));
             updateQuery.append(sql` SETTINGS mutations_sync=1`);
             await updateQuery.command();
           }
@@ -249,16 +259,16 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           return count;
         },
 
-        delete: async ({ model, where }: any) => {
-          const whereClause = buildWhereClause(where, model);
+        delete: async ({ model, where }: Parameters<CustomAdapter['delete']>[0]) => {
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const query = sql`ALTER TABLE ${sql.identifier(model)} DELETE WHERE `;
           query.append(whereClause);
           query.append(sql` SETTINGS mutations_sync=1`);
           await query.command();
         },
 
-        deleteMany: async ({ model, where }: any) => {
-          const whereClause = buildWhereClause(where, model);
+        deleteMany: async ({ model, where }: Parameters<CustomAdapter['deleteMany']>[0]) => {
+          const whereClause = buildWhereClause(where as WhereCondition[], model);
           const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           countQuery.append(whereClause);
           const rows = await countQuery as { count: string }[];
