@@ -16,10 +16,13 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string(),
     CLICKHOUSE_ADAPTER_DEBUG_LOGS: z.coerce.boolean().default(false)
   },
-  client: {},
+  client: {
+    NEXT_PUBLIC_MIN_PASSWORD_SCORE: z.number().min(0).max(4).default(2)
+  },
   skipValidation: process.env.SKIP_VALIDATION === 'true' || isBuildCommand,
   runtimeEnv: {
     API_TOKEN: process.env.API_TOKEN,
+    NEXT_PUBLIC_MIN_PASSWORD_SCORE: process.env.NEXT_PUBLIC_MIN_PASSWORD_SCORE,
     CLIENT_APP_ORIGIN: process.env.CLIENT_APP_ORIGIN,
     CLICKHOUSE_HOST: process.env.CLICKHOUSE_HOST,
     CLICKHOUSE_PORT: process.env.CLICKHOUSE_PORT,

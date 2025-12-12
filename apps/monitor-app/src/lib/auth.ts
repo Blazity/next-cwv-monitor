@@ -1,8 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { clickHouseAdapter } from './clickhouse-adapter';
-
-const MIN_PASSWORD_LENGTH = 8;
+import { validatePasswordStrength } from './utils';
 
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -70,6 +69,15 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: MIN_PASSWORD_LENGTH
+    password: {
+      async hash(password: string) {
+        const validation = validatePasswordStrength(password);
+        if (!validation.valid) {
+          throw new Error(validation.message);
+        }
+        const { hashPassword } = await import('better-auth/crypto');
+        return hashPassword(password);
+      }
+    }
   }
 });
