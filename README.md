@@ -41,3 +41,7 @@ To develop client-sdk you can run
 # SDK Features
 
 - A custom sendBeacon method that was created using the native fetch API. Thanks to this, the application supports cases where a server-side error occurs and allows you to ensure that the data has been sent.
+
+## ClickHouse Schema
+
+For details about the multi-tenant ClickHouse schema (tables, columns, and engine choices), see `apps/monitor-app/clickhouse/SCHEMA.md`.
