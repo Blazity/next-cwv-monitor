@@ -15,15 +15,15 @@ export const auth = betterAuth({
     fields: {
       emailVerified: 'email_verified',
       createdAt: 'created_at',
-      updatedAt: 'updated_at',
-    },
+      updatedAt: 'updated_at'
+    }
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 24 hours (auto-refresh)
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // 5 minutes
+      maxAge: 60 * 5 // 5 minutes
     },
     fields: {
       expiresAt: 'expires_at',
@@ -31,8 +31,8 @@ export const auth = betterAuth({
       updatedAt: 'updated_at',
       ipAddress: 'ip_address',
       userAgent: 'user_agent',
-      userId: 'user_id',
-    },
+      userId: 'user_id'
+    }
   },
   account: {
     fields: {
@@ -45,31 +45,31 @@ export const auth = betterAuth({
       accessTokenExpiresAt: 'access_token_expires_at',
       refreshTokenExpiresAt: 'refresh_token_expires_at',
       createdAt: 'created_at',
-      updatedAt: 'updated_at',
-    },
+      updatedAt: 'updated_at'
+    }
   },
   verification: {
     fields: {
       expiresAt: 'expires_at',
       createdAt: 'created_at',
-      updatedAt: 'updated_at',
-    },
+      updatedAt: 'updated_at'
+    }
   },
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {
       sameSite: 'lax',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-    },
+      secure: process.env.NODE_ENV === 'production'
+    }
   },
   rateLimit: {
     enabled: true,
     window: RATE_LIMIT_WINDOW,
-    max: MAX_LOGIN_ATTEMPTS,
+    max: MAX_LOGIN_ATTEMPTS
   },
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: MIN_PASSWORD_LENGTH,
-  },
+    minPasswordLength: MIN_PASSWORD_LENGTH
+  }
 });

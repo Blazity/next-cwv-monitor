@@ -1,5 +1,15 @@
 import { waddler } from 'waddler/clickhouse';
-import { env } from '@/env';
+import { env as envOriginal } from '@/env';
+
+const env = { ...envOriginal };
+
+if (process.env.SKIP_VALIDATION === 'true') {
+  env.CLICKHOUSE_DB = 'cwv_monitor';
+  env.CLICKHOUSE_USER = 'default';
+  env.CLICKHOUSE_PASSWORD = 'secret';
+  env.CLICKHOUSE_HOST = 'localhost';
+  env.CLICKHOUSE_PORT = '8123';
+}
 
 const user = encodeURIComponent(env.CLICKHOUSE_USER);
 const password = env.CLICKHOUSE_PASSWORD ? encodeURIComponent(env.CLICKHOUSE_PASSWORD) : '';

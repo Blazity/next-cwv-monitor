@@ -1,5 +1,6 @@
 import { createAdapterFactory, type CustomAdapter, type DBAdapterDebugLogOption } from 'better-auth/adapters';
 import { sql } from '@/app/server/lib/clickhouse/client';
+import { isEmpty, mapValues, omit, first } from 'remeda';
 
 interface ClickHouseAdapterConfig {
   debugLogs?: DBAdapterDebugLogOption;
@@ -22,13 +23,8 @@ const formatDateValue = (value: unknown): unknown => {
   return value;
 };
 
-const formatDataForInsert = (data: Record<string, unknown>): Record<string, unknown> => {
-  const formatted: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
-    formatted[key] = formatDateValue(value);
-  }
-  return formatted;
-};
+const formatDataForInsert = (data: Record<string, unknown>): Record<string, unknown> =>
+  mapValues(data, formatDateValue);
 
 export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
   createAdapterFactory({
@@ -40,7 +36,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       supportsJSON: false,
       supportsDates: true,
       supportsBooleans: false,
-      supportsNumericIds: false,
+      supportsNumericIds: false
     },
     adapter: ({ getFieldName }) => {
       const buildCondition = (cond: WhereCondition, model: string): SqlFragment => {
@@ -96,7 +92,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       };
 
       const buildWhereClause = (where: WhereCondition[] | undefined, model: string): SqlFragment => {
-        if (!where || !Array.isArray(where) || where.length === 0) {
+        if (!where || isEmpty(where)) {
           return sql`1=1`;
         }
 
@@ -120,8 +116,8 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
       const buildInsertQuery = (model: string, data: Record<string, unknown>): SqlFragment => {
         const formatted = formatDataForInsert(data);
         const entries = Object.entries(formatted);
-        
-        if (entries.length === 0) {
+
+        if (isEmpty(entries)) {
           throw new Error('No fields to insert');
         }
 
@@ -145,7 +141,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
 
       const buildUpdateSet = (data: Record<string, unknown>, model: string): SqlFragment => {
         const entries = Object.entries(data);
-        if (entries.length === 0) {
+        if (isEmpty(entries)) {
           throw new Error('No fields to update');
         }
 
@@ -154,7 +150,9 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
 
         for (let i = 1; i < entries.length; i++) {
           const [key, value] = entries[i];
-          setClause.append(sql`, ${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`);
+          setClause.append(
+            sql`, ${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`
+          );
         }
 
         return setClause;
@@ -173,7 +171,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           query.append(whereClause);
           query.append(sql` LIMIT 1`);
           const rows = await query;
-          return rows[0] || null;
+          return first(rows) || null;
         },
 
         findMany: async ({ model, where, limit, offset, sortBy }: Parameters<CustomAdapter['findMany']>[0]) => {
@@ -205,19 +203,16 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           const whereClause = buildWhereClause(where as WhereCondition[], model);
           const query = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           query.append(whereClause);
-          const rows = await query as { count: string }[];
-          return Number(rows[0]?.count) || 0;
+          const rows = (await query) as { count: string }[];
+          return Number(first(rows)?.count) || 0;
         },
 
         update: async ({ model, where, update: updateData }: Parameters<CustomAdapter['update']>[0]) => {
-          const safeData = Object.fromEntries(
-            Object.entries(updateData as Record<string, unknown>)
-              .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
-          );
+          const safeData = omit(updateData as Record<string, unknown>, ['id', 'createdAt', 'updatedAt']);
 
           const whereClause = buildWhereClause(where as WhereCondition[], model);
 
-          if (Object.keys(safeData).length > 0) {
+          if (!isEmpty(safeData)) {
             const setClause = buildUpdateSet(safeData, model);
             const updateQuery = sql`ALTER TABLE ${sql.identifier(model)} UPDATE `;
             updateQuery.append(setClause);
@@ -231,22 +226,19 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           selectQuery.append(buildWhereClause(where as WhereCondition[], model));
           selectQuery.append(sql` LIMIT 1`);
           const rows = await selectQuery;
-          return rows[0] || null;
+          return first(rows) || null;
         },
 
         updateMany: async ({ model, where, update: updateData }: Parameters<CustomAdapter['updateMany']>[0]) => {
-          const safeData = Object.fromEntries(
-            Object.entries(updateData as Record<string, unknown>)
-              .filter(([k]) => !['id', 'createdAt', 'updatedAt'].includes(k))
-          );
+          const safeData = omit(updateData as Record<string, unknown>, ['id', 'createdAt', 'updatedAt']);
 
           const whereClause = buildWhereClause(where as WhereCondition[], model);
           const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           countQuery.append(whereClause);
-          const rows = await countQuery as { count: string }[];
-          const count = Number(rows[0]?.count) || 0;
+          const rows = (await countQuery) as { count: string }[];
+          const count = Number(first(rows)?.count) || 0;
 
-          if (Object.keys(safeData).length > 0 && count > 0) {
+          if (!isEmpty(safeData) && count > 0) {
             const setClause = buildUpdateSet(safeData, model);
             const updateQuery = sql`ALTER TABLE ${sql.identifier(model)} UPDATE `;
             updateQuery.append(setClause);
@@ -271,18 +263,18 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           const whereClause = buildWhereClause(where as WhereCondition[], model);
           const countQuery = sql`SELECT count() as count FROM ${sql.identifier(model)} FINAL WHERE `;
           countQuery.append(whereClause);
-          const rows = await countQuery as { count: string }[];
-          const count = Number(rows[0]?.count) || 0;
+          const rows = (await countQuery) as { count: string }[];
+          const count = Number(first(rows)?.count) || 0;
 
-          if (count > 0) {
-            const deleteQuery = sql`ALTER TABLE ${sql.identifier(model)} DELETE WHERE `;
-            deleteQuery.append(buildWhereClause(where, model));
-            deleteQuery.append(sql` SETTINGS mutations_sync=1`);
-            await deleteQuery.command();
-          }
+          if (count <= 0) return count;
+
+          const deleteQuery = sql`ALTER TABLE ${sql.identifier(model)} DELETE WHERE `;
+          deleteQuery.append(buildWhereClause(where, model));
+          deleteQuery.append(sql` SETTINGS mutations_sync=1`);
+          await deleteQuery.command();
 
           return count;
-        },
+        }
       } as CustomAdapter;
     }
   });

@@ -14,7 +14,7 @@ export const env = createEnv({
     CLICKHOUSE_PASSWORD: z.string(),
     CLICKHOUSE_DB: z.string().min(1, 'CLICKHOUSE_DB is required'),
     BETTER_AUTH_SECRET: z.string(),
-    CLICKHOUSE_ADAPTER_DEBUG_LOGS: z.coerce.boolean().default(false),
+    CLICKHOUSE_ADAPTER_DEBUG_LOGS: z.coerce.boolean().default(false)
   },
   client: {},
   skipValidation: process.env.SKIP_VALIDATION === 'true' || isBuildCommand,
@@ -27,6 +27,6 @@ export const env = createEnv({
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
     CLICKHOUSE_DB: process.env.CLICKHOUSE_DB,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-    CLICKHOUSE_ADAPTER_DEBUG_LOGS: process.env.CLICKHOUSE_ADAPTER_DEBUG_LOGS,
+    CLICKHOUSE_ADAPTER_DEBUG_LOGS: process.env.CLICKHOUSE_ADAPTER_DEBUG_LOGS
   }
 });
