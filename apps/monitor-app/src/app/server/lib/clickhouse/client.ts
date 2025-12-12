@@ -3,6 +3,8 @@ import { env as envOriginal } from '@/env';
 
 const env = { ...envOriginal };
 
+// TODO: this is added because it crashes on our CI if env's are not set
+// we should figure out a proper fix and remove it
 if (process.env.SKIP_VALIDATION === 'true') {
   env.CLICKHOUSE_DB = 'cwv_monitor';
   env.CLICKHOUSE_USER = 'default';
