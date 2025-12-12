@@ -10,7 +10,7 @@ export function cn(...inputs: ClassValue[]) {
 export function validatePasswordStrength(password: string): { valid: true } | { valid: false; message: string } {
   const result = zxcvbn(password);
 
-  if (result.score < env.NEXT_PUBLIC_MIN_PASSWORD_SCORE) {
+  if (result.score < env.MIN_PASSWORD_SCORE) {
     const feedback = result.feedback.warning || result.feedback.suggestions[0] || 'Please choose a stronger password';
     return { valid: false, message: feedback };
   }
