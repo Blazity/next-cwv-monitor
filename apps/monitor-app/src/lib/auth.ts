@@ -3,9 +3,6 @@ import { env } from '@/env';
 import { clickHouseAdapter } from './clickhouse-adapter';
 import { validatePasswordStrength } from './utils';
 
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_LOGIN_ATTEMPTS = 5;
-
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.CLIENT_APP_ORIGIN,
@@ -64,8 +61,8 @@ export const auth = betterAuth({
   },
   rateLimit: {
     enabled: true,
-    window: RATE_LIMIT_WINDOW,
-    max: MAX_LOGIN_ATTEMPTS
+    window: env.RATE_LIMIT_WINDOW_MS,
+    max: env.MAX_LOGIN_ATTEMPTS
   },
   emailAndPassword: {
     enabled: true,
