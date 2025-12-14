@@ -1,7 +1,3 @@
--- Auth tables migration
--- Using ReplacingMergeTree for auth tables since they require updates/upserts
--- The updated_at column is used as the version to keep the most recent row
-
 CREATE TABLE IF NOT EXISTS user (
   id String,
   name String,
