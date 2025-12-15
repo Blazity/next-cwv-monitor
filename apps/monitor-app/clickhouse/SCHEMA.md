@@ -1,6 +1,6 @@
 # ClickHouse Schema
 
-This document describes the multi-tenant ClickHouse schema used by the monitor app and the rationale behind the design.
+This document describes the ClickHouse schema used by the monitor app and the rationale behind the design.
 
 ## Tables & Columns
 
@@ -80,3 +80,94 @@ GROUP BY project_id, route, device_type, metric_name, event_date;
 - **Time-based partitioning & TTL:** Partitions by `toYYYYMM(recorded_at)` and a 90-day TTL on raw events make automatic retention efficient. Older partitions can be dropped without heavy deletes. Aggregates are cheaper, so they use a 1-year TTL.
 - **Pre-aggregated quantiles via `AggregatingMergeTree`:** Dashboard queries need daily percentiles by route and metric. Storing `quantilesState` and `countState` in `cwv_daily_aggregates` means we query a much smaller table and merge aggregate states instead of scanning all raw events.
 - **LowCardinality for enums:** `metric_name` and `rating` have tiny cardinality, so `LowCardinality(String)` reduces storage and speeds up grouping and filtering for typical analytical queries.
+
+## Better Auth Schema
+
+The monitor app uses Better Auth for authentication. The following tables are created by `migrations/002_auth.sql`.
+
+> Note: ClickHouse does not enforce relational constraints (e.g. foreign keys) or uniqueness constraints. Relationships like `session.user_id -> user.id` are application-level.
+
+### Design notes (Better Auth in ClickHouse)
+
+- **`ReplacingMergeTree(updated_at)`**: Better Auth requires upserts/updates. We use `ReplacingMergeTree(updated_at)` so the newest row “wins” when multiple versions share the same sort key. The adapter queries with `FINAL` to get the latest version deterministically.
+- **Order keys chosen for hot lookups**:
+  - **`session`**: `ORDER BY token` (session validation is typically “lookup by token”)
+  - **`account`**: `ORDER BY (provider_id, account_id)` (OAuth/SSO lookup)
+  - **`verification`**: `ORDER BY (identifier, value)` (OTP / magic link / reset token lookup)
+- **TTL for expiring data**:
+  - **`session`**: `TTL expires_at DELETE`
+  - **`verification`**: `TTL expires_at DELETE`
+    TTL runs asynchronously, so correctness still comes from checking `expires_at` in app logic; TTL is for automatic cleanup and storage control.
+- **Skipping indexes (bloom filters)**: We add bloom filter indexes on a few high-cardinality lookup fields (e.g. `user.email`, `session.user_id`, `account.user_id`). These are **data-skipping indexes** (they help avoid reading parts) — they are not uniqueness constraints.
+- **`LowCardinality(String)` for `account.provider_id`**: Provider identifiers tend to have tiny cardinality (e.g. `google`, `github`), so `LowCardinality` reduces storage and speeds up grouping/filtering.
+
+### `user`
+
+| Column           | Type             | Notes                   |
+| ---------------- | ---------------- | ----------------------- |
+| `id`             | String           | Primary user identifier |
+| `name`           | String           | Display name            |
+| `email`          | String           | User email address      |
+| `email_verified` | Bool             | Defaults to `false`     |
+| `image`          | Nullable(String) | Optional avatar/image   |
+| `created_at`     | DateTime         | Defaults to `now()`     |
+| `updated_at`     | DateTime         | Defaults to `now()`     |
+
+Engine: `ReplacingMergeTree(updated_at)`  
+Order key: `(id)`  
+Indexes: `idx_user_email` (bloom filter)
+
+### `session`
+
+| Column       | Type             | Notes                        |
+| ------------ | ---------------- | ---------------------------- |
+| `id`         | String           | Primary session identifier   |
+| `expires_at` | DateTime         | Session expiration timestamp |
+| `token`      | String           | Session token                |
+| `created_at` | DateTime         | Defaults to `now()`          |
+| `updated_at` | DateTime         | Defaults to `now()`          |
+| `ip_address` | Nullable(String) | Optional client IP address   |
+| `user_agent` | Nullable(String) | Optional client user agent   |
+| `user_id`    | String           | Owning user (`user.id`)      |
+
+Engine: `ReplacingMergeTree(updated_at)`  
+Order key: `(token)`  
+TTL: `expires_at DELETE`  
+Indexes: `idx_session_user_id` (bloom filter)
+
+### `account`
+
+| Column                     | Type                   | Notes                                  |
+| -------------------------- | ---------------------- | -------------------------------------- |
+| `id`                       | String                 | Primary account identifier             |
+| `account_id`               | String                 | Provider account identifier            |
+| `provider_id`              | LowCardinality(String) | Provider identifier (e.g. `google`)    |
+| `user_id`                  | String                 | Owning user (`user.id`)                |
+| `access_token`             | Nullable(String)       | Provider access token                  |
+| `refresh_token`            | Nullable(String)       | Provider refresh token                 |
+| `id_token`                 | Nullable(String)       | Provider ID token                      |
+| `access_token_expires_at`  | Nullable(DateTime)     | Access token expiration                |
+| `refresh_token_expires_at` | Nullable(DateTime)     | Refresh token expiration               |
+| `scope`                    | Nullable(String)       | Provider scopes                        |
+| `password`                 | Nullable(String)       | Password hash (credentials-based auth) |
+| `created_at`               | DateTime               | Defaults to `now()`                    |
+| `updated_at`               | DateTime               | Defaults to `now()`                    |
+
+Engine: `ReplacingMergeTree(updated_at)`  
+Order key: `(provider_id, account_id)`  
+Indexes: `idx_account_user_id` (bloom filter)
+
+### `verification`
+
+| Column       | Type     | Notes                                  |
+| ------------ | -------- | -------------------------------------- |
+| `id`         | String   | Primary verification identifier        |
+| `identifier` | String   | Lookup key (e.g. email)                |
+| `value`      | String   | Verification value (e.g. token / code) |
+| `expires_at` | DateTime | Expiration timestamp                   |
+| `created_at` | DateTime | Defaults to `now()`                    |
+| `updated_at` | DateTime | Defaults to `now()`                    |
+
+Engine: `ReplacingMergeTree(updated_at)`  
+Order key: `(identifier, value)`  
+TTL: `expires_at DELETE`
