@@ -9,11 +9,13 @@
     "noUncheckedIndexedAccess": true,
     "strict": true,
     "strictNullChecks": true,
+    "skipLibCheck": true,
     "target": "es2018",
     "declaration": true,
     "declarationMap": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/tests"]
 }

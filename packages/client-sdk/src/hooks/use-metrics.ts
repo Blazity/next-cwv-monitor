@@ -1,24 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { onCLS, onFCP, onTTFB, onINP, Metric } from 'web-vitals';
+import { onCLS, onFCP, onTTFB, onINP, onLCP, Metric } from 'web-vitals';
 import { useConfig } from '../context/config/config.context';
-import z from 'zod';
-import { getDeviceType, DeviceType } from '../utils/get-device-type';
-import { getConnectionType } from '../utils/get-connection-type';
+import type { IngestPayloadV1, WebVitalEventV1 } from 'cwv-monitor-contracts';
 
-interface Payload {
-  metric: Metric;
-  timestamp: number;
-  deviceType: DeviceType;
-  connectionType: string;
-  userAgent: string;
-  customDimensions?: Record<string, unknown>;
-}
+type Payload = WebVitalEventV1;
 
 const INTERVAL_TIME = 10_000; // 10 sec
 const MAX_RETRIES = 3;
 
 export const useMetrics = () => {
-  const { fetcher, sampleRate = '1.0', customDimensions } = useConfig();
+  const { endpoint, abortTime, projectId, sampleRate = '1.0' } = useConfig();
   const metrics = useRef(new Set<Payload>());
   const intervalRef = useRef<number>(null);
   const isFlushing = useRef(false);
@@ -31,16 +22,31 @@ export const useMetrics = () => {
     metrics.current.clear();
 
     const attempt = (retryNumber: number) => {
+      const controller = typeof abortTime === 'number' ? new AbortController() : undefined;
+      const abortTimeout = typeof abortTime === 'number' ? setTimeout(() => controller?.abort(), abortTime) : undefined;
+
+      const request = async () => {
+        const response = await fetch(buildIngestUrl(endpoint), {
+          method: 'POST',
+          keepalive: true,
+          signal: controller?.signal,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            projectId,
+            events: [...shallowCopy]
+          } satisfies IngestPayloadV1)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to receive data');
+        }
+        return null;
+      };
+
       // Fire and forget
-      void fetcher
-        .fetch({
-          endpoint: '/api/metrics',
-          schema: z.object({ ok: z.literal(true) }),
-          config: {
-            method: 'POST',
-            body: JSON.stringify([...shallowCopy])
-          }
-        })
+      void request()
         .then(() => {
           isFlushing.current = false;
         })
@@ -56,10 +62,15 @@ export const useMetrics = () => {
             isFlushing.current = false;
             disableWork.current = true;
           }
+        })
+        .finally(() => {
+          if (typeof abortTimeout !== 'undefined') {
+            clearTimeout(abortTimeout);
+          }
         });
     };
     attempt(0);
-  }, [fetcher]);
+  }, [abortTime, endpoint, projectId]);
 
   const clearIntervalRef = () => {
     if (!intervalRef.current) return;
@@ -71,14 +82,20 @@ export const useMetrics = () => {
       if (disableWork.current === true) return;
       if (Math.random() > parseFloat(sampleRate)) return;
 
-      metrics.current.add({
-        metric,
-        ...(typeof customDimensions !== 'undefined' && { customDimensions }),
-        timestamp: Date.now(),
-        deviceType: getDeviceType(),
-        userAgent: navigator.userAgent,
-        connectionType: getConnectionType()
-      });
+      const route = getNormalizedRoute();
+      const path = getFullPath();
+      const recordedAt = new Date().toISOString();
+      const payload: Payload = {
+        sessionId: metric.id,
+        route,
+        path,
+        metric: metric.name,
+        value: metric.value,
+        rating: metric.rating,
+        recordedAt
+      };
+
+      metrics.current.add(payload);
 
       if (metrics.current.size < 10 || isFlushing.current === true) return;
       flush();
@@ -89,13 +106,14 @@ export const useMetrics = () => {
         }
       }, INTERVAL_TIME);
     },
-    [sampleRate, flush, customDimensions]
+    [sampleRate, flush]
   );
 
   useEffect(() => {
     onCLS(addToMetric);
     onTTFB(addToMetric);
     onFCP(addToMetric);
+    onLCP(addToMetric);
     onINP(addToMetric);
 
     intervalRef.current = setInterval(() => {
@@ -115,5 +133,24 @@ export const useMetrics = () => {
 
   if (process.env.NODE_ENV === 'test') {
     return { metrics };
+  }
+};
+
+const getNormalizedRoute = () => {
+  if (typeof window === 'undefined') return '/';
+  return window.location.pathname || '/';
+};
+
+const getFullPath = () => {
+  if (typeof window === 'undefined') return '/';
+  return window.location.pathname || '/';
+};
+
+const buildIngestUrl = (baseUrl: string) => {
+  try {
+    return new URL('/api/ingest', baseUrl).toString();
+  } catch {
+    const normalized = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${normalized}/api/ingest`;
   }
 };

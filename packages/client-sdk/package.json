@@ -19,8 +19,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "qs": "^6.14.0",
     "rxjs": "^7.8.2",
-    "web-vitals": "^5.1.0",
-    "zod": "^4.1.13"
+    "web-vitals": "^5.1.0"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -33,6 +32,7 @@
     "@types/node": "^20.19.25",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "cwv-monitor-contracts": "workspace:*",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
