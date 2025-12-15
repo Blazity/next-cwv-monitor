@@ -54,11 +54,11 @@ const metricProfiles = {
 };
 
 function createRng(seed) {
-  let t = seed + 0x6d2b79f5;
+  let t = seed + 1_831_565_813;
   return () => {
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
   };
 }
 
@@ -220,59 +220,55 @@ function chunk(array, size) {
   return result;
 }
 
-async function main() {
-  const client = createClient({
-    url: `http://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}`,
-    database: CLICKHOUSE_DB,
-    username: CLICKHOUSE_USER,
-    password: CLICKHOUSE_PASSWORD
-  });
+const client = createClient({
+  url: `http://${CLICKHOUSE_HOST}:${CLICKHOUSE_PORT}`,
+  database: CLICKHOUSE_DB,
+  username: CLICKHOUSE_USER,
+  password: CLICKHOUSE_PASSWORD
+});
 
-  try {
-    await client.query({ query: 'SELECT 1' });
-  } catch (error) {
-    console.error('Unable to reach ClickHouse. Check CLICKHOUSE_* env vars.', error);
-    await client.close();
-    process.exit(1);
-  }
-
-  try {
-    await ensureProject(client);
-
-    const existingEvents = await countExistingEvents(client);
-    if (existingEvents > 0 && !RESET_BEFORE_SEED) {
-      console.log(
-        `Demo data already present for project ${DEMO_PROJECT_SLUG} (${existingEvents} events). Skipping seeding.`
-      );
-      await client.close();
-      return;
-    }
-
-    if (existingEvents > 0 && RESET_BEFORE_SEED) {
-      console.log(`Resetting existing demo data for project ${DEMO_PROJECT_SLUG} (${existingEvents} events)`);
-      await deleteExistingData(client);
-    }
-
-    const events = buildEvents(DEMO_PROJECT_ID);
-    const batches = chunk(events, 500);
-
-    for (const batch of batches) {
-      await client.insert({
-        table: 'cwv_events',
-        values: batch,
-        format: 'JSONEachRow'
-      });
-    }
-
-    console.log(
-      `Seeded ${events.length} events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_SLUG} (${DEMO_PROJECT_ID}).`
-    );
-  } catch (error) {
-    console.error('Seeding failed', error);
-    process.exitCode = 1;
-  } finally {
-    await client.close();
-  }
+try {
+  await client.query({ query: 'SELECT 1' });
+} catch (error) {
+  console.error('Unable to reach ClickHouse. Check CLICKHOUSE_* env vars.', error);
+  await client.close();
+  process.exit(1);
 }
 
-void main();
+try {
+  await ensureProject(client);
+
+  const existingEvents = await countExistingEvents(client);
+  if (existingEvents > 0 && !RESET_BEFORE_SEED) {
+    console.log(
+      `Demo data already present for project ${DEMO_PROJECT_SLUG} (${existingEvents} events). Skipping seeding.`
+    );
+    await client.close();
+    process.exit(0);
+  }
+
+  if (existingEvents > 0 && RESET_BEFORE_SEED) {
+    console.log(`Resetting existing demo data for project ${DEMO_PROJECT_SLUG} (${existingEvents} events)`);
+    await deleteExistingData(client);
+  }
+
+  const events = buildEvents(DEMO_PROJECT_ID);
+  const batches = chunk(events, 500);
+
+  for (const batch of batches) {
+    await client.insert({
+      table: 'cwv_events',
+      values: batch,
+      format: 'JSONEachRow'
+    });
+  }
+
+  console.log(
+    `Seeded ${events.length} events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_SLUG} (${DEMO_PROJECT_ID}).`
+  );
+} catch (error) {
+  console.error('Seeding failed', error);
+  process.exitCode = 1;
+} finally {
+  await client.close();
+}
