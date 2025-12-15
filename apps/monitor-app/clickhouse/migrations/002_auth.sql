@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS account (
   id_token Nullable(String),
   access_token_expires_at Nullable(DateTime),
   refresh_token_expires_at Nullable(DateTime),
-  scope Nullable(String),
   password Nullable(String),
   created_at DateTime DEFAULT now(),
   updated_at DateTime DEFAULT now()
