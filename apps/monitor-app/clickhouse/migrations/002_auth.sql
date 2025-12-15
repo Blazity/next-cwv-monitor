@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS user (
   email_verified Bool DEFAULT false,
   image Nullable(String),
   created_at DateTime DEFAULT now(),
-  updated_at DateTime DEFAULT now()
+  updated_at DateTime DEFAULT now(),
+  INDEX idx_user_email email TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY id;
 
@@ -17,14 +18,16 @@ CREATE TABLE IF NOT EXISTS session (
   updated_at DateTime DEFAULT now(),
   ip_address Nullable(String),
   user_agent Nullable(String),
-  user_id String
+  user_id String,
+  INDEX idx_session_user_id user_id TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(updated_at)
-ORDER BY id;
+ORDER BY token
+TTL expires_at DELETE;
 
 CREATE TABLE IF NOT EXISTS account (
   id String,
   account_id String,
-  provider_id String,
+  provider_id LowCardinality(String),
   user_id String,
   access_token Nullable(String),
   refresh_token Nullable(String),
@@ -33,9 +36,10 @@ CREATE TABLE IF NOT EXISTS account (
   refresh_token_expires_at Nullable(DateTime),
   password Nullable(String),
   created_at DateTime DEFAULT now(),
-  updated_at DateTime DEFAULT now()
+  updated_at DateTime DEFAULT now(),
+  INDEX idx_account_user_id user_id TYPE bloom_filter(0.01) GRANULARITY 4
 ) ENGINE = ReplacingMergeTree(updated_at)
-ORDER BY id;
+ORDER BY (provider_id, account_id);
 
 CREATE TABLE IF NOT EXISTS verification (
   id String,
@@ -45,4 +49,5 @@ CREATE TABLE IF NOT EXISTS verification (
   created_at DateTime DEFAULT now(),
   updated_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(updated_at)
-ORDER BY id;
+ORDER BY (identifier, value)
+TTL expires_at DELETE;
