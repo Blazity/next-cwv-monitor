@@ -8,20 +8,18 @@ interface ClickHouseAdapterConfig {
   usePlural?: boolean;
 }
 
-const whereOperators = [
-  'eq',
-  'ne',
-  'gt',
-  'gte',
-  'lt',
-  'lte',
-  'contains',
-  'starts_with',
-  'ends_with',
-  'in',
-  'not_in'
-] as const;
-type WhereOperator = (typeof whereOperators)[number];
+type WhereOperator =
+  | 'eq'
+  | 'ne'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'contains'
+  | 'starts_with'
+  | 'ends_with'
+  | 'in'
+  | 'not_in';
 
 interface WhereCondition {
   field: string;
