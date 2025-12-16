@@ -3,7 +3,8 @@ import { env } from './src/env';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  transpilePackages: ['@t3-oss/env-nextjs', '@t3-oss/env-core'],
+  transpilePackages: ['@t3-oss/env-nextjs', '@t3-oss/env-core', 'cwv-monitor-contracts'],
+  serverExternalPackages: ['pino'],
   headers() {
     return [
       {

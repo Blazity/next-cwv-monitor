@@ -63,8 +63,10 @@ services:
       context: ../../
       dockerfile: docker/monitor/dockerfiles/monitor-app.prod.Dockerfile
     environment:
-      API_TOKEN: ${API_TOKEN:-changeme}
-      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3000}
+      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3001}
+      # TRUST_PROXY controls whether we honor X-Forwarded-For/X-Real-IP headers.
+      # Leave false unless the app runs behind a trusted reverse proxy.
+      TRUST_PROXY: ${TRUST_PROXY:-false}
       <<: *clickhouse-env
     ports:
       - "3000:3000"

@@ -35,7 +35,7 @@ To develop client-sdk you can run
 - With one terminal - `pnpm dev`
 - Multi terminal
   - monitor app - `cd apps/monitor-app && pnpm dev`
-  - client app - `cd apps/client-app && pnpm dev`
+  - client app - `cd apps/client-app && pnpm dev` (runs on http://localhost:3001 by default)
   - client sdk - `cd packages/client-sdk && pnpm build`
 
 # SDK Features

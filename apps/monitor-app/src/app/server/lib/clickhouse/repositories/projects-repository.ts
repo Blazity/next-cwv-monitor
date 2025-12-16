@@ -1,13 +1,7 @@
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { InsertableProjectRow, ProjectRow } from '@/app/server/lib/clickhouse/schema';
 
-type CreateProjectInput = InsertableProjectRow & {
-  id: string;
-  slug: string;
-  name: string;
-};
-
-export async function createProject(project: CreateProjectInput): Promise<void> {
+export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();
   const updatedAtRaw = project.updated_at ?? createdAtRaw;
 

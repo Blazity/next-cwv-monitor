@@ -19,7 +19,15 @@ services:
       - "8123:8123" # HTTP API
       - "9000:9000" # Native TCP
     healthcheck:
-      test: ["CMD", "clickhouse-client", "--host", "localhost", "--query", "SELECT 1"]
+      test:
+        [
+          "CMD",
+          "clickhouse-client",
+          "--host",
+          "localhost",
+          "--query",
+          "SELECT 1",
+        ]
       interval: 5s
       retries: 10
     volumes:
@@ -48,6 +56,24 @@ services:
         condition: service_healthy
     restart: "no"
 
+  seed-demo:
+    image: node:20-alpine
+    container_name: cwv-monitor-seed-dev
+    working_dir: /workspace
+    volumes:
+      - ../../:/workspace
+    environment:
+      CI: "true"
+      <<: *clickhouse-env
+    command: >
+      sh -c "corepack enable pnpm && pnpm install --filter cwv-monitor-app && pnpm --filter cwv-monitor-app seed:demo"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: "no"
+
   monitor-app:
     build:
       context: ../../
@@ -56,8 +82,8 @@ services:
     environment:
       NODE_ENV: development
       <<: *clickhouse-env
-      API_TOKEN: ${API_TOKEN:-changeme}
-      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3000}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3001}
     ports:
       - "3000:3000"
     volumes:
