@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
   });
 }
 
-async function handleIngest(ip: string, payload: unknown, userAgentHeader?: string): Promise<IngestResponse> {
+async function handleIngest(ip: string | null, payload: unknown, userAgentHeader?: string): Promise<IngestResponse> {
   const parsed = IngestPayloadV1Schema(payload);
   if (parsed instanceof arkType.errors) {
     const issues = 'summary' in parsed ? parsed.summary : `${parsed}`;
@@ -77,10 +77,7 @@ async function handleIngest(ip: string, payload: unknown, userAgentHeader?: stri
     };
   }
 
-  const eventsInput = parsed.events;
-  const hasEvents =
-    (Array.isArray(eventsInput) && eventsInput.length > 0) || (!Array.isArray(eventsInput) && !!eventsInput);
-  if (!hasEvents) {
+  if (parsed.events.length === 0) {
     return {
       status: 400,
       body: { message: 'No events provided' }
@@ -123,20 +120,19 @@ function cors(init?: HeadersInit) {
   return headers;
 }
 
-function getClientIp(req: NextRequest, allowForwardedHeaders: boolean): string {
-  if (allowForwardedHeaders) {
-    const forwardedFor = getForwardedHeader(req.headers.get('x-forwarded-for'));
-    if (forwardedFor) return forwardedFor;
+function getClientIp(req: NextRequest, allowForwardedHeaders: boolean): string | null {
+  if (!allowForwardedHeaders) return null;
 
-    const realIp = req.headers.get('x-real-ip')?.trim();
-    if (realIp) return realIp;
+  const forwardedFor = getForwardedHeader(req.headers.get('x-forwarded-for'));
+  if (forwardedFor) return forwardedFor;
 
-    const cfConnecting = req.headers.get('cf-connecting-ip')?.trim();
-    if (cfConnecting) return cfConnecting;
-  }
+  const realIp = req.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
 
-  const maybeIp = (req as unknown as { ip?: string }).ip;
-  return maybeIp ?? '0.0.0.0';
+  const cfConnecting = req.headers.get('cf-connecting-ip')?.trim();
+  if (cfConnecting) return cfConnecting;
+
+  return null;
 }
 
 function getForwardedHeader(value: string | null): string | undefined {

@@ -13,7 +13,7 @@ export interface WebVitalEvent {
 }
 
 export interface IngestCommand {
-  ip: string;
+  ip: string | null;
   projectId: string;
   events: WebVitalEvent[];
 }

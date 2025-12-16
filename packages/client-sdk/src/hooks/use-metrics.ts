@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { onCLS, onFCP, onTTFB, onINP, onLCP, Metric } from 'web-vitals';
 import { useConfig } from '../context/config/config.context';
-import type { IngestPayloadV1, WebVitalEventV1 } from 'cwv-monitor-contracts';
+import type { IngestPayloadV1In, WebVitalEventV1In } from 'cwv-monitor-contracts';
 
-type Payload = WebVitalEventV1;
+type Payload = WebVitalEventV1In;
 
 const INTERVAL_TIME = 10_000; // 10 sec
 const MAX_RETRIES = 3;
@@ -36,7 +36,7 @@ export const useMetrics = () => {
           body: JSON.stringify({
             projectId,
             events: [...shallowCopy]
-          } satisfies IngestPayloadV1)
+          } satisfies IngestPayloadV1In)
         });
 
         if (!response.ok) {

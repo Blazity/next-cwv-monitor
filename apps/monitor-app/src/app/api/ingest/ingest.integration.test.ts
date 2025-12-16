@@ -32,7 +32,8 @@ function buildRequest(body: Record<string, unknown> | string, headers: Record<st
     headers: {
       'content-type': 'application/json',
       'x-forwarded-for': headers['x-forwarded-for'] ?? '203.0.113.14',
-      'user-agent': headers['user-agent'] ?? 'Mozilla/5.0 Vitest'
+      'user-agent': headers['user-agent'] ?? 'Mozilla/5.0 Vitest',
+      ...headers
     }
   });
 }
@@ -132,6 +133,7 @@ describe('POST /api/ingest integration', () => {
     process.env.CLICKHOUSE_USER = CLICKHOUSE_USER;
     process.env.CLICKHOUSE_PASSWORD = CLICKHOUSE_PASSWORD;
     process.env.CLIENT_APP_ORIGIN = 'http://localhost:3001';
+    process.env.BETTER_AUTH_SECRET = 'integration-test-secret';
     process.env.TRUST_PROXY = 'true';
     process.env.LOG_LEVEL = 'debug';
 
@@ -297,12 +299,14 @@ describe('POST /api/ingest integration', () => {
     const response = await POST(
       buildRequest({
         projectId: 'not-a-uuid',
-        events: {
-          route: '/',
-          metric: 'CLS',
-          value: 0.1,
-          rating: 'good'
-        }
+        events: [
+          {
+            route: '/',
+            metric: 'CLS',
+            value: 0.1,
+            rating: 'good'
+          }
+        ]
       })
     );
 
@@ -354,6 +358,120 @@ describe('POST /api/ingest integration', () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBeTruthy();
+  });
+
+  it('ignores rate limits when client IP is null', async () => {
+    const project: InsertableProjectRow = {
+      id: randomUUID(),
+      slug: 'no-ip',
+      name: 'No IP'
+    };
+    await createProject(project);
+
+    // If the code ever falls back to 0.0.0.0 (or any placeholder), this request would be rate-limited.
+    for (let i = 0; i < 1000; i++) {
+      await ipRateLimiter.check('0.0.0.0');
+    }
+
+    const response = await POST(
+      buildRequest(
+        {
+          projectId: project.id,
+          events: [
+            {
+              route: '/',
+              metric: 'CLS',
+              value: 0.1,
+              rating: 'good'
+            }
+          ]
+        },
+        // Empty forwarded-for means "no usable IP" while still allowing other tests to use the default.
+        { 'x-forwarded-for': '' }
+      )
+    );
+
+    expect(response.status).toBe(204);
+    const stored = await waitForPersistedEvents(project.id, 1, { limit: 10 });
+    expect(stored).toHaveLength(1);
+  });
+
+  it('uses the first x-forwarded-for entry for rate limiting', async () => {
+    const ip = '198.51.100.201';
+    for (let i = 0; i < 1000; i++) {
+      await ipRateLimiter.check(ip);
+    }
+
+    const response = await POST(
+      buildRequest(
+        {
+          projectId: randomUUID(),
+          events: [
+            {
+              route: '/',
+              metric: 'CLS',
+              value: 0.1,
+              rating: 'good'
+            }
+          ]
+        },
+        { 'x-forwarded-for': `${ip}, 10.0.0.1` }
+      )
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('uses x-real-ip when x-forwarded-for is missing', async () => {
+    const ip = '198.51.100.202';
+    for (let i = 0; i < 1000; i++) {
+      await ipRateLimiter.check(ip);
+    }
+
+    const response = await POST(
+      buildRequest(
+        {
+          projectId: randomUUID(),
+          events: [
+            {
+              route: '/',
+              metric: 'CLS',
+              value: 0.1,
+              rating: 'good'
+            }
+          ]
+        },
+        { 'x-forwarded-for': '', 'x-real-ip': ip }
+      )
+    );
+
+    expect(response.status).toBe(429);
+  });
+
+  it('uses cf-connecting-ip when x-forwarded-for and x-real-ip are missing', async () => {
+    const ip = '198.51.100.203';
+    for (let i = 0; i < 1000; i++) {
+      await ipRateLimiter.check(ip);
+    }
+
+    const response = await POST(
+      buildRequest(
+        {
+          projectId: randomUUID(),
+          events: [
+            {
+              route: '/',
+              metric: 'CLS',
+              value: 0.1,
+              rating: 'good'
+            }
+          ]
+        },
+        { 'x-forwarded-for': '', 'cf-connecting-ip': ip }
+      )
+    );
+
+    expect(response.status).toBe(429);
   });
 
   it('responds to OPTIONS preflight with CORS headers', async () => {

@@ -14,10 +14,11 @@ export class IngestService {
   constructor(private readonly rateLimiter: RateLimiter) {}
 
   async handle(command: IngestCommand): Promise<IngestServiceResult> {
-    const rateResult = await this.rateLimiter.check(command.ip);
-
-    if (!rateResult.ok) {
-      return { kind: 'rate-limit', rate: rateResult };
+    if (command.ip) {
+      const rateResult = await this.rateLimiter.check(command.ip);
+      if (!rateResult.ok) {
+        return { kind: 'rate-limit', rate: rateResult };
+      }
     }
 
     const project = await getProjectById(command.projectId);

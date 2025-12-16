@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
-const PUBLIC_ROUTES = ['/login', '/setup', '/api/auth', '/api/health'];
+const PUBLIC_ROUTES = ['/login', '/setup', '/api/auth', '/api/health', '/api/ingest'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -15,21 +15,18 @@ export const WebVitalEventV1Schema = arkType({
   rating: WebVitalRatingV1Schema,
   "connectionType?": "string",
   "navigationType?": "string",
-  "recordedAt?": "string",
+  "recordedAt?": "string.date.iso.parse",
 });
-
-export const MetricsPayloadV1Schema = arkType([
-  WebVitalEventV1Schema,
-  "|",
-  WebVitalEventV1Schema.array(),
-]);
 
 export const IngestPayloadV1Schema = arkType({
   projectId: "string.uuid",
-  events: MetricsPayloadV1Schema,
+  events: WebVitalEventV1Schema.array(),
 });
 
 export type WebVitalRatingV1 = typeof WebVitalRatingV1Schema.infer;
 export type WebVitalEventV1 = typeof WebVitalEventV1Schema.infer;
-export type MetricsPayloadV1 = typeof MetricsPayloadV1Schema.infer;
 export type IngestPayloadV1 = typeof IngestPayloadV1Schema.infer;
+
+// "wire" / input types (pre-morph)
+export type WebVitalEventV1In = typeof WebVitalEventV1Schema.inferIn;
+export type IngestPayloadV1In = typeof IngestPayloadV1Schema.inferIn;
