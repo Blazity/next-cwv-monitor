@@ -1,14 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { spawn } from 'node:child_process';
-import path from 'node:path';
 
-import { GenericContainer, type StartedTestContainer } from 'testcontainers';
+import type { StartedTestContainer } from 'testcontainers';
 import { NextRequest } from 'next/server';
 import { describe, beforeAll, afterAll, beforeEach, it, expect } from 'vitest';
 
 import type { InsertableProjectRow } from '@/app/server/lib/clickhouse/schema';
 import { ipRateLimiter } from '@/app/server/lib/rate-limit';
-import { createClient } from '@clickhouse/client';
+import { setupClickHouseContainer, wait } from '@/test/clickhouse-test-utils';
 
 let container: StartedTestContainer;
 let POST: typeof import('./route').POST;
@@ -16,14 +14,6 @@ let OPTIONS: typeof import('./route').OPTIONS;
 let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
 let fetchEvents: typeof import('@/app/server/lib/clickhouse/repositories/events-repository').fetchEvents;
 let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-
-const CLICKHOUSE_IMAGE = 'clickhouse/clickhouse-server:24.8-alpine';
-const HTTP_PORT = 8123;
-const DATABASE = 'cwv_monitor';
-const CLICKHOUSE_USER = 'default';
-const CLICKHOUSE_PASSWORD = 'secret';
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function buildRequest(body: Record<string, unknown> | string, headers: Record<string, string> = {}) {
   return new NextRequest('http://localhost/api/ingest', {
@@ -35,64 +25,6 @@ function buildRequest(body: Record<string, unknown> | string, headers: Record<st
       'user-agent': headers['user-agent'] ?? 'Mozilla/5.0 Vitest',
       ...headers
     }
-  });
-}
-
-async function waitForClickHouse(host: string, port: number, attempts = 30, options?: { database?: string }) {
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const client = createClient({
-        url: `http://${host}:${port}`,
-        database: options?.database ?? DATABASE,
-        username: CLICKHOUSE_USER,
-        password: CLICKHOUSE_PASSWORD
-      });
-      await client.query({ query: 'SELECT 1' });
-      await client.close();
-      return;
-    } catch (error) {
-      if (i === attempts - 1) throw error;
-      await wait(1000);
-    }
-  }
-}
-
-async function execOrThrow(target: StartedTestContainer, command: string[], context: string) {
-  const result = await target.exec(command);
-  if (result.exitCode !== 0) {
-    throw new Error(`${context} failed (exit ${result.exitCode}): ${result.stderr || result.stdout || result.output}`);
-  }
-}
-
-async function runClickHouseMigrations(host: string, port: number) {
-  const scriptPath = path.resolve(process.cwd(), 'scripts/run-clickhouse-migrate.mjs');
-  const migrationsDir = path.resolve(process.cwd(), 'clickhouse/migrations');
-
-  const envOverrides = {
-    ...process.env,
-    CH_MIGRATIONS_HOST: `http://${host}:${port}`,
-    CH_MIGRATIONS_PORT: String(port),
-    CH_MIGRATIONS_DATABASE: DATABASE,
-    CH_MIGRATIONS_USER: CLICKHOUSE_USER,
-    CH_MIGRATIONS_PASSWORD: CLICKHOUSE_PASSWORD,
-    CH_MIGRATIONS_DIR: migrationsDir
-  };
-
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(process.execPath, [scriptPath], {
-      cwd: path.resolve(process.cwd()),
-      env: envOverrides,
-      stdio: 'inherit'
-    });
-
-    child.on('error', reject);
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Migrations script exited with code ${code}`));
-      }
-    });
   });
 }
 
@@ -118,43 +50,8 @@ async function waitForPersistedEvents(
 
 describe('POST /api/ingest integration', () => {
   beforeAll(async () => {
-    container = await new GenericContainer(CLICKHOUSE_IMAGE)
-      .withExposedPorts(HTTP_PORT)
-      .withEnvironment({ CLICKHOUSE_DB: DATABASE, CLICKHOUSE_USER, CLICKHOUSE_PASSWORD })
-      .start();
-
-    const dockerHost = container.getHost();
-    const host = dockerHost === 'localhost' ? '127.0.0.1' : dockerHost;
-    const port = container.getMappedPort(HTTP_PORT);
-
-    process.env.CLICKHOUSE_HOST = host;
-    process.env.CLICKHOUSE_PORT = String(port);
-    process.env.CLICKHOUSE_DB = DATABASE;
-    process.env.CLICKHOUSE_USER = CLICKHOUSE_USER;
-    process.env.CLICKHOUSE_PASSWORD = CLICKHOUSE_PASSWORD;
-    process.env.CLIENT_APP_ORIGIN = 'http://localhost:3001';
-    process.env.BETTER_AUTH_SECRET = 'integration-test-secret';
-    process.env.TRUST_PROXY = 'true';
-    process.env.LOG_LEVEL = 'debug';
-
-    await waitForClickHouse(host, port, 30, { database: 'default' });
-
-    await execOrThrow(
-      container,
-      [
-        'clickhouse-client',
-        '--user',
-        CLICKHOUSE_USER,
-        '--password',
-        CLICKHOUSE_PASSWORD,
-        '--query',
-        `CREATE DATABASE IF NOT EXISTS ${DATABASE}`
-      ],
-      'CREATE DATABASE'
-    );
-
-    await runClickHouseMigrations(host, port);
-    await waitForClickHouse(host, port);
+    const setup = await setupClickHouseContainer();
+    container = setup.container;
 
     ({ POST, OPTIONS } = await import('./route'));
     ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
