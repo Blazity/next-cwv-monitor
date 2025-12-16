@@ -45,3 +45,7 @@ To develop client-sdk you can run
 ## ClickHouse Schema
 
 For details about the multi-tenant ClickHouse schema (tables, columns, and engine choices), see `apps/monitor-app/clickhouse/SCHEMA.md`.
+
+## Code style & architecture conventions
+
+For general coding guidelines, see `CODE_STYLE.md`.
