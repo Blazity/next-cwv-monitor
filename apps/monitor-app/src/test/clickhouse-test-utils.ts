@@ -79,10 +79,7 @@ export async function runClickHouseMigrations(): Promise<void> {
 }
 
 export async function optimizeAggregates(
-  sqlClient: { command: () => Promise<void> } & ((
-    strings: TemplateStringsArray,
-    ...values: unknown[]
-  ) => { command: () => Promise<void> })
+  sqlClient: (strings: TemplateStringsArray, ...values: unknown[]) => { command: () => PromiseLike<unknown> }
 ): Promise<void> {
   // The MV inserts happen asynchronously, wait briefly for them to complete
   await wait(100);
