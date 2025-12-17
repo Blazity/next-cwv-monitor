@@ -1,7 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { clickHouseAdapter } from './clickhouse-adapter';
-import { validatePasswordStrength } from './utils';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,

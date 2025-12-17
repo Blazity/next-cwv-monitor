@@ -1,20 +1,22 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { userEvent, within, expect, fn } from 'storybook/test';
+import { userEvent, within, expect } from 'storybook/test';
 import { http, HttpResponse, delay } from 'msw';
 import { LoginForm } from '@/components/login-form';
 
 const meta: Meta<typeof LoginForm> = {
-  title: 'Components/LoginForm',
-  component: LoginForm,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  tags: ['autodocs'],
-  args: {
-    onSuccess: fn(),
-    onError: fn(),
-  },
-};
+    title: 'Components/LoginForm',
+    component: LoginForm,
+    parameters: {
+      layout: 'fullscreen',
+      nextjs: {
+        appDirectory: true,
+      },
+    },
+    tags: ['autodocs'],
+    args: {
+      callbackUrl: '/',
+    },
+  };
 
 export default meta;
 type Story = StoryObj<typeof LoginForm>;

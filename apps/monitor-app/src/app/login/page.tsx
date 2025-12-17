@@ -1,20 +1,16 @@
-'use client';
-
-import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '@/components/login-form';
 
-function handleError(error: string) {
-  console.error('Login error:', error);
-}
+export default async function LoginPage({
+    searchParams,
+  }: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }) {
+    const params = await searchParams;
+  const callbackUrl = (params.callbackUrl as string) || '/projects';
 
-export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/projects';
-
-  const handleSuccess = () => {
-    router.push(callbackUrl);
-  };
-
-  return <LoginForm onSuccess={handleSuccess} onError={handleError} />;
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <LoginForm callbackUrl={callbackUrl} />
+    </div>
+  );
 }

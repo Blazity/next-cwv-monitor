@@ -7,7 +7,6 @@ const PUBLIC_ROUTES = ['/login', '/api/auth', '/api/health', '/api/ingest'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isPublicRoute) {
@@ -21,14 +20,18 @@ export async function proxy(request: NextRequest) {
 
     if (!session) {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
+      if (pathname !== '/') {
+        loginUrl.searchParams.set('callbackUrl', pathname);
+      }
       return NextResponse.redirect(loginUrl);
     }
 
     return NextResponse.next();
     } catch {
       const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
+      if (pathname !== '/') {
+        loginUrl.searchParams.set('callbackUrl', pathname);
+      }
       return NextResponse.redirect(loginUrl);
     }
 }
