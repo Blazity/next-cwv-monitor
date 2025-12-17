@@ -68,10 +68,6 @@ export const auth = betterAuth({
     enabled: true,
     password: {
       async hash(password: string) {
-        const validation = validatePasswordStrength(password);
-        if (!validation.valid) {
-          throw new Error(validation.message);
-        }
         const { hashPassword } = await import('better-auth/crypto');
         return hashPassword(password);
       }
