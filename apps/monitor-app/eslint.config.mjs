@@ -3,13 +3,17 @@ import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
+import eslintReact from '@eslint-react/eslint-plugin';
+import reactRefresh from 'eslint-plugin-react-refresh';
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  reactRefresh.configs.next,
   prettier,
   {
     ...eslintPluginUnicorn.configs.recommended,
+    extends: [eslintReact.configs['recommended-typescript']],
     ignores: ['.storybook/**'],
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
@@ -20,6 +24,16 @@ const eslintConfig = defineConfig([
   },
   {
     rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportDeclaration[source.value='react'] > ImportDefaultSpecifier",
+          message: 'React import is unnecessary since version 17'
+        }
+      ],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@eslint-react/naming-convention/context-name': 'error',
+      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'no-restricted-imports': [
         'error',
         {
@@ -34,6 +48,7 @@ const eslintConfig = defineConfig([
     '.next/**',
     'out/**',
     'build/**',
+    'components/ui',
     'next-env.d.ts',
     '.storybook/**'
   ])
