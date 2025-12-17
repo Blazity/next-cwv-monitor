@@ -9,7 +9,7 @@ import {
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 import { User } from 'better-auth';
-import { signOut } from '@/actions';
+import { signOut } from '@/actions/sign-out';
 
 function UserDropdown({ user }: { user: User }) {
   const handleSignOut = async () => {

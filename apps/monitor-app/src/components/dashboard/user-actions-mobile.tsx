@@ -2,7 +2,7 @@
 
 import { LogOut } from 'lucide-react';
 import { User } from 'better-auth';
-import { signOut } from '@/actions';
+import { signOut } from '@/actions/sign-out';
 
 function UserActionsMobile({ setMobileMenuOpen, user }: { setMobileMenuOpen: (open: boolean) => void; user: User }) {
   const handleSignOut = async () => {

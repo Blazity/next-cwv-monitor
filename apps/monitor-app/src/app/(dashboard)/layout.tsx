@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ProjectsListService } from '@/app/server/domain/projects/list/service';
 
-async function ProjectsLayout({ children }: { children: React.ReactNode }) {
+async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const sessionData = await auth.api.getSession({
     headers: await headers()
   });
@@ -25,4 +25,4 @@ async function ProjectsLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default ProjectsLayout;
+export default DashboardLayout;
