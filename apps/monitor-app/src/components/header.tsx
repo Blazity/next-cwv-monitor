@@ -9,11 +9,10 @@ import {
   Calendar,
   Activity,
   Menu,
-  Users,
   LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
-import { logout } from '@/lib/auth-client';
+import { useSession } from '@/contexts/session-context';
 import {
   Sheet,
   SheetContent,
@@ -27,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useLogout } from '@/hooks/use-logout';
 
 const navItems = [
   {
@@ -55,27 +55,17 @@ const navItems = [
   },
 ];
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role?: string;
-}
-
-interface HeaderProps {
-  user?: User | null;
-  isProjectScoped?: boolean;
-}
-
-export function Header({ user, isProjectScoped = false }: HeaderProps) {
+export function Header() {
+  const { session } = useSession();
+  const user = session?.user
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { logout } = useLogout()
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center justify-between px-3 sm:px-4 lg:px-6">
         <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-          {/* Mobile Menu Button */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button
@@ -114,23 +104,6 @@ export function Header({ user, isProjectScoped = false }: HeaderProps) {
                       </Link>
                     )
                   })}
-                  {user?.role === 'admin' && (
-                    <>
-                      <div className="h-px bg-border my-2" />
-                      <Link
-                        href="/users"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                          pathname === '/users'
-                            ? 'bg-accent text-accent-foreground'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                        }`}
-                      >
-                        <Users className="h-4 w-4" />
-                        Users
-                      </Link>
-                    </>
-                  )}
                 </nav>
                 {user && (
                   <div className="mt-auto border-t border-border p-4">
@@ -159,7 +132,6 @@ export function Header({ user, isProjectScoped = false }: HeaderProps) {
             </SheetContent>
           </Sheet>
 
-          {/* Logo */}
           <Link href="/projects" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <Activity className="h-4 w-4 text-primary-foreground" />
@@ -167,13 +139,6 @@ export function Header({ user, isProjectScoped = false }: HeaderProps) {
             <span className="hidden sm:inline font-semibold text-foreground">CWV Monitor</span>
           </Link>
 
-          {isProjectScoped && (
-                <div className="hidden sm:block">
-                  {/*<ProjectSelector />*/}
-                  </div>
-          )}
-
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = item.isExact
@@ -194,24 +159,10 @@ export function Header({ user, isProjectScoped = false }: HeaderProps) {
                 </Link>
               )
             })}
-            {user?.role === 'admin' && (
-              <Link
-                href="/users"
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  pathname === '/users'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                }`}
-              >
-                <Users className="h-4 w-4" />
-                Users
-              </Link>
-            )}
           </nav>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
-          {/* Theme Toggle */}
           <ThemeToggle />
 
           {user && (

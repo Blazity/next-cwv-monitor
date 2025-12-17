@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useRouter } from 'next/navigation';
 
 const loginSchema = arkType({
   email: 'string.email',
@@ -20,48 +19,39 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isPending, startTransition] = React.useTransition();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
-    setErrorMessage(null);
-
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData);
 
     const out = loginSchema(data);
     if (out instanceof arkType.errors) {
       setErrorMessage(out.summary);
-      setIsLoading(false);
       return;
     }
 
-    try {
+    startTransition(async () => {
+      setErrorMessage(null);
+      
       const { error } = await authClient.signIn.email({
         email: out.email,
         password: out.password,
+        callbackURL: callbackUrl,
       });
 
       if (error) {
         setErrorMessage(error.message || 'Login failed');
-        setIsLoading(false);
-        return;
       }
-      router.push(callbackUrl);
-    } catch (error) {
-      console.error("Auth Crash:", error);
-      setErrorMessage('A connection error occurred. Please try again.');
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
             <Activity className="h-5 w-5 text-primary-foreground" />
@@ -93,7 +83,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   autoComplete="email"
                   type="email"
                   required
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
               </div>
 
@@ -106,14 +96,14 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   autoComplete="current-password"
                   type="password"
                   required
-                  disabled={isLoading}
+                  disabled={isPending}
                 />
               </div>
             </CardContent>
 
             <CardFooter>
-              <Button type="submit" className="w-full my-4 mb-0 mt-4" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign in'}
+              <Button type="submit" className="w-full my-4 mb-0 mt-4" disabled={isPending}>
+                {isPending ? 'Signing in...' : 'Sign in'}
               </Button>
             </CardFooter>
           </form>

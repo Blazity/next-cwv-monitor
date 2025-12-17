@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 
 import './globals.css';
 
+import { auth } from '@/lib/auth';
 import { Providers } from './providers';
 
 const spaceGrotesk = Space_Grotesk({
@@ -21,11 +23,20 @@ export const metadata: Metadata = {
   description: 'Core Web Vitals monitoring'
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const session = await auth.api
+  .getSession({
+    headers: await headers(),
+  })
+  .catch((error) => {
+    console.warn('Auth session fetch failed:', error);
+    return null;
+  });
+
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );
