@@ -12,7 +12,7 @@ export const auth = betterAuth({
       emailVerified: 'email_verified',
       createdAt: 'created_at',
       updatedAt: 'updated_at'
-    }
+    }, 
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
