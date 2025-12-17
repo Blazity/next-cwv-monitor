@@ -16,10 +16,10 @@ type RateLimiterOptions = {
   blockDurationSeconds?: number;
 };
 
-export interface RateLimiter {
+export type RateLimiter = {
   check(key: string): Promise<RateLimitResult>;
   reset(key?: string): Promise<void>;
-}
+};
 
 export class MemoryRateLimiter implements RateLimiter {
   private limiter: RateLimiterMemory;
