@@ -57,7 +57,6 @@ function Navbar({ projects, user }: NavbarProps) {
               <ProjectSelector projects={projects} />
             </div>
 
-            {/* Desktop Navigation */}
             <nav className="hidden items-center gap-1 lg:flex">
               {navItems.map((item) => {
                 const isActive = item.isExact
