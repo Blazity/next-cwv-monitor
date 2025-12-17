@@ -1,23 +1,23 @@
 'use client';
 
-import * as React from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { DeviceSelector } from '@/components/dashboard/device-selector';
 import TimeRangeSelector from './time-range-selector';
 
-interface PageHeaderProps {
+type PageHeaderProps = {
   title: string;
   description?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   showFilters?: boolean;
-}
+};
 
 export function PageHeader({ title, description, children, showFilters = true }: PageHeaderProps) {
-  const headerRef = React.useRef<HTMLDivElement>(null);
-  const [showStickyBar, setShowStickyBar] = React.useState(false);
-  const [hasMounted, setHasMounted] = React.useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
 
@@ -33,16 +33,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
     return () => observer.disconnect();
   }, [hasMounted]);
 
-  const FiltersContent = () => (
-    <div className="flex items-center gap-2">
-      <DeviceSelector />
-      <TimeRangeSelector />
-    </div>
-  );
-
   return (
     <>
-      {/* Main header */}
       <div ref={headerRef} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -53,7 +45,10 @@ export function PageHeader({ title, description, children, showFilters = true }:
         </div>
         {showFilters && (
           <div className="shrink-0">
-            <FiltersContent />
+            <div className="flex items-center gap-2">
+              <DeviceSelector />
+              <TimeRangeSelector />
+            </div>
           </div>
         )}
       </div>
@@ -71,7 +66,10 @@ export function PageHeader({ title, description, children, showFilters = true }:
             <div className="px-3 py-3 sm:px-4 lg:px-6">
               <div className="flex items-center justify-between gap-4">
                 <h2 className="text-foreground truncate text-base font-semibold">{title}</h2>
-                <FiltersContent />
+                <div className="flex items-center gap-2">
+                  <DeviceSelector />
+                  <TimeRangeSelector />
+                </div>
               </div>
             </div>
           </div>

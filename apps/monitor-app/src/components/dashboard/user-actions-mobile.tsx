@@ -4,11 +4,10 @@ import { LogOut } from 'lucide-react';
 import { User } from 'better-auth';
 import { signOut } from '@/actions/sign-out';
 
+const handleSignOut = async () => {
+  await signOut();
+};
 function UserActionsMobile({ setMobileMenuOpen, user }: { setMobileMenuOpen: (open: boolean) => void; user: User }) {
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
   console.log('user', user);
 
   return (

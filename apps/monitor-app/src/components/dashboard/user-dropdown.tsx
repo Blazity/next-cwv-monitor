@@ -11,11 +11,11 @@ import {
 import { User } from 'better-auth';
 import { signOut } from '@/actions/sign-out';
 
-function UserDropdown({ user }: { user: User }) {
-  const handleSignOut = async () => {
-    await signOut();
-  };
+const handleSignOut = async () => {
+  await signOut();
+};
 
+function UserDropdown({ user }: { user: User }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="bg-muted text-muted-foreground hover:bg-accent hidden h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors sm:flex">
