@@ -1,7 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { clickHouseAdapter } from './clickhouse-adapter';
-import { validatePasswordStrength } from './utils';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -68,10 +67,13 @@ export const auth = betterAuth({
     enabled: true,
     password: {
       async hash(password: string) {
+        /* FIXME: this should be moved to account creation/password change logic */
+        /*
         const validation = validatePasswordStrength(password);
         if (!validation.valid) {
           throw new Error(validation.message);
         }
+        */
         const { hashPassword } = await import('better-auth/crypto');
         return hashPassword(password);
       }
