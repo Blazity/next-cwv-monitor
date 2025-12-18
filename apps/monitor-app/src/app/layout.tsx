@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import type { ReactNode } from 'react';
-import { headers } from 'next/headers';
 
 import './globals.css';
 
-import { auth } from '@/lib/auth';
 import { Providers } from './providers';
 
 const spaceGrotesk = Space_Grotesk({
@@ -24,16 +22,10 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const session = await auth.api
-  .getSession({
-    headers: await headers(),
-  })
-  .catch(() => null);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <Providers sessionData={session}>{children}</Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

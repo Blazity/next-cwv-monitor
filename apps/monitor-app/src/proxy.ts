@@ -1,39 +1,44 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
 
 const PUBLIC_ROUTES = ['/login', '/api/auth', '/api/health', '/api/ingest'];
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
+  const requestHeaders = request.headers;
+  
+  const fullPath = `${pathname}${search}`;
+  requestHeaders.set('x-current-path', fullPath);
+
   if (isPublicRoute) {
-    return NextResponse.next();
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
   try {
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: requestHeaders, 
     });
 
     if (!session) {
       const loginUrl = new URL('/login', request.url);
       if (pathname !== '/') {
-        loginUrl.searchParams.set('callbackUrl', pathname);
+        loginUrl.searchParams.set('callbackUrl', fullPath);
       }
       return NextResponse.redirect(loginUrl);
     }
 
-    return NextResponse.next();
-    } catch {
-      const loginUrl = new URL('/login', request.url);
-      if (pathname !== '/') {
-        loginUrl.searchParams.set('callbackUrl', pathname);
-      }
-      return NextResponse.redirect(loginUrl);
-    }
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  } catch {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 export const config = {
