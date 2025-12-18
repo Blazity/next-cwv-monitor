@@ -12,7 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useState } from 'react';
-import { useSession } from '@/contexts/session-context';
+import { useSession } from '@/hooks/use-session';
 import {
   Sheet,
   SheetContent,
@@ -69,6 +69,7 @@ export function Header() {
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <button
+                type="button"
                 className="lg:hidden flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                 aria-label="Open menu"
               >
@@ -117,6 +118,7 @@ export function Header() {
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         setMobileMenuOpen(false)
                         logout()

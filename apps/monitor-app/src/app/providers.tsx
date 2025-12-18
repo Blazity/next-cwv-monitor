@@ -2,12 +2,12 @@
 
 import * as React from 'react';
 
-import { SessionProvider } from '@/contexts/session-context';
+import { SessionProvider } from '@/contexts/session-provider';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { Toaster } from 'sonner';
 import { Session } from '@/lib/auth-client';
 
-interface ProvidersProps {
+type ProvidersProps = {
   children: React.ReactNode;
   session: Session | null;
 }

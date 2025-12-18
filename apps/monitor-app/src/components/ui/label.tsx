@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils"
 
 export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>
 
-const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
-  ({ className, ...props }, ref) => (
+const Label = ({ ref, className, ...props }: LabelProps & { ref?: React.RefObject<HTMLLabelElement | null> }) => (
     <label
       ref={ref}
       data-slot="label"
@@ -16,7 +15,6 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
       {...props}
     />
   )
-)
 Label.displayName = "Label"
 
 export { Label }

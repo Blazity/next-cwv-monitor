@@ -14,7 +14,7 @@ const loginSchema = arkType({
   password: 'string >= 1'
 });
 
-interface LoginFormProps {
+type LoginFormProps = {
   callbackUrl: string;
 }
 
