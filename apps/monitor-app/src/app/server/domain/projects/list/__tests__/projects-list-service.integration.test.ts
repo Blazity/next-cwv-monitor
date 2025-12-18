@@ -15,7 +15,6 @@ let container: StartedTestContainer;
 let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
 let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
 let ProjectsListService: typeof import('../service').ProjectsListService;
-let requireAuth: typeof import('@/app/server/lib/auth-check').requireAuth;
 
 describe('projects-list-service (integration)', () => {
   beforeAll(async () => {
@@ -24,7 +23,6 @@ describe('projects-list-service (integration)', () => {
 
     ({ sql } = await import('@/app/server/lib/clickhouse/client'));
     ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
-    ({ requireAuth } = await import('@/app/server/lib/auth-check'));
     ({ ProjectsListService } = await import('../service'));
   }, 120_000);
 
@@ -40,7 +38,7 @@ describe('projects-list-service (integration)', () => {
         id: 'test-session-id',
         userId: 'test-user-id',
         token: 'test-token',
-        expiresAt: new Date(Date.now() + 86400000),
+        expiresAt: new Date(Date.now() + 86_400_000),
         createdAt: new Date(),
         updatedAt: new Date()
       },
