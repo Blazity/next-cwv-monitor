@@ -7,10 +7,8 @@ import { SessionProvider } from '@/contexts/session-provider';
 const projectsService = new ProjectsListService();
 
 async function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user, session } = await getServerSessionDataOrRedirect();
-
-  const projectsData = await projectsService.list();
-
+  const [sessionData, projectsData] = await Promise.all([getServerSessionDataOrRedirect(), projectsService.list()]);
+  const { user, session } = sessionData;
   return (
     <SessionProvider user={user} session={session}>
       <Navbar projects={projectsData} />

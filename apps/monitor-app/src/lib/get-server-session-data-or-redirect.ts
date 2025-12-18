@@ -7,7 +7,7 @@ export async function getServerSessionDataOrRedirect() {
     headers: await headers()
   });
 
-  if (!sessionData || !sessionData.session || !sessionData.user) {
+  if (!sessionData?.session || !sessionData?.user) {
     redirect('/login');
   }
 
