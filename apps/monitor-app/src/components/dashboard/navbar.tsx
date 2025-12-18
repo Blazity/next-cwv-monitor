@@ -2,7 +2,7 @@
 
 import { ProjectRow } from '@/app/server/lib/clickhouse/schema';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import UserDropdown from './user-dropdown';
+import { UserDropdown } from './user-dropdown';
 import { ProjectSelector } from './projects-selector';
 import Link from 'next/link';
 import { useMemo } from 'react';
