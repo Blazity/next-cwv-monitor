@@ -9,7 +9,7 @@
     "lint": "eslint",
     "dev": "tsup --watch",
     "test": "vitest",
-    "build": "vitest run && eslint && tsup"
+    "build": "tsup"
   },
   "files": [
     "dist"

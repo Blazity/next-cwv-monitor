@@ -37,6 +37,24 @@ Partition key: `toYYYYMM(recorded_at)`
 Order key: `(project_id, route, metric_name, recorded_at, session_id)`  
 TTL: `toDateTime(recorded_at) + INTERVAL 90 DAY DELETE`
 
+### `custom_events`
+
+| Column        | Type                   | Notes                                      |
+| ------------- | ---------------------- | ------------------------------------------ |
+| `project_id`  | UUID                   | Owning project                             |
+| `session_id`  | String                 | Per-page-load session identifier           |
+| `route`       | String                 | Normalized route                           |
+| `path`        | String                 | Raw concrete path (e.g. `/blog/xyz`)       |
+| `device_type` | LowCardinality(String) | Device classification (`desktop`/`mobile`) |
+| `event_name`  | LowCardinality(String) | Custom event name (e.g. `purchase`)        |
+| `recorded_at` | DateTime64(3, 'UTC')   | Client-side timestamp                      |
+| `ingested_at` | DateTime64(3, 'UTC')   | Server ingest timestamp                    |
+
+Engine: `MergeTree`  
+Partition key: `toYYYYMM(recorded_at)`  
+Order key: `(project_id, route, event_name, recorded_at, session_id)`  
+TTL: `toDateTime(recorded_at) + INTERVAL 90 DAY DELETE`
+
 ### `cwv_daily_aggregates`
 
 | Column        | Type                                                          | Notes                                      |
