@@ -5,8 +5,8 @@ export default async function LoginPage({
   }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
   }) {
-    const params = await searchParams;
-  const callbackUrl = (params.callbackUrl as string) || '/projects';
+  const params = await searchParams;
+  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : params.callbackUrl ?? '/projects'
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">

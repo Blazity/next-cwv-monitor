@@ -6,7 +6,6 @@ import { createContext, useContext } from 'react';
 
 interface SessionContextType {
   session: Session | null;
-  isPending: boolean;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -18,12 +17,8 @@ export function SessionProvider({
   initialSession: Session | null; 
   children: React.ReactNode; 
 }) {
-  const { data: clientSession, isPending } = authClient.useSession();
-
-  const activeSession = isPending ? (clientSession ?? initialSession) : clientSession;
-
   return (
-    <SessionContext.Provider value={{ session: activeSession, isPending }}>
+    <SessionContext.Provider value={{ session: initialSession }}>
       {children}
     </SessionContext.Provider>
   );

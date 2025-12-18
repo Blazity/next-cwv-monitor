@@ -42,15 +42,11 @@ const args = [
   ...extraArgs
 ];
 
-let child = process.platform === 'win32' ?
- spawn('cmd', ['/c', 'clickhouse-migrations', ...args], {
+let child = spawn('clickhouse-migrations', args, {
     stdio: 'inherit',
-    env: process.env
-  }):
-spawn('clickhouse-migrations', args, {
-    stdio: 'inherit',
-    env: process.env
-  });
+    env: process.env,
+    shell: process.platform === 'win32'
+});
 
 child.on('exit', (code) => {
   process.exit(code ?? 0);
