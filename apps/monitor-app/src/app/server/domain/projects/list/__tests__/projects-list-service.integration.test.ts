@@ -5,10 +5,10 @@ import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vites
 
 import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
 
-const requireAuthMock = vi.hoisted(() => vi.fn());
+const getAuthorizedSessionMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/app/server/lib/auth-check', () => ({
-  requireAuth: requireAuthMock
+  getAuthorizedSession: getAuthorizedSessionMock
 }));
 
 let container: StartedTestContainer;
@@ -32,8 +32,8 @@ describe('projects-list-service (integration)', () => {
 
   beforeEach(async () => {
     await sql`TRUNCATE TABLE projects`.command();
-    requireAuthMock.mockReset();
-    requireAuthMock.mockResolvedValue({
+    getAuthorizedSessionMock.mockReset();
+    getAuthorizedSessionMock.mockResolvedValue({
       session: {
         id: 'test-session-id',
         userId: 'test-user-id',
@@ -54,7 +54,7 @@ describe('projects-list-service (integration)', () => {
   });
 
   it('throws error when user is not authenticated', async () => {
-    requireAuthMock.mockRejectedValue(new Error('Unauthorized'));
+    getAuthorizedSessionMock.mockRejectedValue(new Error('Unauthorized'));
 
     const service = new ProjectsListService();
 
@@ -66,7 +66,7 @@ describe('projects-list-service (integration)', () => {
     const result = await service.list();
 
     expect(result).toEqual([]);
-    expect(requireAuthMock).toHaveBeenCalled();
+    expect(getAuthorizedSessionMock).toHaveBeenCalled();
   });
 
   it('returns all projects', async () => {
@@ -82,6 +82,6 @@ describe('projects-list-service (integration)', () => {
     const result = await service.list();
 
     expect(result).toHaveLength(5);
-    expect(requireAuthMock).toHaveBeenCalled();
+    expect(getAuthorizedSessionMock).toHaveBeenCalled();
   });
 });
