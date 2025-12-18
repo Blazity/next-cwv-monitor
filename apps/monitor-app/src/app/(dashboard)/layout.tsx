@@ -2,19 +2,20 @@ import React from 'react';
 import { Navbar } from '@/components/dashboard/navbar';
 import { ProjectsListService } from '@/app/server/domain/projects/list/service';
 import { getServerSessionDataOrRedirect } from '@/lib/get-server-session-data-or-redirect';
+import { SessionProvider } from '@/contexts/session-provider';
 
 const projectsService = new ProjectsListService();
 
 async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user } = await getServerSessionDataOrRedirect();
+  const { user, session } = await getServerSessionDataOrRedirect();
 
   const projectsData = await projectsService.list();
 
   return (
-    <>
-      <Navbar projects={projectsData} user={user} />
+    <SessionProvider user={user} session={session}>
+      <Navbar projects={projectsData} />
       <main className="p-3 sm:p-4 lg:p-6">{children}</main>
-    </>
+    </SessionProvider>
   );
 }
 

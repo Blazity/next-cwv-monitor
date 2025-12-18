@@ -9,12 +9,11 @@ import { useParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { MobileSheet } from './mobile-sheet';
 import { ThemeToggle } from './theme-toggle';
-import { type User } from 'better-auth';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
+import { useSession } from '@/app/hooks/use-session';
 
 type NavbarProps = {
   projects: ListProjectsResult;
-  user: User;
 };
 
 export function getNavItems(projectId: string | undefined) {
@@ -32,7 +31,8 @@ export function getNavItems(projectId: string | undefined) {
 
 export type NavItem = ReturnType<typeof getNavItems>[number];
 
-export function Navbar({ projects, user }: NavbarProps) {
+export function Navbar({ projects }: NavbarProps) {
+  const { user } = useSession();
   const pathname = usePathname();
   const params = useParams<{ projectId: string | undefined }>();
   const projectId = params.projectId;
@@ -44,7 +44,7 @@ export function Navbar({ projects, user }: NavbarProps) {
       <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
         <div className="flex h-14 items-center justify-between px-3 sm:px-4 lg:px-6">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-            <MobileSheet navItems={navItems} user={user} />
+            <MobileSheet navItems={navItems} />
             <Link href="/projects" className="flex items-center gap-2">
               <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-md">
                 <Activity className="text-primary-foreground h-4 w-4" />

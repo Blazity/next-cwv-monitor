@@ -8,9 +8,10 @@ import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { UserActionsMobile } from './user-actions-mobile';
 import { NavItem } from './navbar';
-import { User } from 'better-auth';
+import { useSession } from '@/app/hooks/use-session';
 
-export function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: User }) {
+export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
+  const { user } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
