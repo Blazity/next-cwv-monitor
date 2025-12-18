@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Menu, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { UserActionsMobile } from './user-actions-mobile';
-import { NavItem } from './navbar';
+import { NavItem } from './nav-items';
 import { useSession } from '@/app/hooks/use-session';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {

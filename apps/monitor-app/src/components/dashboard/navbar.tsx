@@ -4,32 +4,18 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { UserDropdown } from './user-dropdown';
 import { ProjectSelector } from './projects-selector';
 import Link from 'next/link';
-import { Route, TrendingDown, Calendar, Settings, Activity, Users, LayoutDashboard } from 'lucide-react';
+import { Activity, Users } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { MobileSheet } from './mobile-sheet';
 import { ThemeToggle } from './theme-toggle';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
 import { useSession } from '@/app/hooks/use-session';
+import { getNavItems } from './nav-items';
 
 type NavbarProps = {
   projects: ListProjectsResult;
 };
-
-export function getNavItems(projectId: string | undefined) {
-  if (!projectId) {
-    return [{ href: '/projects', label: 'Projects', icon: LayoutDashboard, isExact: true }];
-  }
-  return [
-    { href: `/projects/${projectId}`, label: 'Overview', icon: LayoutDashboard, isExact: true },
-    { href: `/projects/${projectId}/routes`, label: 'Routes', icon: Route },
-    { href: `/projects/${projectId}/regressions`, label: 'Regressions', icon: TrendingDown },
-    { href: `/projects/${projectId}/events`, label: 'Events', icon: Calendar },
-    { href: `/projects/${projectId}/settings`, label: 'Settings', icon: Settings }
-  ];
-}
-
-export type NavItem = ReturnType<typeof getNavItems>[number];
 
 export function Navbar({ projects }: NavbarProps) {
   const { user } = useSession();

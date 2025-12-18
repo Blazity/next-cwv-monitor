@@ -23,6 +23,7 @@ export function UserActionsMobile({
         </div>
       </div>
       <button
+        type="button"
         onClick={async () => {
           setMobileMenuOpen(false);
           await signOut();

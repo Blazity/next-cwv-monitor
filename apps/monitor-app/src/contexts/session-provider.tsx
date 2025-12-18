@@ -11,5 +11,6 @@ type SessionProviderProps = {
 };
 
 export function SessionProvider({ user, session, children }: SessionProviderProps) {
-  return <SessionContext.Provider value={{ user, session }}>{children}</SessionContext.Provider>;
+  // eslint-disable-next-line @eslint-react/no-unstable-context-value
+  return <SessionContext value={{ user, session }}>{children}</SessionContext>;
 }

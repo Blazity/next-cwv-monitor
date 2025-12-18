@@ -1,6 +1,6 @@
 'use client';
 
-import type React from 'react';
+import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Monitor, Smartphone, Layers } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useQueryParam } from '@/lib/use-query-params';
 
 type DeviceType = 'all' | 'desktop' | 'mobile';
 
-const devices: { value: DeviceType; label: string; shortLabel: string; icon: React.ReactNode }[] = [
+const devices: { value: DeviceType; label: string; shortLabel: string; icon: ReactNode }[] = [
   { value: 'all', label: 'All devices', shortLabel: 'All', icon: <Layers className="h-3.5 w-3.5" /> },
   { value: 'desktop', label: 'Desktop', shortLabel: 'Desktop', icon: <Monitor className="h-3.5 w-3.5" /> },
   { value: 'mobile', label: 'Mobile', shortLabel: 'Mobile', icon: <Smartphone className="h-3.5 w-3.5" /> }

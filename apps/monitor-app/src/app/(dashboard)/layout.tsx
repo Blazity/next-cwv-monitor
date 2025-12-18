@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Navbar } from '@/components/dashboard/navbar';
 import { ProjectsListService } from '@/app/server/domain/projects/list/service';
 import { getServerSessionDataOrRedirect } from '@/lib/get-server-session-data-or-redirect';
@@ -6,7 +6,7 @@ import { SessionProvider } from '@/contexts/session-provider';
 
 const projectsService = new ProjectsListService();
 
-async function DashboardLayout({ children }: { children: React.ReactNode }) {
+async function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, session } = await getServerSessionDataOrRedirect();
 
   const projectsData = await projectsService.list();
