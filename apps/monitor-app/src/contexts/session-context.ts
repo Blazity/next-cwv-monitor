@@ -1,8 +1,4 @@
-import { Session } from '@/lib/auth-client';
+import { SessionData } from '@/lib/auth-client';
 import { createContext } from 'react';
 
-export type SessionContextType = {
-  session: Session | null;
-}
-
-export const SessionContext = createContext<SessionContextType | undefined>(undefined);
+export const SessionContext = createContext<SessionData | null | undefined>(undefined);

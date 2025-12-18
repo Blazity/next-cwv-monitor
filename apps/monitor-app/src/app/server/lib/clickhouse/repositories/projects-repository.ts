@@ -47,11 +47,10 @@ export async function getProjectBySlug(slug: string): Promise<ProjectRow | null>
   return rows[0] ?? null;
 }
 
-export async function listProjects(limit = 50): Promise<ProjectRow[]> {
+export async function listProjects(): Promise<ProjectRow[]> {
   return sql<ProjectRow>`
     SELECT id, slug, name, created_at, updated_at
     FROM projects FINAL
     ORDER BY created_at DESC
-    LIMIT ${limit}
   `;
 }

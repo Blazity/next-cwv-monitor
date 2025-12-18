@@ -5,16 +5,16 @@ import * as React from 'react';
 import { SessionProvider } from '@/contexts/session-provider';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { Toaster } from 'sonner';
-import { Session } from '@/lib/auth-client';
+import { SessionData } from '@/lib/auth-client';
 
 type ProvidersProps = {
   children: React.ReactNode;
-  session: Session | null;
+  sessionData: SessionData | null;
 }
 
-export function Providers({ children, session }: ProvidersProps) {
+export function Providers({ children, sessionData }: ProvidersProps) {
   return (
-    <SessionProvider initialSession={session}>
+    <SessionProvider initialSessionData={sessionData}>
       <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         {children}
         <Toaster position="bottom-right" theme="system" />

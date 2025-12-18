@@ -34,9 +34,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   });
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <Providers session={session}>{children}</Providers>
+        <Providers sessionData={session}>{children}</Providers>
       </body>
     </html>
   );

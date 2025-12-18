@@ -1,17 +1,14 @@
 'use client';
 
-import { Session } from '@/lib/auth-client';
+import { SessionData as SessionData } from '@/lib/auth-client';
 import { useMemo } from 'react';
 import { SessionContext } from './session-context';
 
-export function SessionProvider({
-  initialSession,
-  children
-}: {
-  initialSession: Session | null;
+export function SessionProvider({ initialSessionData, children }: {
+  initialSessionData: SessionData | null;
   children: React.ReactNode;
 }) {
-  const value = useMemo(() => ({ session: initialSession }), [initialSession]);
+  const value = useMemo(() => initialSessionData, [initialSessionData]);
 
   return (
     <SessionContext value={value}>
