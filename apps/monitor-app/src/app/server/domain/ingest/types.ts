@@ -1,7 +1,7 @@
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
 import type { DeviceType } from '@/app/server/lib/device-types';
 
-export interface WebVitalEvent {
+export type WebVitalEvent = {
   sessionId: string;
   route: string;
   path: string;
@@ -10,10 +10,10 @@ export interface WebVitalEvent {
   rating: WebVitalRatingV1;
   recordedAt: Date;
   deviceType: DeviceType;
-}
+};
 
-export interface IngestCommand {
+export type IngestCommand = {
   ip: string | null;
   projectId: string;
   events: WebVitalEvent[];
-}
+};

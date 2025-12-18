@@ -3,10 +3,10 @@ import { sql } from '@/app/server/lib/clickhouse/client';
 import { isEmpty, mapValues, omit, first } from 'remeda';
 import { z } from 'zod';
 
-interface ClickHouseAdapterConfig {
+type ClickHouseAdapterConfig = {
   debugLogs?: DBAdapterDebugLogOption;
   usePlural?: boolean;
-}
+};
 
 type WhereOperator =
   | 'eq'
@@ -21,12 +21,12 @@ type WhereOperator =
   | 'in'
   | 'not_in';
 
-interface WhereCondition {
+type WhereCondition = {
   field: string;
   value?: unknown;
   operator: WhereOperator;
   connector: 'AND' | 'OR';
-}
+};
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 type FieldNameGetter = (opts: { model: string; field: string }) => string;
