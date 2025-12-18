@@ -15,7 +15,6 @@ type PageHeaderProps = {
 export function PageHeader({ title, description, children, showFilters = true }: PageHeaderProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     const header = headerRef.current;
@@ -24,14 +23,13 @@ export function PageHeader({ title, description, children, showFilters = true }:
     const observer = new IntersectionObserver(
       ([entry]) => {
         setShowStickyBar(!entry.isIntersecting);
-        if (!hasMounted) setHasMounted(true);
       },
       { threshold: 0, rootMargin: '-56px 0px 0px 0px' }
     );
 
     observer.observe(header);
     return () => observer.disconnect();
-  }, [hasMounted]);
+  }, []);
 
   return (
     <>
@@ -57,10 +55,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
         <div className="pointer-events-none sticky top-14 z-40 -mx-3 overflow-hidden sm:-mx-4 lg:-mx-6">
           <div
             className={cn(
-              'bg-background/95 border-border pointer-events-auto border-b backdrop-blur',
-              hasMounted ? 'transition-transform duration-300' : '',
-              showStickyBar ? 'translate-y-0' : '-translate-y-full',
-              !hasMounted && 'invisible'
+              'bg-background/95 border-border pointer-events-auto -translate-y-full border-b backdrop-blur transition-transform duration-300',
+              { 'translate-y-0': showStickyBar }
             )}
           >
             <div className="px-3 py-3 sm:px-4 lg:px-6">

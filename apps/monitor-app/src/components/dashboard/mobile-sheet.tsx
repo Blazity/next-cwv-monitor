@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { Menu, Users } from 'lucide-react';
-import { Activity } from 'lucide-react';
+import { Menu, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
@@ -21,6 +20,7 @@ export function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: Use
         <button
           className="text-muted-foreground hover:text-foreground hover:bg-accent flex h-9 w-9 items-center justify-center rounded-md transition-colors lg:hidden"
           aria-label="Open menu"
+          type="button"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -45,10 +45,8 @@ export function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: Use
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    'text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
+                    { 'bg-accent text-accent-foreground': isActive }
                   )}
                 >
                   <item.icon className="h-4 w-4" />

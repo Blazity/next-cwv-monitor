@@ -1,26 +1,25 @@
 'use client';
 
-import { ProjectRow } from '@/app/server/lib/clickhouse/schema';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { UserDropdown } from './user-dropdown';
 import { ProjectSelector } from './projects-selector';
 import Link from 'next/link';
-import { useMemo } from 'react';
-import { LayoutDashboard, Route, TrendingDown, Calendar, Settings, Activity, Users } from 'lucide-react';
+import { Route, TrendingDown, Calendar, Settings, Activity, Users, LayoutDashboard } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { MobileSheet } from './mobile-sheet';
 import { ThemeToggle } from './theme-toggle';
-import { User } from 'better-auth';
+import { type User } from 'better-auth';
+import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
 
 type NavbarProps = {
-  projects: ProjectRow[];
+  projects: ListProjectsResult;
   user: User;
 };
 
 export function getNavItems(projectId: string | undefined) {
   if (!projectId) {
-    return [];
+    return [{ href: '/projects', label: 'Projects', icon: LayoutDashboard, isExact: true }];
   }
   return [
     { href: `/projects/${projectId}`, label: 'Overview', icon: LayoutDashboard, isExact: true },
@@ -38,7 +37,7 @@ export function Navbar({ projects, user }: NavbarProps) {
   const params = useParams<{ projectId: string | undefined }>();
   const projectId = params.projectId;
 
-  const navItems = useMemo(() => getNavItems(projectId), [projectId]);
+  const navItems = getNavItems(projectId);
 
   return (
     <TooltipProvider>

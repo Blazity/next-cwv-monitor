@@ -35,7 +35,7 @@ describe('projects-list-service (integration)', () => {
     expect(result).toEqual([]);
   });
 
-  it('uses default limit of 50 when limit is not specified', async () => {
+  it('returns all projects', async () => {
     for (let i = 0; i < 5; i++) {
       await createProject({
         id: randomUUID(),
@@ -48,20 +48,5 @@ describe('projects-list-service (integration)', () => {
     const result = await service.list();
 
     expect(result).toHaveLength(5);
-  });
-
-  it('respects custom limit parameter', async () => {
-    for (let i = 0; i < 10; i++) {
-      await createProject({
-        id: randomUUID(),
-        slug: `project-${i}`,
-        name: `Project ${i}`
-      });
-    }
-
-    const service = new ProjectsListService();
-    const result = await service.list({ limit: 3 });
-
-    expect(result).toHaveLength(3);
   });
 });

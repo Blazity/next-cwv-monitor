@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { ProjectRow } from '@/app/server/lib/clickhouse/schema';
+import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
 
 type ProjectSelectorProps = {
-  projects: ProjectRow[];
+  projects: ListProjectsResult;
 };
 
 export function ProjectSelector({ projects }: ProjectSelectorProps) {

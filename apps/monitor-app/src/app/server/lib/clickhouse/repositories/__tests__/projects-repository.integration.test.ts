@@ -137,14 +137,14 @@ describe('projects-repository', () => {
         await createProject(project);
       }
 
-      const listed = await listProjects(10);
+      const listed = await listProjects();
 
       expect(listed).toHaveLength(3);
       expect(listed[0]?.slug).toBe('project-c');
       expect(listed[2]?.slug).toBe('project-a');
     });
 
-    it('respects limit parameter', async () => {
+    it('returns all projects', async () => {
       for (let i = 0; i < 5; i++) {
         await createProject({
           id: randomUUID(),
@@ -153,12 +153,12 @@ describe('projects-repository', () => {
         });
       }
 
-      const listed = await listProjects(2);
-      expect(listed).toHaveLength(2);
+      const listed = await listProjects();
+      expect(listed).toHaveLength(5);
     });
 
     it('returns empty array when no projects exist', async () => {
-      const listed = await listProjects(10);
+      const listed = await listProjects();
       expect(listed).toEqual([]);
     });
   });
