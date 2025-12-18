@@ -28,10 +28,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   .getSession({
     headers: await headers(),
   })
-  .catch((error) => {
-    console.warn('Auth session fetch failed:', error);
-    return null;
-  });
+  .catch(() => null);
 
   return (
     <html lang="en" suppressHydrationWarning>

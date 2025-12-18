@@ -1,8 +1,9 @@
 'use client';
 
+import { useTransition } from 'react';
 import { LogOut } from 'lucide-react';
 import { User } from 'better-auth';
-import { useLogout } from '@/app/hooks/use-logout';
+import { signOut } from '@/actions/sign-out';
 
 export function UserActionsMobile({
   setMobileMenuOpen,
@@ -11,11 +12,13 @@ export function UserActionsMobile({
   setMobileMenuOpen: (open: boolean) => void;
   user: User;
 }) {
-  const {isPending, logout} = useLogout();
+  const [isPending, startTransition] = useTransition();
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     setMobileMenuOpen(false);
-    await logout();
+    startTransition(async () => {
+      await signOut();
+    });
   };
 
   return (

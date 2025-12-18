@@ -1,6 +1,7 @@
 'use client';
 
-import * as React from 'react';
+import { useForm } from 'react-hook-form';
+import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { Activity, AlertCircle } from 'lucide-react';
 import { type as arkType } from 'arktype';
 import { authClient } from '@/lib/auth-client';
@@ -14,38 +15,40 @@ const loginSchema = arkType({
   password: 'string >= 1'
 });
 
+type LoginFormData = typeof loginSchema.infer;
+
 type LoginFormProps = {
   callbackUrl: string;
 }
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
-  const [isPending, startTransition] = React.useTransition();
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const data = Object.fromEntries(formData);
-
-    const out = loginSchema(data);
-    if (out instanceof arkType.errors) {
-      setErrorMessage(out.summary);
-      return;
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginFormData>({
+    resolver: arktypeResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: ''
     }
+  });
 
-    startTransition(async () => {
-      setErrorMessage(null);
-      
-      const { error } = await authClient.signIn.email({
-        email: out.email,
-        password: out.password,
-        callbackURL: callbackUrl,
-      });
-
-      if (error) {
-        setErrorMessage(error.message || 'Login failed');
-      }
+  const onSubmit = async (data: LoginFormData) => {
+    
+    const { error } = await authClient.signIn.email({
+      email: data.email,
+      password: data.password,
+      callbackURL: callbackUrl,
     });
+
+    if (error) {
+      setError('root', { 
+        type: 'server',
+        message: error.message || 'Login failed' 
+      });
+    }
   };
 
   return (
@@ -65,12 +68,12 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
-              {errorMessage && (
+              {errors.root && (
                 <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
                   <AlertCircle className="h-4 w-4 shrink-0" />
-                  {errorMessage}
+                  {errors.root.message}
                 </div>
               )}
 
@@ -78,32 +81,44 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
-                  name="email"
+                  type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  type="email"
-                  required
-                  disabled={isPending}
+                  disabled={isSubmitting}
+                  {...register('email')}
                 />
+                {errors.email && (
+                  <p className="text-sm font-medium text-destructive">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
-                  name="password"
+                  type="password"
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  type="password"
-                  required
-                  disabled={isPending}
+                  disabled={isSubmitting}
+                  {...register('password')}
                 />
+                {errors.password && (
+                  <p className="text-sm font-medium text-destructive">
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
             </CardContent>
 
             <CardFooter>
-              <Button type="submit" className="w-full my-4 mb-0 mt-4" disabled={isPending}>
-                {isPending ? 'Signing in...' : 'Sign in'}
+              <Button 
+                type="submit" 
+                className="w-full my-4 mb-0 mt-4" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Signing in...' : 'Sign in'}
               </Button>
             </CardFooter>
           </form>

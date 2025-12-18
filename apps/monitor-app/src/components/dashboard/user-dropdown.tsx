@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import { LogOut } from 'lucide-react';
 import {
   DropdownMenu,
@@ -9,13 +10,15 @@ import {
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 import { User } from 'better-auth';
-import { useLogout } from '@/app/hooks/use-logout';
+import { signOut } from '@/actions/sign-out';
 
 export function UserDropdown({ user }: { user: User }) {
-  const {isPending, logout} = useLogout();
+  const [isPending, startTransition] = useTransition();
 
-  const handleSignOut = async () => {
-    await logout();
+  const handleSignOut = () => {
+    startTransition(async () => {
+      await signOut();
+    });
   };
 
   return (

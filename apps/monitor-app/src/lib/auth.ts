@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { clickHouseAdapter } from './clickhouse-adapter';
+import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -50,6 +51,7 @@ export const auth = betterAuth({
       updatedAt: 'updated_at'
     }
   },
+  plugins: [nextCookies()],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {
