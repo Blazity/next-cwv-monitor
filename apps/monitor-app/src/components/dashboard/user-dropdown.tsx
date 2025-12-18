@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import { LogOut } from 'lucide-react';
 import {
   DropdownMenu,
@@ -12,6 +13,14 @@ import { User } from 'better-auth';
 import { signOut } from '@/actions/sign-out';
 
 export function UserDropdown({ user }: { user: User }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleSignOut = () => {
+    startTransition(async () => {
+      await signOut();
+    });
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="bg-muted text-muted-foreground hover:bg-accent hidden h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors sm:flex">
@@ -23,9 +32,9 @@ export function UserDropdown({ user }: { user: User }) {
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-muted-foreground" onClick={async () => await signOut()}>
+        <DropdownMenuItem className="text-muted-foreground" onClick={handleSignOut} disabled={isPending}>
           <LogOut className="mr-2 h-4 w-4" />
-          Sign out
+          {isPending ? 'Signing out...' : 'Sign out'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
