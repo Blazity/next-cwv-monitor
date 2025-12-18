@@ -11,11 +11,7 @@ import {
 import { User } from 'better-auth';
 import { signOut } from '@/actions/sign-out';
 
-const handleSignOut = async () => {
-  await signOut();
-};
-
-function UserDropdown({ user }: { user: User }) {
+export function UserDropdown({ user }: { user: User }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="bg-muted text-muted-foreground hover:bg-accent hidden h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors sm:flex">
@@ -27,7 +23,7 @@ function UserDropdown({ user }: { user: User }) {
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-muted-foreground" onClick={handleSignOut}>
+        <DropdownMenuItem className="text-muted-foreground" onClick={async () => await signOut()}>
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </DropdownMenuItem>
@@ -35,5 +31,3 @@ function UserDropdown({ user }: { user: User }) {
     </DropdownMenu>
   );
 }
-
-export default UserDropdown;

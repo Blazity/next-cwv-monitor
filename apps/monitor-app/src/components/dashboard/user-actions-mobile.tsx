@@ -4,12 +4,13 @@ import { LogOut } from 'lucide-react';
 import { User } from 'better-auth';
 import { signOut } from '@/actions/sign-out';
 
-const handleSignOut = async () => {
-  await signOut();
-};
-function UserActionsMobile({ setMobileMenuOpen, user }: { setMobileMenuOpen: (open: boolean) => void; user: User }) {
-  console.log('user', user);
-
+export function UserActionsMobile({
+  setMobileMenuOpen,
+  user
+}: {
+  setMobileMenuOpen: (open: boolean) => void;
+  user: User;
+}) {
   return (
     <div className="border-border mt-auto border-t p-4">
       <div className="mb-3 flex items-center gap-3">
@@ -22,9 +23,9 @@ function UserActionsMobile({ setMobileMenuOpen, user }: { setMobileMenuOpen: (op
         </div>
       </div>
       <button
-        onClick={() => {
+        onClick={async () => {
           setMobileMenuOpen(false);
-          handleSignOut();
+          await signOut();
         }}
         className="text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors"
       >
@@ -34,5 +35,3 @@ function UserActionsMobile({ setMobileMenuOpen, user }: { setMobileMenuOpen: (op
     </div>
   );
 }
-
-export { UserActionsMobile };

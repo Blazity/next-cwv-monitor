@@ -11,7 +11,7 @@ import { UserActionsMobile } from './user-actions-mobile';
 import { NavItem } from './navbar';
 import { User } from 'better-auth';
 
-function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: User }) {
+export function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: User }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
@@ -82,5 +82,3 @@ function MobileSheet({ navItems, user }: { navItems: NavItem[]; user: User }) {
     </Sheet>
   );
 }
-
-export { MobileSheet };

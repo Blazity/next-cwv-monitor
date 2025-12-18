@@ -19,7 +19,7 @@ const timeRanges = [
 
 const DEFAULT_TIME_RANGE = '7d';
 
-function TimeRangeSelector() {
+export function TimeRangeSelector() {
   const [timeRange, setTimeRange] = useQueryParam('timeRange', DEFAULT_TIME_RANGE);
 
   const handleTimeRangeChange = (value: string) => {
@@ -47,5 +47,3 @@ function TimeRangeSelector() {
     </DropdownMenu>
   );
 }
-
-export default TimeRangeSelector;

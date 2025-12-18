@@ -1,25 +1,18 @@
 import React from 'react';
 import { Navbar } from '@/components/dashboard/navbar';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { ProjectsListService } from '@/app/server/domain/projects/list/service';
+import { getServerSessionDataOrRedirect } from '@/lib/get-server-session-data-or-redirect';
+
+const projectsService = new ProjectsListService();
 
 async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const sessionData = await auth.api.getSession({
-    headers: await headers()
-  });
+  const { user } = await getServerSessionDataOrRedirect();
 
-  if (!sessionData?.session || !sessionData.user) {
-    redirect('/login');
-  }
-
-  const projectsService = new ProjectsListService();
   const projectsData = await projectsService.list();
 
   return (
     <>
-      <Navbar projects={projectsData} user={sessionData.user} />
+      <Navbar projects={projectsData} user={user} />
       <main className="p-3 sm:p-4 lg:p-6">{children}</main>
     </>
   );

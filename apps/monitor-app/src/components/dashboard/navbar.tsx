@@ -33,7 +33,7 @@ export function getNavItems(projectId: string | undefined) {
 
 export type NavItem = ReturnType<typeof getNavItems>[number];
 
-function Navbar({ projects, user }: NavbarProps) {
+export function Navbar({ projects, user }: NavbarProps) {
   const pathname = usePathname();
   const params = useParams<{ projectId: string | undefined }>();
   const projectId = params.projectId;
@@ -108,5 +108,3 @@ function Navbar({ projects, user }: NavbarProps) {
     </TooltipProvider>
   );
 }
-
-export { Navbar };
