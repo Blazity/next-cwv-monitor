@@ -1,12 +1,13 @@
 import type { IngestCommand } from './types';
 import type { RateLimiter, RateLimitResult } from '@/app/server/lib/rate-limit';
-import type { InsertableCwvEventRow } from '@/app/server/lib/clickhouse/schema';
+import type { InsertableCustomEventRow, InsertableCwvEventRow } from '@/app/server/lib/clickhouse/schema';
 import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import { insertEvents } from '@/app/server/lib/clickhouse/repositories/events-repository';
+import { insertCustomEvents } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
 import { logger } from '@/app/server/lib/logger';
 
 export type IngestServiceResult =
-  | { kind: 'ok'; accepted: number }
+  | { kind: 'ok'; accepted: { cwv: number; custom: number } }
   | { kind: 'rate-limit'; rate: RateLimitResult }
   | { kind: 'project-not-found'; projectId: string };
 
@@ -31,7 +32,7 @@ export class IngestService {
     }
 
     const now = new Date();
-    const rows: InsertableCwvEventRow[] = command.events.map((event) => ({
+    const cwvRows: InsertableCwvEventRow[] = command.cwvEvents.map((event) => ({
       project_id: command.projectId,
       session_id: event.sessionId,
       route: event.route,
@@ -44,19 +45,45 @@ export class IngestService {
       ingested_at: now
     }));
 
-    logger.info({ projectId: command.projectId, count: rows.length, ip: command.ip }, 'ingest.accepted');
+    const customRows: InsertableCustomEventRow[] = command.customEvents.map((event) => ({
+      project_id: command.projectId,
+      session_id: event.sessionId,
+      route: event.route,
+      path: event.path,
+      device_type: event.deviceType,
+      event_name: event.name,
+      recorded_at: event.recordedAt,
+      ingested_at: now
+    }));
 
-    void insertEvents(rows)
-      .then(() => {
-        logger.info({ projectId: command.projectId, count: rows.length }, 'ingest.persisted');
-      })
-      .catch((error) => {
-        logger.error({ projectId: command.projectId, err: error }, 'ingest.persist_failed');
-      });
+    logger.info(
+      { projectId: command.projectId, cwvCount: cwvRows.length, customCount: customRows.length, ip: command.ip },
+      'ingest.accepted'
+    );
+
+    if (cwvRows.length > 0) {
+      void insertEvents(cwvRows)
+        .then(() => {
+          logger.info({ projectId: command.projectId, count: cwvRows.length }, 'ingest.cwv_events.persisted');
+        })
+        .catch((error) => {
+          logger.error({ projectId: command.projectId, err: error }, 'ingest.cwv_events.persist_failed');
+        });
+    }
+
+    if (customRows.length > 0) {
+      void insertCustomEvents(customRows)
+        .then(() => {
+          logger.info({ projectId: command.projectId, count: customRows.length }, 'ingest.custom_events.persisted');
+        })
+        .catch((error) => {
+          logger.error({ projectId: command.projectId, err: error }, 'ingest.custom_events.persist_failed');
+        });
+    }
 
     return {
       kind: 'ok',
-      accepted: rows.length
+      accepted: { cwv: cwvRows.length, custom: customRows.length }
     };
   }
 }

@@ -21,6 +21,17 @@ export type CwvEventRow = {
   ingested_at: Date | string;
 };
 
+export type CustomEventRow = {
+  project_id: string;
+  session_id: string;
+  route: string;
+  path: string;
+  device_type: DeviceType;
+  event_name: string;
+  recorded_at: Date | string;
+  ingested_at: Date | string;
+};
+
 export type CwvDailyAggregateRow = {
   project_id: string;
   route: string;
@@ -34,6 +45,7 @@ export type CwvDailyAggregateRow = {
 export type ClickHouseSchema = {
   projects: ProjectRow;
   cwv_events: CwvEventRow;
+  custom_events: CustomEventRow;
   cwv_daily_aggregates: CwvDailyAggregateRow;
 };
 
@@ -46,3 +58,6 @@ export type InsertableProjectRow = Omit<ProjectRow, 'created_at' | 'updated_at'>
 
 export type InsertableCwvEventRow = Omit<CwvEventRow, 'recorded_at' | 'ingested_at'> &
   Partial<Pick<CwvEventRow, 'recorded_at' | 'ingested_at'>>;
+
+export type InsertableCustomEventRow = Omit<CustomEventRow, 'recorded_at' | 'ingested_at'> &
+  Partial<Pick<CustomEventRow, 'recorded_at' | 'ingested_at'>>;

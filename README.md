@@ -41,6 +41,7 @@ To develop client-sdk you can run
 # SDK Features
 
 - A custom sendBeacon method that was created using the native fetch API. Thanks to this, the application supports cases where a server-side error occurs and allows you to ensure that the data has been sent.
+- Hook-based custom event tracking (`useTrackCustomEvent`) for correlating product events with CWV.
 
 ## ClickHouse Schema
 

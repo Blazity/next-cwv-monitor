@@ -12,8 +12,18 @@ export type WebVitalEvent = {
   deviceType: DeviceType;
 };
 
+export type CustomEvent = {
+  sessionId: string;
+  route: string;
+  path: string;
+  name: string;
+  recordedAt: Date;
+  deviceType: DeviceType;
+};
+
 export type IngestCommand = {
   ip: string | null;
   projectId: string;
-  events: WebVitalEvent[];
+  cwvEvents: WebVitalEvent[];
+  customEvents: CustomEvent[];
 };
