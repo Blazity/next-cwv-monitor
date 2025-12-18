@@ -1,14 +1,21 @@
 import { randomUUID } from 'node:crypto';
 
 import type { StartedTestContainer } from 'testcontainers';
-import { describe, beforeAll, afterAll, beforeEach, it, expect } from 'vitest';
+import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vitest';
 
 import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
+
+const requireAuthMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/app/server/lib/auth-check', () => ({
+  requireAuth: requireAuthMock
+}));
 
 let container: StartedTestContainer;
 let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
 let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
 let ProjectsListService: typeof import('../service').ProjectsListService;
+let requireAuth: typeof import('@/app/server/lib/auth-check').requireAuth;
 
 describe('projects-list-service (integration)', () => {
   beforeAll(async () => {
@@ -17,6 +24,7 @@ describe('projects-list-service (integration)', () => {
 
     ({ sql } = await import('@/app/server/lib/clickhouse/client'));
     ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
+    ({ requireAuth } = await import('@/app/server/lib/auth-check'));
     ({ ProjectsListService } = await import('../service'));
   }, 120_000);
 
@@ -26,6 +34,33 @@ describe('projects-list-service (integration)', () => {
 
   beforeEach(async () => {
     await sql`TRUNCATE TABLE projects`.command();
+    requireAuthMock.mockReset();
+    requireAuthMock.mockResolvedValue({
+      session: {
+        id: 'test-session-id',
+        userId: 'test-user-id',
+        token: 'test-token',
+        expiresAt: new Date(Date.now() + 86400000),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      user: {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+  });
+
+  it('throws error when user is not authenticated', async () => {
+    requireAuthMock.mockRejectedValue(new Error('Unauthorized'));
+
+    const service = new ProjectsListService();
+
+    await expect(service.list()).rejects.toThrow('Unauthorized');
   });
 
   it('returns empty array when no projects exist', async () => {
@@ -33,6 +68,7 @@ describe('projects-list-service (integration)', () => {
     const result = await service.list();
 
     expect(result).toEqual([]);
+    expect(requireAuthMock).toHaveBeenCalled();
   });
 
   it('returns all projects', async () => {
@@ -48,5 +84,6 @@ describe('projects-list-service (integration)', () => {
     const result = await service.list();
 
     expect(result).toHaveLength(5);
+    expect(requireAuthMock).toHaveBeenCalled();
   });
 });
