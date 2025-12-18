@@ -24,6 +24,7 @@ const eslintConfig = defineConfig([
   },
   {
     rules: {
+      '@eslint-react/no-nested-component-definitions': 'warn',
       'no-restricted-syntax': [
         'error',
         {
@@ -33,6 +34,7 @@ const eslintConfig = defineConfig([
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@eslint-react/naming-convention/context-name': 'error',
+      '@eslint-react/dom/no-missing-button-type': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'no-restricted-imports': [
         'error',
