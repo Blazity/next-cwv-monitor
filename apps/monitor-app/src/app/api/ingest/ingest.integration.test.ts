@@ -13,6 +13,7 @@ let POST: typeof import('./route').POST;
 let OPTIONS: typeof import('./route').OPTIONS;
 let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
 let fetchEvents: typeof import('@/app/server/lib/clickhouse/repositories/events-repository').fetchEvents;
+let fetchCustomEvents: typeof import('@/app/server/lib/clickhouse/repositories/custom-events-repository').fetchCustomEvents;
 let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
 
 function buildRequest(body: Record<string, unknown> | string, headers: Record<string, string> = {}) {
@@ -48,6 +49,26 @@ async function waitForPersistedEvents(
   throw new Error(`Timed out waiting for ${expectedCount} events for project ${projectId}`);
 }
 
+async function waitForPersistedCustomEvents(
+  projectId: string,
+  expectedCount: number,
+  options?: { limit?: number; timeoutMs?: number }
+) {
+  const limit = Math.max(expectedCount, options?.limit ?? 10);
+  const timeoutMs = options?.timeoutMs ?? 2000;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const rows = await fetchCustomEvents({ projectId, limit });
+    if (rows.length >= expectedCount) {
+      return rows;
+    }
+    await wait(50);
+  }
+
+  throw new Error(`Timed out waiting for ${expectedCount} custom events for project ${projectId}`);
+}
+
 describe('POST /api/ingest integration', () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
@@ -56,6 +77,7 @@ describe('POST /api/ingest integration', () => {
     ({ POST, OPTIONS } = await import('./route'));
     ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
     ({ fetchEvents } = await import('@/app/server/lib/clickhouse/repositories/events-repository'));
+    ({ fetchCustomEvents } = await import('@/app/server/lib/clickhouse/repositories/custom-events-repository'));
     ({ sql } = await import('@/app/server/lib/clickhouse/client'));
   }, 120_000);
 
@@ -67,6 +89,7 @@ describe('POST /api/ingest integration', () => {
     await ipRateLimiter.reset();
     await sql`TRUNCATE TABLE projects`.command();
     await sql`TRUNCATE TABLE cwv_events`.command();
+    await sql`TRUNCATE TABLE custom_events`.command();
   });
 
   it('ingests events and persists them in ClickHouse', async () => {
@@ -104,6 +127,41 @@ describe('POST /api/ingest integration', () => {
     expect(stored[0]?.path).toBe('/about');
     expect(stored[0]?.metric_name).toBe('CLS');
     expect(stored[0]?.rating).toBe('needs-improvement');
+    expect(stored[0]?.device_type).toBe('desktop');
+  });
+
+  it('ingests custom events and persists them in ClickHouse', async () => {
+    const project: InsertableProjectRow = {
+      id: randomUUID(),
+      slug: 'custom-events-project',
+      name: 'Custom Events Project'
+    };
+    await createProject(project);
+
+    const recordedAt = new Date().toISOString();
+
+    const response = await POST(
+      buildRequest({
+        projectId: project.id,
+        customEvents: [
+          {
+            sessionId: 'session-1',
+            route: '/checkout',
+            path: '/checkout',
+            name: 'purchase',
+            recordedAt
+          }
+        ]
+      })
+    );
+
+    expect(response.status).toBe(204);
+
+    const stored = await waitForPersistedCustomEvents(project.id, 1, { limit: 10 });
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.route).toBe('/checkout');
+    expect(stored[0]?.path).toBe('/checkout');
+    expect(stored[0]?.event_name).toBe('purchase');
     expect(stored[0]?.device_type).toBe('desktop');
   });
 

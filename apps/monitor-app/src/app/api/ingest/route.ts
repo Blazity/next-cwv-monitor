@@ -77,7 +77,10 @@ async function handleIngest(ip: string | null, payload: unknown, userAgentHeader
     };
   }
 
-  if (parsed.events.length === 0) {
+  const cwvEvents = parsed.events ?? [];
+  const customEvents = parsed.customEvents ?? [];
+
+  if (cwvEvents.length === 0 && customEvents.length === 0) {
     return {
       status: 400,
       body: { message: 'No events provided' }

@@ -1,20 +1,27 @@
-import { ConfigProvider } from './context/config/config.provider.js';
-import { useMetrics } from './hooks/use-metrics.js';
+import { CWVConfig, CWVProvider as CWVContextProvider } from './cwv-context';
+import { useMetrics } from './hooks/use-metrics';
+import { useIngestQueueLifecycle } from './hooks/use-ingest-queue';
+import { usePageViewTracking } from './hooks/use-page-view-tracking';
 
-interface Props extends Omit<React.ComponentProps<typeof ConfigProvider>, 'children'> {
-  debug?: boolean;
-}
-
-const HookCaller: React.FC = () => {
+const HookCaller = () => {
+  useIngestQueueLifecycle();
+  usePageViewTracking();
   useMetrics();
 
   return null;
 };
 
-export const CWVMonitor: React.FC<Props> = ({ ...props }) => {
+type CWVMonitorProps = CWVConfig & {
+  children?: React.ReactNode;
+};
+
+export const CWVMonitor = ({ children, ...config }: CWVMonitorProps) => {
   return (
-    <ConfigProvider {...props}>
+    <CWVContextProvider config={config}>
       <HookCaller />
-    </ConfigProvider>
+      {children}
+    </CWVContextProvider>
   );
 };
+
+export const CWVProvider = CWVMonitor;

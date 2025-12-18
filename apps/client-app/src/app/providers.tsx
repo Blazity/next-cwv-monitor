@@ -9,9 +9,8 @@ interface Props {
 
 export const Providers: React.FC<Props> = ({ children }) => {
   return (
-    <>
-      <CWVMonitor projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID} endpoint={env.NEXT_PUBLIC_MONITOR_API} />
+    <CWVMonitor projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID} endpoint={env.NEXT_PUBLIC_MONITOR_API}>
       {children}
-    </>
+    </CWVMonitor>
   );
 };
