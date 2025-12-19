@@ -2,7 +2,7 @@
 
 import { SessionData as SessionData } from '@/lib/auth-client';
 import { useMemo } from 'react';
-import { SessionContext } from './session-context';
+import { SessionContext } from '@/contexts/session-context';
 
 export function SessionProvider({ initialSessionData, children }: {
   initialSessionData: SessionData | null;

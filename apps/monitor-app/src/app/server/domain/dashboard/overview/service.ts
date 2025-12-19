@@ -17,7 +17,7 @@ import type {
   QuantileSummary,
   StatusDistribution,
   WorstRouteItem
-} from './types';
+} from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -78,7 +78,7 @@ export class DashboardOverviewService {
       const status = typeof p75 === 'number' ? getRatingForValue(row.metric_name, p75) : null;
       return {
         metricName: row.metric_name,
-        sampleSize: Number(row.sample_size ?? 0),
+        sampleSize: Number(row.sample_size || 0),
         quantiles,
         status
       };
@@ -90,7 +90,7 @@ export class DashboardOverviewService {
       const status = typeof p75 === 'number' ? getRatingForValue(query.selectedMetric, p75) : null;
       return {
         date: row.event_date,
-        sampleSize: Number(row.sample_size ?? 0),
+        sampleSize: Number(row.sample_size || 0),
         quantiles,
         status
       };
@@ -102,7 +102,7 @@ export class DashboardOverviewService {
       const status = typeof p75 === 'number' ? getRatingForValue(query.selectedMetric, p75) : null;
       return {
         route: row.route,
-        sampleSize: Number(row.sample_size ?? 0),
+        sampleSize: Number(row.sample_size || 0),
         quantiles,
         status
       };
@@ -111,7 +111,7 @@ export class DashboardOverviewService {
     const statusDistribution = emptyStatusDistribution();
     for (const row of distributionRows) {
       if (!isRating(row.status)) continue;
-      statusDistribution[row.status] = Number(row.route_count ?? 0);
+      statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
     return {
@@ -134,5 +134,3 @@ function mapDashboardOverview(
     statusDistribution
   };
 }
-
-

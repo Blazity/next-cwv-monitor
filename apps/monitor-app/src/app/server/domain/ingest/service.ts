@@ -1,10 +1,10 @@
-import type { IngestCommand } from './types';
 import type { RateLimiter, RateLimitResult } from '@/app/server/lib/rate-limit';
 import type { InsertableCustomEventRow, InsertableCwvEventRow } from '@/app/server/lib/clickhouse/schema';
 import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import { insertEvents } from '@/app/server/lib/clickhouse/repositories/events-repository';
 import { insertCustomEvents } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
 import { logger } from '@/app/server/lib/logger';
+import { IngestCommand } from '@/app/server/domain/ingest/types';
 
 export type IngestServiceResult =
   | { kind: 'ok'; accepted: { cwv: number; custom: number } }

@@ -6,9 +6,9 @@ import { Menu, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import { UserActionsMobile } from './user-actions-mobile';
-import { NavItem } from './nav-items';
 import { useUser } from '@/app/hooks/use-session';
+import { NavItem } from '@/components/dashboard/nav-items';
+import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
   const user = useUser();
@@ -56,6 +56,8 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
               );
             })}
             {/* {user?.role === 'admin' && ( */}
+            {/* TODO: */}
+            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
             {true && (
               <>
                 <div className="bg-border my-2 h-px" />

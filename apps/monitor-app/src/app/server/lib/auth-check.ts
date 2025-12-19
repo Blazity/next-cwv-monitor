@@ -6,7 +6,7 @@ export async function getAuthorizedSession() {
     headers: await headers()
   });
 
-  if (!sessionData?.session || !sessionData?.user) {
+  if (!sessionData?.session) {
     throw new Error('Unauthorized');
   }
 

@@ -1,4 +1,9 @@
-import type { DateRange, GetDashboardOverviewQuery, MetricName, OverviewDeviceType } from './types';
+import {
+  DateRange,
+  GetDashboardOverviewQuery,
+  MetricName,
+  OverviewDeviceType
+} from '@/app/server/domain/dashboard/overview/types';
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_TOP_ROUTES_LIMIT = 5;
@@ -37,5 +42,3 @@ export function buildDashboardOverviewQuery(input: BuildDashboardOverviewQueryIn
     topRoutesLimit: input.topRoutesLimit ?? DEFAULT_TOP_ROUTES_LIMIT
   };
 }
-
-

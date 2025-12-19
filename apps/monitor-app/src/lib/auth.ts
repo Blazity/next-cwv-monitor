@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
-import { clickHouseAdapter } from './clickhouse-adapter';
+import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
 import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
