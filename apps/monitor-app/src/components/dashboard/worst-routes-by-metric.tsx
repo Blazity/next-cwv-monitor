@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { RouteHelpTooltip } from '@/components/dashboard/route-help-tooltip';
 import { WorstRouteItem } from '@/app/server/domain/dashboard/overview/types';
 import { MetricName } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
-import { StatusBadge } from '@/components/dashboard/status-badge';
+import { Badge } from '@/components/badge';
 import { formatCompactNumber, formatMetricValue } from '@/lib/utils';
+import { statusToBadge } from '@/consts/status-to-badge';
 
 type WorstRoutesByMetricProps = {
   projectId: string;
@@ -47,7 +48,7 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
                     <span className="text-foreground font-mono text-sm font-medium">
                       {route.quantiles && formatMetricValue(metricName, route.quantiles.p75)}
                     </span>
-                    {route.status && <StatusBadge status={route.status} showLabel={false} size="sm" />}
+                    {route.status && <Badge {...statusToBadge[route.status]} label={undefined} size="sm" />}
                   </div>
                 </div>
 
@@ -58,7 +59,7 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
                     <span className="text-foreground font-mono text-sm font-medium">
                       {route.quantiles && formatMetricValue(metricName, route.quantiles.p75)}
                     </span>
-                    {route.status && <StatusBadge status={route.status} showLabel={false} size="sm" />}
+                    {route.status && <Badge {...statusToBadge[route.status]} label={undefined} size="sm" />}
                   </div>
 
                   <ArrowRight className="text-muted-foreground hidden h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
