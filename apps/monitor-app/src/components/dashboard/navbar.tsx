@@ -1,17 +1,17 @@
 'use client';
 
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { UserDropdown } from './user-dropdown';
-import { ProjectSelector } from './projects-selector';
 import Link from 'next/link';
 import { Activity, Users } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { MobileSheet } from './mobile-sheet';
-import { ThemeToggle } from './theme-toggle';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
 import { useSession } from '@/app/hooks/use-session';
-import { getNavItems } from './nav-items';
+import { ProjectSelector } from '@/components/dashboard/projects-selector';
+import { MobileSheet } from '@/components/dashboard/mobile-sheet';
+import { getNavItems } from '@/components/dashboard/nav-items';
+import { ThemeToggle } from '@/components/dashboard/theme-toggle';
+import { UserDropdown } from '@/components/dashboard/user-dropdown';
 
 type NavbarProps = {
   projects: ListProjectsResult;
@@ -64,6 +64,8 @@ export function Navbar({ projects }: NavbarProps) {
                 );
               })}
               {/* {user?.role === 'admin' && ( */}
+              {/* TODO: */}
+              {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
               {true && (
                 <Link
                   href="/users"

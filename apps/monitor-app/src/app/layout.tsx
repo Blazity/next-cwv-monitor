@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import type { ReactNode } from 'react';
 
-import './globals.css';
-
-import { Providers } from './providers';
+import '@/app/globals.css';
+import { Providers } from '@/app/providers';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],

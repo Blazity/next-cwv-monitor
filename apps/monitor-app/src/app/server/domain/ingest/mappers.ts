@@ -2,13 +2,13 @@ import { randomUUID } from 'node:crypto';
 import { UAParser } from 'ua-parser-js';
 
 import type { IngestPayloadV1 } from 'cwv-monitor-contracts';
-import type { CustomEvent, IngestCommand, WebVitalEvent } from './types';
+import type { CustomEvent, IngestCommand, WebVitalEvent } from '@/app/server/domain/ingest/types';
 import { coerceDeviceType, DEFAULT_DEVICE_TYPE } from '@/app/server/lib/device-types';
 
 type UserAgentMeta = ReturnType<UAParser['getResult']>;
 
 function determineDeviceType(userAgent?: UserAgentMeta) {
-  return coerceDeviceType(userAgent?.device?.type) ?? DEFAULT_DEVICE_TYPE;
+  return coerceDeviceType(userAgent?.device.type) ?? DEFAULT_DEVICE_TYPE;
 }
 
 export function buildIngestCommand(

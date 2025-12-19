@@ -23,6 +23,11 @@ const eslintConfig = defineConfig([
     }
   },
   {
+    languageOptions: {
+      parserOptions: {
+        projectService: true
+      }
+    },
     rules: {
       '@eslint-react/no-nested-component-definitions': 'warn',
       '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
@@ -35,13 +40,14 @@ const eslintConfig = defineConfig([
         }
       ],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unnecessary-condition': 'error',
       '@eslint-react/naming-convention/context-name': 'error',
       '@eslint-react/dom/no-missing-button-type': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
       'no-restricted-imports': [
         'error',
         {
-          patterns: ['../*']
+          patterns: ['../*', './*']
         }
       ]
     }

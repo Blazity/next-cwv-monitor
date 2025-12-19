@@ -1,7 +1,7 @@
 import { describe, afterAll, beforeAll } from 'vitest';
 import { runAdapterTest } from 'better-auth/adapters/test';
-import { clickHouseAdapter } from './clickhouse-adapter';
 import { sql } from '@/app/server/lib/clickhouse/client';
+import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
 
 const cleanupTables = async () => {
   const tables = ['user', 'session', 'account', 'verification'];

@@ -1,3 +1,4 @@
+import { Badge } from '@/components/badge';
 import Image from 'next/image';
 
 export default function Home() {
@@ -6,6 +7,7 @@ export default function Home() {
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
         <Image className="dark:invert" src="/next.svg" alt="Next.js logo" width={100} height={20} priority />
         <h1>Monitor app</h1>
+        <Badge defaultIcon label="test" />
       </main>
     </div>
   );
