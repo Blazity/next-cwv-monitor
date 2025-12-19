@@ -33,13 +33,13 @@ const icon = cva([], {
   }
 });
 
-type Props = VariantProps<typeof badge> & {
+export type BadgeProps = VariantProps<typeof badge> & {
   label?: string;
   defaultIcon?: boolean;
   className?: string;
   LeftIcon?: React.ElementType;
 };
-type BadgeType = NonNullable<Props['type']>;
+type BadgeType = NonNullable<BadgeProps['type']>;
 
 const defaultIcons: Record<BadgeType, React.ElementType> = {
   error: XCircle,
@@ -47,7 +47,7 @@ const defaultIcons: Record<BadgeType, React.ElementType> = {
   warning: AlertTriangle
 };
 
-export function Badge({ type = 'success', LeftIcon, size = 'sm', defaultIcon, className, label }: Props) {
+export function Badge({ type = 'success', LeftIcon, size = 'sm', defaultIcon, className, label }: BadgeProps) {
   const Icon = defaultIcons[type ?? 'success'];
   return (
     <div className={badge({ type, size, className })}>
