@@ -23,7 +23,7 @@ describe('projects-repository', () => {
   }, 120_000);
 
   afterAll(async () => {
-    await container?.stop();
+    await container.stop();
   });
 
   beforeEach(async () => {

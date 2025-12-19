@@ -2,7 +2,7 @@
 
 import { type ReactNode } from 'react';
 import type { User, Session } from 'better-auth';
-import { SessionContext } from './session-context';
+import { SessionContext } from '@/contexts/session-context';
 
 type SessionProviderProps = {
   user: User;
