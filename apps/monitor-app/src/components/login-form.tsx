@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 const loginSchema = arkType({
-  email: 'string.email',
-  password: 'string >= 1'
+  email: arkType('string.email').describe("a valid email address").configure({ actual: () => "" }),
+  password: arkType('string >= 1').configure({ actual: () => "" })
 });
 
 type LoginFormData = typeof loginSchema.infer;
@@ -26,14 +26,22 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     register,
     handleSubmit,
     setError,
+    clearErrors,
     formState: { errors, isSubmitting }
   } = useForm<LoginFormData>({
     resolver: arktypeResolver(loginSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       email: '',
       password: ''
     }
   });
+
+  const errorMessage = 
+    errors.root?.message || 
+    errors.email?.message || 
+    errors.password?.message;
 
   const onSubmit = async (data: LoginFormData) => {
     
@@ -70,12 +78,14 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
-              {errors.root && (
-                <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  {errors.root.message}
-                </div>
-              )}
+                {errorMessage && (
+                  <div className="flex items-start gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md border border-destructive/20 animate-in fade-in zoom-in-95 duration-200">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span className="block break-words whitespace-normal leading-tight">
+                      {errorMessage}
+                    </span>
+                  </div>
+                )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -85,13 +95,11 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   placeholder="you@example.com"
                   autoComplete="email"
                   disabled={isSubmitting}
-                  {...register('email')}
+                  {...register('email', {onChange: () => {
+                    clearErrors('email');
+                    clearErrors('root');
+                  }})}
                 />
-                {errors.email && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -102,13 +110,11 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={isSubmitting}
-                  {...register('password')}
+                  {...register('password', {onChange: () => {
+                    clearErrors('password');
+                    clearErrors('root');
+                  }})}
                 />
-                {errors.password && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.password.message}
-                  </p>
-                )}
               </div>
             </CardContent>
 
