@@ -10,14 +10,13 @@ type QuickStatsProps = {
   data: {
     statusDistribution: StatusDistribution;
     timeRangeLabel: string;
-    lastUpdated: string;
-    totalViews?: number; 
-    viewTrend?: number;
+    totalViews: number; 
+    viewTrend: number;
   };
 };
 
 export function QuickStats({ projectId, selectedMetric, data }: QuickStatsProps) {
-    const { statusDistribution, timeRangeLabel, lastUpdated, totalViews, viewTrend } = data;
+    const { statusDistribution, timeRangeLabel, totalViews, viewTrend } = data;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -71,37 +70,22 @@ export function QuickStats({ projectId, selectedMetric, data }: QuickStatsProps)
       <Card className="bg-card border-border">
         <CardHeader className="pb-3 px-6">
           <CardTitle className="text-sm font-medium text-foreground">
-            {totalViews == undefined ? 'Data Summary' : 'Tracked Views'}
+            Tracked Views
           </CardTitle>
         </CardHeader>
         <CardContent className="px-6">
-          {totalViews == undefined ? (
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Time range</span>
-                <span className="text-foreground font-medium">{timeRangeLabel}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Last updated</span>
-                <span className="text-foreground font-medium">{lastUpdated}</span>
-              </div>
+        <div className="space-y-3">
+            <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-semibold text-foreground font-mono">
+                {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(totalViews)}
+            </span>
+            <div className={`flex items-center gap-0.5 text-xs ${viewTrend < 0 ? 'text-status-poor' : 'text-status-good'}`}>
+                {viewTrend < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
+                <span>{viewTrend > 0 ? '+' : ''}{viewTrend}%</span>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-semibold text-foreground font-mono">
-                  {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(totalViews)}
-                </span>
-                {viewTrend !== undefined && (
-                  <div className={`flex items-center gap-0.5 text-xs ${viewTrend < 0 ? 'text-status-poor' : 'text-status-good'}`}>
-                    {viewTrend < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
-                    <span>{viewTrend > 0 ? '+' : ''}{viewTrend}%</span>
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground">vs previous {timeRangeLabel.toLowerCase()}</div>
             </div>
-          ) }
+            <div className="text-xs text-muted-foreground">vs previous {timeRangeLabel.toLowerCase()}</div>
+        </div>
         </CardContent>
       </Card>
     </div>
