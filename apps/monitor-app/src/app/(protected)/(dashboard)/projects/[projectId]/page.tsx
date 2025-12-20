@@ -11,6 +11,7 @@ import { dashboardSearchParamsSchema } from '@/lib/search-params';
 import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
+import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
@@ -54,7 +55,7 @@ async function ProjectPageContent({
     throw new Error(`Failed to load dashboard: ${overview.kind}`);
   }
 
-  const { worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
+  const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
   return (
     <div>
@@ -65,6 +66,7 @@ async function ProjectPageContent({
         data={quickStats}
         statusDistribution={statusDistribution}
       />
+      <CoreWebVitals metricOverview={metricOverview}/>
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
     </div>
