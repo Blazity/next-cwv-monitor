@@ -37,7 +37,7 @@ export type QuantileSummary = {
 };
 
 export type MetricOverviewItem = {
-  metricName: string;
+  metricName: MetricName;
   sampleSize: number;
   quantiles: QuantileSummary | null;
   status: WebVitalRatingV1 | null;

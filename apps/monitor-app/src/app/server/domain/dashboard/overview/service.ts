@@ -3,24 +3,24 @@ import {
   fetchMetricsOverview,
   fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
-  fetchWorstRoutes
+  fetchWorstRoutes,
+  MetricName,
+  MetricsOverviewRow
 } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
 import { getMetricThresholds, getRatingForValue } from '@/app/server/lib/cwv-thresholds';
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
 
-import type {
-  DashboardOverview,
-  DailySeriesPoint,
-  GetDashboardOverviewQuery,
-  GetDashboardOverviewResult,
-  MetricName,
-  MetricOverviewItem,
-  QuantileSummary,
-  StatusDistribution,
-  WorstRouteItem,
-  QuickStatsData
+import {
+  type DashboardOverview,
+  type DailySeriesPoint,
+  type GetDashboardOverviewQuery,
+  type GetDashboardOverviewResult,
+  type MetricOverviewItem,
+  type QuantileSummary,
+  type StatusDistribution,
+  type WorstRouteItem,
+  METRIC_NAMES
 } from '@/app/server/domain/dashboard/overview/types';
-import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -96,7 +96,9 @@ export class DashboardOverviewService {
         fetchAllMetricsDailySeries(filters)
       ]);
 
-    const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
+    const metricOverview: MetricOverviewItem[] = metricsRows.filter((row): row is MetricsOverviewRow & { metric_name: MetricName } => 
+      METRIC_NAMES.includes(row.metric_name as MetricName)
+    ).map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
       const status = typeof p75 === 'number' ? getRatingForValue(row.metric_name, p75) : null;
