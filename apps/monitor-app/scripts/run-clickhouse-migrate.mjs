@@ -42,9 +42,10 @@ const args = [
   ...extraArgs
 ];
 
-const child = spawn('clickhouse-migrations', args, {
-  stdio: 'inherit',
-  env: process.env
+let child = spawn('clickhouse-migrations', args, {
+    stdio: 'inherit',
+    env: process.env,
+    shell: process.platform === 'win32'
 });
 
 child.on('exit', (code) => {

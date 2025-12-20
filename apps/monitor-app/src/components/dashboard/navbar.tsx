@@ -6,7 +6,7 @@ import { Activity, Users } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
-import { useSession } from '@/app/hooks/use-session';
+import { useUser } from '@/app/hooks/use-session';
 import { ProjectSelector } from '@/components/dashboard/projects-selector';
 import { MobileSheet } from '@/components/dashboard/mobile-sheet';
 import { getNavItems } from '@/components/dashboard/nav-items';
@@ -18,7 +18,7 @@ type NavbarProps = {
 };
 
 export function Navbar({ projects }: NavbarProps) {
-  const { user } = useSession();
+  const user = useUser();
   const pathname = usePathname();
   const params = useParams<{ projectId: string | undefined }>();
   const projectId = params.projectId;

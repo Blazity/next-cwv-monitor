@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { env } from '@/env';
 import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
-import { validatePasswordStrength } from '@/lib/utils';
+import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -12,7 +12,7 @@ export const auth = betterAuth({
       emailVerified: 'email_verified',
       createdAt: 'created_at',
       updatedAt: 'updated_at'
-    }
+    }, 
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -51,6 +51,7 @@ export const auth = betterAuth({
       updatedAt: 'updated_at'
     }
   },
+  plugins: [nextCookies()],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {
@@ -68,10 +69,13 @@ export const auth = betterAuth({
     enabled: true,
     password: {
       async hash(password: string) {
+        /* FIXME: this should be moved to account creation/password change logic */
+        /*
         const validation = validatePasswordStrength(password);
         if (!validation.valid) {
           throw new Error(validation.message);
         }
+        */
         const { hashPassword } = await import('better-auth/crypto');
         return hashPassword(password);
       }

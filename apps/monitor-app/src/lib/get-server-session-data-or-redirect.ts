@@ -3,16 +3,15 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export async function getServerSessionDataOrRedirect() {
-  const sessionData = await auth.api.getSession({
-    headers: await headers()
-  });
+  const resolvedHeaders = await headers();
+  const sessionData = await auth.api.getSession({ headers: resolvedHeaders });
 
-  if (!sessionData?.session) {
-    redirect('/login');
+  if (!sessionData) {
+    const currentPath = resolvedHeaders.get("x-current-path"); 
+    const loginUrl = currentPath ? `/login?callbackUrl=${encodeURIComponent(currentPath)}` : '/login';
+    
+    redirect(loginUrl);
   }
 
-  return {
-    session: sessionData.session,
-    user: sessionData.user
-  };
+  return sessionData;
 }

@@ -1,27 +1,44 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getSessionCookie } from 'better-auth/cookies';
+import { auth } from '@/lib/auth';
 
-const PUBLIC_ROUTES = ['/login', '/setup', '/api/auth', '/api/health', '/api/ingest'];
+const PUBLIC_ROUTES = ['/login', '/api/auth', '/api/health', '/api/ingest'];
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
+export async function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
-  if (isPublicRoute || pathname.startsWith('/_next') || pathname.includes('.')) {
-    return NextResponse.next();
+  const requestHeaders = request.headers;
+  
+  const fullPath = `${pathname}${search}`;
+  requestHeaders.set('x-current-path', fullPath);
+
+  if (isPublicRoute) {
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
-  const sessionCookie = getSessionCookie(request);
+  try {
+    const session = await auth.api.getSession({
+      headers: requestHeaders, 
+    });
 
-  if (!sessionCookie) {
+    if (!session) {
+      const loginUrl = new URL('/login', request.url);
+      if (pathname !== '/') {
+        loginUrl.searchParams.set('callbackUrl', fullPath);
+      }
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  } catch {
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
-
-  return NextResponse.next();
 }
 
 export const config = {

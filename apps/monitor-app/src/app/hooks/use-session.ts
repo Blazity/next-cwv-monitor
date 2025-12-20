@@ -1,10 +1,22 @@
 import { use } from 'react';
 import { SessionContext } from '@/contexts/session-context';
 
-export function useSession() {
-  const context = use(SessionContext);
-  if (context === undefined) {
-    throw new Error('useSession must be used within a SessionProvider');
+export function useSessionData() {
+  const sessionData = use(SessionContext);
+  
+  if (sessionData === undefined) {
+    throw new Error('useSession must be used within SessionProvider');
   }
-  return context;
+  
+  return sessionData; 
+}
+
+export function useUser() {
+  const session = useSessionData();
+  
+  if (!session) {
+    throw new Error("useUser was called on a protected page without a session.");
+  }
+
+  return session.user;
 }
