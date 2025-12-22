@@ -1,11 +1,11 @@
-import { randomUUID } from 'node:crypto';
-import { UAParser } from 'ua-parser-js';
+import { randomUUID } from "node:crypto";
+import { UAParser } from "ua-parser-js";
 
-import type { IngestPayloadV1 } from 'cwv-monitor-contracts';
-import type { CustomEvent, IngestCommand, WebVitalEvent } from '@/app/server/domain/ingest/types';
-import { coerceDeviceType, DEFAULT_DEVICE_TYPE } from '@/app/server/lib/device-types';
+import type { IngestPayloadV1 } from "cwv-monitor-contracts";
+import type { CustomEvent, IngestCommand, WebVitalEvent } from "@/app/server/domain/ingest/types";
+import { coerceDeviceType, DEFAULT_DEVICE_TYPE } from "@/app/server/lib/device-types";
 
-type UserAgentMeta = ReturnType<UAParser['getResult']>;
+type UserAgentMeta = ReturnType<UAParser["getResult"]>;
 
 function determineDeviceType(userAgent?: UserAgentMeta) {
   return coerceDeviceType(userAgent?.device.type) ?? DEFAULT_DEVICE_TYPE;
@@ -23,7 +23,7 @@ export function buildIngestCommand(
 
   const cwvEvents: WebVitalEvent[] = (parsed.events ?? []).map((event) => {
     const sessionId = event.sessionId ?? randomUUID();
-    const resolvedRoute = event.route ?? event.path ?? '/';
+    const resolvedRoute = event.route ?? event.path ?? "/";
     const resolvedPath = event.path ?? event.route ?? resolvedRoute;
     const recordedAt = event.recordedAt ?? now;
 
@@ -41,7 +41,7 @@ export function buildIngestCommand(
 
   const customEvents: CustomEvent[] = (parsed.customEvents ?? []).map((event) => {
     const sessionId = event.sessionId ?? randomUUID();
-    const resolvedRoute = event.route ?? event.path ?? '/';
+    const resolvedRoute = event.route ?? event.path ?? "/";
     const resolvedPath = event.path ?? event.route ?? resolvedRoute;
     const recordedAt = event.recordedAt ?? now;
 

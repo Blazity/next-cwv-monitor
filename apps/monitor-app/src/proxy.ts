@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { auth } from '@/lib/auth';
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
-const PUBLIC_ROUTES = ['/login', '/api/auth', '/api/health', '/api/ingest'];
+const PUBLIC_ROUTES = ["/login", "/api/auth", "/api/health", "/api/ingest"];
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -11,7 +11,7 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = request.headers;
 
   const fullPath = `${pathname}${search}`;
-  requestHeaders.set('x-current-path', fullPath);
+  requestHeaders.set("x-current-path", fullPath);
 
   if (isPublicRoute) {
     return NextResponse.next({
@@ -25,9 +25,9 @@ export async function proxy(request: NextRequest) {
     });
 
     if (!session) {
-      const loginUrl = new URL('/login', request.url);
-      if (pathname !== '/') {
-        loginUrl.searchParams.set('callbackUrl', fullPath);
+      const loginUrl = new URL("/login", request.url);
+      if (pathname !== "/") {
+        loginUrl.searchParams.set("callbackUrl", fullPath);
       }
       return NextResponse.redirect(loginUrl);
     }
@@ -36,7 +36,7 @@ export async function proxy(request: NextRequest) {
       request: { headers: requestHeaders }
     });
   } catch {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 }
@@ -49,6 +49,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)"
   ]
 };

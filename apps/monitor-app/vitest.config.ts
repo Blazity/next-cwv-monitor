@@ -1,14 +1,14 @@
-import path from 'node:path';
+import path from "node:path";
 
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
-import type { UserConfig } from 'vite';
-import { playwright } from '@vitest/browser-playwright';
+import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
+import type { UserConfig } from "vite";
+import { playwright } from "@vitest/browser-playwright";
 
 const __dirname = import.meta.dirname;
 
-type VitestProvider = NonNullable<NonNullable<UserConfig['test']>['browser']>['provider'];
+type VitestProvider = NonNullable<NonNullable<UserConfig["test"]>["browser"]>["provider"];
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
@@ -19,7 +19,7 @@ export default defineConfig({
         plugins: [
           // The plugin will run tests for the stories defined in your Storybook config
           // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-          storybookTest({ configDir: path.join(__dirname, '.storybook') })
+          storybookTest({ configDir: path.join(__dirname, ".storybook") })
         ],
         test: {
           browser: {
@@ -28,9 +28,9 @@ export default defineConfig({
             // TODO: Verify whether all is ok, it looks like up to date with docs https://vitest.dev/config/browser/playwright.html#configuring-playwright
             // But typescript shouts here
             provider: playwright() as unknown as VitestProvider,
-            instances: [{ browser: 'chromium' }]
+            instances: [{ browser: "chromium" }]
           },
-          setupFiles: ['.storybook/vitest.setup.ts']
+          setupFiles: [".storybook/vitest.setup.ts"]
         }
       }
     ]

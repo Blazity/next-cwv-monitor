@@ -1,7 +1,7 @@
-import { betterAuth } from 'better-auth';
-import { env } from '@/env';
-import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
-import { nextCookies } from 'better-auth/next-js';
+import { betterAuth } from "better-auth";
+import { env } from "@/env";
+import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
+import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -9,9 +9,9 @@ export const auth = betterAuth({
   database: clickHouseAdapter({ debugLogs: env.CLICKHOUSE_ADAPTER_DEBUG_LOGS }),
   user: {
     fields: {
-      emailVerified: 'email_verified',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at'
+      emailVerified: "email_verified",
+      createdAt: "created_at",
+      updatedAt: "updated_at"
     }
   },
   session: {
@@ -22,42 +22,42 @@ export const auth = betterAuth({
       maxAge: 60 * 5 // 5 minutes
     },
     fields: {
-      expiresAt: 'expires_at',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at',
-      ipAddress: 'ip_address',
-      userAgent: 'user_agent',
-      userId: 'user_id'
+      expiresAt: "expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      ipAddress: "ip_address",
+      userAgent: "user_agent",
+      userId: "user_id"
     }
   },
   account: {
     fields: {
-      accountId: 'account_id',
-      providerId: 'provider_id',
-      userId: 'user_id',
-      accessToken: 'access_token',
-      refreshToken: 'refresh_token',
-      idToken: 'id_token',
-      accessTokenExpiresAt: 'access_token_expires_at',
-      refreshTokenExpiresAt: 'refresh_token_expires_at',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at'
+      accountId: "account_id",
+      providerId: "provider_id",
+      userId: "user_id",
+      accessToken: "access_token",
+      refreshToken: "refresh_token",
+      idToken: "id_token",
+      accessTokenExpiresAt: "access_token_expires_at",
+      refreshTokenExpiresAt: "refresh_token_expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at"
     }
   },
   verification: {
     fields: {
-      expiresAt: 'expires_at',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at'
+      expiresAt: "expires_at",
+      createdAt: "created_at",
+      updatedAt: "updated_at"
     }
   },
   plugins: [nextCookies()],
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === 'production',
+    useSecureCookies: process.env.NODE_ENV === "production",
     defaultCookieAttributes: {
-      sameSite: 'lax',
+      sameSite: "lax",
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === "production"
     }
   },
   rateLimit: {
@@ -76,7 +76,7 @@ export const auth = betterAuth({
           throw new Error(validation.message);
         }
         */
-        const { hashPassword } = await import('better-auth/crypto');
+        const { hashPassword } = await import("better-auth/crypto");
         return hashPassword(password);
       }
     }

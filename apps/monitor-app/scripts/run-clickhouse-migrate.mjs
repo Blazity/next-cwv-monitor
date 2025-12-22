@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process';
+import { spawn } from "node:child_process";
 
 const {
   CH_MIGRATIONS_HOST,
@@ -14,40 +14,40 @@ const {
   CLICKHOUSE_PASSWORD
 } = process.env;
 
-const rawHost = CH_MIGRATIONS_HOST ?? CLICKHOUSE_HOST ?? 'localhost';
-const port = CH_MIGRATIONS_PORT ?? CLICKHOUSE_PORT ?? '8123';
+const rawHost = CH_MIGRATIONS_HOST ?? CLICKHOUSE_HOST ?? "localhost";
+const port = CH_MIGRATIONS_PORT ?? CLICKHOUSE_PORT ?? "8123";
 const hostHasProtocol = /^https?:\/\//.test(rawHost);
 const resolvedHost = hostHasProtocol ? rawHost : `http://${rawHost}:${port}`;
 
-const CH_MIGRATIONS_HOME = process.env.CH_MIGRATIONS_HOME ?? process.env.CH_MIGRATIONS_DIR ?? 'clickhouse/migrations';
+const CH_MIGRATIONS_HOME = process.env.CH_MIGRATIONS_HOME ?? process.env.CH_MIGRATIONS_DIR ?? "clickhouse/migrations";
 
-const database = CH_MIGRATIONS_DATABASE ?? CLICKHOUSE_DB ?? 'cwv_monitor';
-const user = CH_MIGRATIONS_USER ?? CLICKHOUSE_USER ?? 'default';
-const password = CH_MIGRATIONS_PASSWORD ?? CLICKHOUSE_PASSWORD ?? '';
+const database = CH_MIGRATIONS_DATABASE ?? CLICKHOUSE_DB ?? "cwv_monitor";
+const user = CH_MIGRATIONS_USER ?? CLICKHOUSE_USER ?? "default";
+const password = CH_MIGRATIONS_PASSWORD ?? CLICKHOUSE_PASSWORD ?? "";
 
 const extraArgs = process.argv.slice(2);
 
 const args = [
-  'migrate',
-  '--host',
+  "migrate",
+  "--host",
   resolvedHost,
-  '--db',
+  "--db",
   database,
-  '--user',
+  "--user",
   user,
-  '--password',
+  "--password",
   password,
-  '--migrations-home',
+  "--migrations-home",
   CH_MIGRATIONS_HOME,
   ...extraArgs
 ];
 
-let child = spawn('clickhouse-migrations', args, {
-  stdio: 'inherit',
+let child = spawn("clickhouse-migrations", args, {
+  stdio: "inherit",
   env: process.env,
-  shell: process.platform === 'win32'
+  shell: process.platform === "win32"
 });
 
-child.on('exit', (code) => {
+child.on("exit", (code) => {
   process.exit(code ?? 0);
 });

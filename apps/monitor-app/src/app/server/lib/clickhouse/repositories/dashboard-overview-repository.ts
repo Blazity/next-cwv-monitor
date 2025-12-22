@@ -1,8 +1,8 @@
-import { MetricName } from '@/app/server/domain/dashboard/overview/types';
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
-export type OverviewDeviceFilter = DeviceType | 'all';
+export type OverviewDeviceFilter = DeviceType | "all";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -19,7 +19,7 @@ function buildWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFra
       AND event_date BETWEEN toDate(${filters.start}) AND toDate(${filters.end})
   `;
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 

@@ -1,4 +1,4 @@
-import { RateLimiterMemory, RateLimiterRes } from 'rate-limiter-flexible';
+import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 const DEFAULT_LIMIT = 1000;
 const ONE_HOUR_SECONDS = 60 * 60;

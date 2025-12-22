@@ -1,5 +1,5 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
 type DateRange = {
   start: Date | string;

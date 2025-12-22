@@ -1,7 +1,7 @@
-import { LoginForm } from '@/components/login-form';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { LoginForm } from "@/components/login-form";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage({
   searchParams
@@ -9,7 +9,7 @@ export default async function LoginPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : (params.callbackUrl ?? '/projects');
+  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : (params.callbackUrl ?? "/projects");
 
   const session = await auth.api.getSession({
     headers: await headers()

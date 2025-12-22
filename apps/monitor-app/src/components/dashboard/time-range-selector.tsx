@@ -1,24 +1,24 @@
-'use client';
+"use client";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem
-} from '@/components/ui/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQueryParam } from '@/lib/use-query-params';
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useQueryParam } from "@/lib/use-query-params";
 
 const timeRanges = [
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' }
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+  { value: "90d", label: "Last 90 days" }
 ];
 
-const DEFAULT_TIME_RANGE = '7d';
+const DEFAULT_TIME_RANGE = "7d";
 
 export function TimeRangeSelector() {
-  const [timeRange, setTimeRange] = useQueryParam('timeRange', DEFAULT_TIME_RANGE);
+  const [timeRange, setTimeRange] = useQueryParam("timeRange", DEFAULT_TIME_RANGE);
 
   const handleTimeRangeChange = (value: string) => {
     setTimeRange(value);
@@ -36,7 +36,7 @@ export function TimeRangeSelector() {
           <DropdownMenuItem
             key={range.value}
             onClick={() => handleTimeRangeChange(range.value)}
-            className={cn('cursor-pointer', timeRange === range.value && 'bg-accent')}
+            className={cn("cursor-pointer", timeRange === range.value && "bg-accent")}
           >
             {range.label}
           </DropdownMenuItem>

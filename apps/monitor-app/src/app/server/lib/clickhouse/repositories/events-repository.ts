@@ -1,5 +1,5 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { CwvEventRow, InsertableCwvEventRow } from '@/app/server/lib/clickhouse/schema';
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { CwvEventRow, InsertableCwvEventRow } from "@/app/server/lib/clickhouse/schema";
 
 type EventFilters = {
   projectId: string;
@@ -44,16 +44,16 @@ export async function insertEvents(events: InsertableCwvEventRow[]): Promise<voi
       ingested_at
     )
     VALUES ${sql.values(rows, [
-      'String',
-      'String',
-      'String',
-      'String',
-      'String',
-      'String',
-      'Float64',
-      'String',
-      'DateTime64(3)',
-      'DateTime64(3)'
+      "String",
+      "String",
+      "String",
+      "String",
+      "String",
+      "String",
+      "Float64",
+      "String",
+      "DateTime64(3)",
+      "DateTime64(3)"
     ])}
   `.command();
 }

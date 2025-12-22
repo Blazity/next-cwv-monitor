@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Sheet, SheetTrigger, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { Menu, Users, Activity } from 'lucide-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
-import { useUser } from '@/app/hooks/use-session';
-import { NavItem } from '@/components/dashboard/nav-items';
-import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
+import { useState } from "react";
+import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Menu, Users, Activity } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useUser } from "@/app/hooks/use-session";
+import { NavItem } from "@/components/dashboard/nav-items";
+import { UserActionsMobile } from "@/components/dashboard/user-actions-mobile";
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
   const user = useUser();
@@ -39,15 +39,15 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
             {navItems.map((item) => {
               const isActive = item.isExact
                 ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(item.href + '/');
+                : pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                    { 'bg-accent text-accent-foreground': isActive }
+                    "text-muted-foreground hover:text-foreground hover:bg-accent/50 flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    { "bg-accent text-accent-foreground": isActive }
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -65,10 +65,10 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                   href="/users"
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors',
-                    pathname === '/users'
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                    pathname === "/users"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
                   <Users className="h-4 w-4" />

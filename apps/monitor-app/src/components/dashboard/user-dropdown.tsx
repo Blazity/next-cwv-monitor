@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { LogOut } from 'lucide-react';
+import { useTransition } from "react";
+import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuSeparator,
   DropdownMenuItem
-} from '@/components/ui/dropdown-menu';
-import { User } from 'better-auth';
-import { signOut } from '@/actions/sign-out';
+} from "@/components/ui/dropdown-menu";
+import { User } from "better-auth";
+import { signOut } from "@/actions/sign-out";
 
 export function UserDropdown({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();
@@ -34,7 +34,7 @@ export function UserDropdown({ user }: { user: User }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-muted-foreground" onClick={handleSignOut} disabled={isPending}>
           <LogOut className="mr-2 h-4 w-4" />
-          {isPending ? 'Signing out...' : 'Sign out'}
+          {isPending ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,24 +1,24 @@
-import { Badge } from '@/components/badge';
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { Badge } from "@/components/badge";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 const meta = {
-  title: 'CWV-Custom-Components/Badge',
+  title: "CWV-Custom-Components/Badge",
   component: Badge,
   parameters: {
-    layout: 'centered'
+    layout: "centered"
   },
-  tags: ['autodocs'],
+  tags: ["autodocs"],
   argTypes: {
     LeftIcon: {
       control: false
     },
     type: {
       // control: 'radio',
-      options: ['success', 'warning', 'error']
+      options: ["success", "warning", "error"]
     },
     size: {
       // control: 'select',
-      options: ['sm', 'md', 'lg']
+      options: ["sm", "md", "lg"]
     }
   }
 } satisfies Meta<typeof Badge>;
@@ -28,6 +28,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Primary: Story = {
   args: {
-    label: 'Succees'
+    label: "Succees"
   }
 };

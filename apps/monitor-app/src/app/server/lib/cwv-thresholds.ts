@@ -1,4 +1,4 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 
 export type MetricThresholds = {
   good: number;
@@ -28,7 +28,7 @@ export function getRatingForValue(metricName: string, value: number): WebVitalRa
   const thresholds = getMetricThresholds(metricName);
   if (!thresholds) return null;
 
-  if (value <= thresholds.good) return 'good';
-  if (value <= thresholds.needsImprovement) return 'needs-improvement';
-  return 'poor';
+  if (value <= thresholds.good) return "good";
+  if (value <= thresholds.needsImprovement) return "needs-improvement";
+  return "poor";
 }

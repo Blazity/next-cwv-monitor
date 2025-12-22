@@ -1,5 +1,5 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { CustomEventRow, InsertableCustomEventRow } from '@/app/server/lib/clickhouse/schema';
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
 
 type CustomEventFilters = {
   projectId: string;
@@ -41,14 +41,14 @@ export async function insertCustomEvents(events: InsertableCustomEventRow[]): Pr
       ingested_at
     )
     VALUES ${sql.values(rows, [
-      'String',
-      'String',
-      'String',
-      'String',
-      'String',
-      'String',
-      'DateTime64(3)',
-      'DateTime64(3)'
+      "String",
+      "String",
+      "String",
+      "String",
+      "String",
+      "String",
+      "DateTime64(3)",
+      "DateTime64(3)"
     ])}
   `.command();
 }

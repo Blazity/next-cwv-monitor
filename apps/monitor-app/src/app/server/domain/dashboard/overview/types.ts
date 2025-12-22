@@ -1,10 +1,10 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
-export const OVERVIEW_DEVICE_TYPES = ['desktop', 'mobile', 'all'] as const;
-export type OverviewDeviceType = DeviceType | 'all';
+export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
+export type OverviewDeviceType = DeviceType | "all";
 
-export const METRIC_NAMES = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] as const;
+export const METRIC_NAMES = ["LCP", "INP", "CLS", "FCP", "TTFB"] as const;
 export type MetricName = (typeof METRIC_NAMES)[number];
 
 export type DateRange = {
@@ -59,6 +59,6 @@ export type DashboardOverview = {
 };
 
 export type GetDashboardOverviewResult =
-  | { kind: 'ok'; data: DashboardOverview }
-  | { kind: 'project-not-found'; projectId: string }
-  | { kind: 'unsupported-metric'; metricName: string };
+  | { kind: "ok"; data: DashboardOverview }
+  | { kind: "project-not-found"; projectId: string }
+  | { kind: "unsupported-metric"; metricName: string };

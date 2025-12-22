@@ -1,5 +1,5 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
 export type WebVitalEvent = {
   sessionId: string;

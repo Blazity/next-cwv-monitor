@@ -1,5 +1,5 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { InsertableProjectRow, ProjectRow } from '@/app/server/lib/clickhouse/schema';
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { InsertableProjectRow, ProjectRow } from "@/app/server/lib/clickhouse/schema";
 
 export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();

@@ -1,5 +1,5 @@
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export async function getAuthorizedSession() {
   const sessionData = await auth.api.getSession({
@@ -7,7 +7,7 @@ export async function getAuthorizedSession() {
   });
 
   if (!sessionData?.session) {
-    throw new Error('Unauthorized');
+    throw new Error("Unauthorized");
   }
 
   return {

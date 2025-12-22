@@ -1,18 +1,18 @@
-import { createEnv } from '@t3-oss/env-nextjs';
-import z from 'zod';
+import { createEnv } from "@t3-oss/env-nextjs";
+import z from "zod";
 
-const lifecycleEvent = process.env.npm_lifecycle_event ?? '';
-const isBuildCommand = lifecycleEvent === 'build' || lifecycleEvent.startsWith('build:');
+const lifecycleEvent = process.env.npm_lifecycle_event ?? "";
+const isBuildCommand = lifecycleEvent === "build" || lifecycleEvent.startsWith("build:");
 
 export const env = createEnv({
   server: {
     CLIENT_APP_ORIGIN: z.url(),
-    TRUST_PROXY: z.enum(['true', 'false']).default('false'),
-    CLICKHOUSE_HOST: z.string().min(1, 'CLICKHOUSE_HOST is required'),
-    CLICKHOUSE_PORT: z.string().min(1, 'CLICKHOUSE_PORT is required'),
-    CLICKHOUSE_USER: z.string().min(1, 'CLICKHOUSE_USER is required'),
+    TRUST_PROXY: z.enum(["true", "false"]).default("false"),
+    CLICKHOUSE_HOST: z.string().min(1, "CLICKHOUSE_HOST is required"),
+    CLICKHOUSE_PORT: z.string().min(1, "CLICKHOUSE_PORT is required"),
+    CLICKHOUSE_USER: z.string().min(1, "CLICKHOUSE_USER is required"),
     CLICKHOUSE_PASSWORD: z.string(),
-    CLICKHOUSE_DB: z.string().min(1, 'CLICKHOUSE_DB is required'),
+    CLICKHOUSE_DB: z.string().min(1, "CLICKHOUSE_DB is required"),
     BETTER_AUTH_SECRET: z.string(),
     CLICKHOUSE_ADAPTER_DEBUG_LOGS: z.coerce.boolean().default(false),
     MIN_PASSWORD_SCORE: z.coerce.number().min(0).max(4).default(2),
@@ -20,7 +20,7 @@ export const env = createEnv({
     MAX_LOGIN_ATTEMPTS: z.coerce.number().positive().default(5)
   },
   client: {},
-  skipValidation: process.env.SKIP_VALIDATION === 'true' || isBuildCommand,
+  skipValidation: process.env.SKIP_VALIDATION === "true" || isBuildCommand,
   runtimeEnv: {
     MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
     RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,

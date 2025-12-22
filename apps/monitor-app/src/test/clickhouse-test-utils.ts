@@ -1,10 +1,10 @@
-import { spawn } from 'node:child_process';
-import path from 'node:path';
+import { spawn } from "node:child_process";
+import path from "node:path";
 
-import { GenericContainer, type StartedTestContainer } from 'testcontainers';
-import { createClient } from '@clickhouse/client';
+import { GenericContainer, type StartedTestContainer } from "testcontainers";
+import { createClient } from "@clickhouse/client";
 
-export const CLICKHOUSE_IMAGE = 'clickhouse/clickhouse-server:24.8-alpine';
+export const CLICKHOUSE_IMAGE = "clickhouse/clickhouse-server:24.8-alpine";
 export const HTTP_PORT = 8123;
 
 type ClickHouseTestConfig = {
@@ -13,9 +13,9 @@ type ClickHouseTestConfig = {
   password: string;
 };
 
-const DEFAULT_TEST_DATABASE = 'cwv_monitor_test';
-const DEFAULT_TEST_USERNAME = 'default';
-const DEFAULT_TEST_PASSWORD = 'secret';
+const DEFAULT_TEST_DATABASE = "cwv_monitor_test";
+const DEFAULT_TEST_USERNAME = "default";
+const DEFAULT_TEST_PASSWORD = "secret";
 
 function getClickHouseTestConfig(): ClickHouseTestConfig {
   return {
@@ -37,11 +37,11 @@ export async function waitForClickHouse(
     try {
       const client = createClient({
         url: `http://${host}:${port}`,
-        database: options?.database ?? 'default',
-        username: options?.username ?? 'default',
-        password: options?.password ?? ''
+        database: options?.database ?? "default",
+        username: options?.username ?? "default",
+        password: options?.password ?? ""
       });
-      await client.query({ query: 'SELECT 1' });
+      await client.query({ query: "SELECT 1" });
       await client.close();
       return;
     } catch (error) {
@@ -59,16 +59,16 @@ export async function execOrThrow(target: StartedTestContainer, command: string[
 }
 
 export async function runClickHouseMigrations(): Promise<void> {
-  const scriptPath = path.resolve(process.cwd(), 'scripts/run-clickhouse-migrate.mjs');
+  const scriptPath = path.resolve(process.cwd(), "scripts/run-clickhouse-migrate.mjs");
 
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
       cwd: path.resolve(process.cwd()),
-      stdio: 'inherit'
+      stdio: "inherit"
     });
 
-    child.on('error', reject);
-    child.on('exit', (code) => {
+    child.on("error", reject);
+    child.on("exit", (code) => {
       if (code === 0) {
         resolve();
       } else {
@@ -108,23 +108,23 @@ export async function setupClickHouseContainer(): Promise<{
     .start();
 
   const dockerHost = container.getHost();
-  const host = dockerHost === 'localhost' ? '127.0.0.1' : dockerHost;
+  const host = dockerHost === "localhost" ? "127.0.0.1" : dockerHost;
   const port = container.getMappedPort(HTTP_PORT);
 
-  await waitForClickHouse(host, port, 30, { database: 'default', username: cfg.username, password: cfg.password });
+  await waitForClickHouse(host, port, 30, { database: "default", username: cfg.username, password: cfg.password });
 
   await execOrThrow(
     container,
     [
-      'clickhouse-client',
-      '--user',
+      "clickhouse-client",
+      "--user",
       cfg.username,
-      '--password',
+      "--password",
       cfg.password,
-      '--query',
+      "--query",
       `CREATE DATABASE IF NOT EXISTS ${cfg.database}`
     ],
-    'CREATE DATABASE'
+    "CREATE DATABASE"
   );
 
   // We only override the ClickHouse port for tests. Everything else comes from `.env.test` / `.env.ci`.

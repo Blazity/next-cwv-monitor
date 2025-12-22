@@ -1,5 +1,5 @@
-import { waddler } from 'waddler/clickhouse';
-import { env } from '@/env';
+import { waddler } from "waddler/clickhouse";
+import { env } from "@/env";
 
 type SqlTag = ReturnType<typeof waddler>;
 
@@ -16,13 +16,13 @@ function buildConnectionUrl(): string {
   // throw at module-import time because Next evaluates route modules during build.
   if (!host || !port || !userRaw || !dbRaw) {
     throw new Error(
-      'ClickHouse is not configured. Set CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USER and CLICKHOUSE_DB ' +
-        '(and optional CLICKHOUSE_PASSWORD) to enable database access.'
+      "ClickHouse is not configured. Set CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USER and CLICKHOUSE_DB " +
+        "(and optional CLICKHOUSE_PASSWORD) to enable database access."
     );
   }
 
   const user = encodeURIComponent(userRaw);
-  const password = env.CLICKHOUSE_PASSWORD ? encodeURIComponent(env.CLICKHOUSE_PASSWORD) : '';
+  const password = env.CLICKHOUSE_PASSWORD ? encodeURIComponent(env.CLICKHOUSE_PASSWORD) : "";
   const auth = password ? `${user}:${password}@` : `${user}@`;
   const db = `/${encodeURIComponent(dbRaw)}`;
 

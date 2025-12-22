@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { DeviceSelector } from '@/components/dashboard/device-selector';
-import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { DeviceSelector } from "@/components/dashboard/device-selector";
+import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
 
 type PageHeaderProps = {
   title: string;
@@ -24,7 +24,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
       ([entry]) => {
         setShowStickyBar(!entry.isIntersecting);
       },
-      { threshold: 0, rootMargin: '-56px 0px 0px 0px' }
+      { threshold: 0, rootMargin: "-56px 0px 0px 0px" }
     );
 
     observer.observe(header);
@@ -55,8 +55,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
         <div className="pointer-events-none sticky top-14 z-40 -mx-3 overflow-hidden sm:-mx-4 lg:-mx-6">
           <div
             className={cn(
-              'bg-background/95 border-border pointer-events-auto -translate-y-full border-b backdrop-blur transition-transform duration-300',
-              { 'translate-y-0': showStickyBar }
+              "bg-background/95 border-border pointer-events-auto -translate-y-full border-b backdrop-blur transition-transform duration-300",
+              { "translate-y-0": showStickyBar }
             )}
           >
             <div className="px-3 py-3 sm:px-4 lg:px-6">

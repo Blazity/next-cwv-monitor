@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
-import { Activity, AlertCircle } from 'lucide-react';
-import { type as arkType } from 'arktype';
-import { authClient } from '@/lib/auth-client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useForm } from "react-hook-form";
+import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { Activity, AlertCircle } from "lucide-react";
+import { type as arkType } from "arktype";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const loginSchema = arkType({
-  email: arkType('string.email')
-    .describe('a valid email address')
-    .configure({ actual: () => '' }),
-  password: arkType('string >= 1').configure({ actual: () => '' })
+  email: arkType("string.email")
+    .describe("a valid email address")
+    .configure({ actual: () => "" }),
+  password: arkType("string >= 1").configure({ actual: () => "" })
 });
 
 type LoginFormData = typeof loginSchema.infer;
@@ -32,11 +32,11 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     formState: { errors, isSubmitting }
   } = useForm<LoginFormData>({
     resolver: arktypeResolver(loginSchema),
-    mode: 'onBlur',
-    reValidateMode: 'onSubmit',
+    mode: "onBlur",
+    reValidateMode: "onSubmit",
     defaultValues: {
-      email: '',
-      password: ''
+      email: "",
+      password: ""
     }
   });
 
@@ -50,9 +50,9 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     });
 
     if (error) {
-      setError('root', {
-        type: 'server',
-        message: error.message || 'Login failed'
+      setError("root", {
+        type: "server",
+        message: error.message || "Login failed"
       });
     }
   };
@@ -90,10 +90,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   placeholder="you@example.com"
                   autoComplete="email"
                   disabled={isSubmitting}
-                  {...register('email', {
+                  {...register("email", {
                     onChange: () => {
-                      clearErrors('email');
-                      clearErrors('root');
+                      clearErrors("email");
+                      clearErrors("root");
                     }
                   })}
                 />
@@ -107,10 +107,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   disabled={isSubmitting}
-                  {...register('password', {
+                  {...register("password", {
                     onChange: () => {
-                      clearErrors('password');
-                      clearErrors('root');
+                      clearErrors("password");
+                      clearErrors("root");
                     }
                   })}
                 />
@@ -119,7 +119,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
 
             <CardFooter>
               <Button type="submit" className="my-4 mt-4 mb-0 w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+                {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
             </CardFooter>
           </form>

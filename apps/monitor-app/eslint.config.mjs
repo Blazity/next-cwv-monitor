@@ -1,11 +1,11 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import nextVitals from 'eslint-config-next/core-web-vitals';
-import nextTs from 'eslint-config-next/typescript';
-import prettier from 'eslint-config-prettier/flat';
-import eslintPluginUnicorn from 'eslint-plugin-unicorn';
-import eslintReact from '@eslint-react/eslint-plugin';
-import reactRefresh from 'eslint-plugin-react-refresh';
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+import prettier from "eslint-config-prettier/flat";
+import eslintPluginUnicorn from "eslint-plugin-unicorn";
+import eslintReact from "@eslint-react/eslint-plugin";
+import reactRefresh from "eslint-plugin-react-refresh";
+import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -13,13 +13,13 @@ const eslintConfig = defineConfig([
   reactRefresh.configs.next,
   {
     ...eslintPluginUnicorn.configs.recommended,
-    extends: [eslintReact.configs['recommended-typescript']],
-    ignores: ['.storybook/**'],
+    extends: [eslintReact.configs["recommended-typescript"]],
+    ignores: [".storybook/**"],
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
-      'unicorn/prevent-abbreviations': 'off',
-      'react/no-unescaped-entities': 'off',
-      'unicorn/no-null': 'off'
+      "unicorn/prevent-abbreviations": "off",
+      "react/no-unescaped-entities": "off",
+      "unicorn/no-null": "off"
     }
   },
   {
@@ -29,41 +29,41 @@ const eslintConfig = defineConfig([
       }
     },
     rules: {
-      indent: 'error',
-      '@eslint-react/no-nested-component-definitions': 'warn',
-      '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
-      '@eslint-react/no-unstable-context-value': 'error',
-      'no-restricted-syntax': [
-        'error',
+      indent: "error",
+      "@eslint-react/no-nested-component-definitions": "warn",
+      "@eslint-react/hooks-extra/no-direct-set-state-in-use-effect": "error",
+      "@eslint-react/no-unstable-context-value": "error",
+      "no-restricted-syntax": [
+        "error",
         {
           selector: "ImportDeclaration[source.value='react'] > ImportDefaultSpecifier",
-          message: 'React import is unnecessary since version 17'
+          message: "React import is unnecessary since version 17"
         }
       ],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-unnecessary-condition': 'error',
-      '@eslint-react/naming-convention/context-name': 'error',
-      '@eslint-react/dom/no-missing-button-type': 'error',
-      '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
-      'no-restricted-imports': [
-        'error',
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unnecessary-condition": "error",
+      "@eslint-react/naming-convention/context-name": "error",
+      "@eslint-react/dom/no-missing-button-type": "error",
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
+      "no-restricted-imports": [
+        "error",
         {
-          patterns: ['../*', './*']
+          patterns: ["../*", "./*"]
         }
       ]
     }
   },
-  { ...eslintPluginPrettierRecommended, ignores: ['components/ui'] },
+  { ...eslintPluginPrettierRecommended, ignores: ["components/ui"] },
   prettier,
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
-    '.next/**',
-    'out/**',
-    'build/**',
-    'components/ui',
-    'next-env.d.ts',
-    '.storybook/**'
+    ".next/**",
+    "out/**",
+    "build/**",
+    "components/ui",
+    "next-env.d.ts",
+    ".storybook/**"
   ])
 ]);
 

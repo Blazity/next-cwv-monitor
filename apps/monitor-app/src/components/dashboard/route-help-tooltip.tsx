@@ -1,5 +1,5 @@
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 export function RouteHelpTooltip() {
   return (
@@ -16,9 +16,9 @@ export function RouteHelpTooltip() {
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
           <p className="text-sm">
-            <strong>Route patterns</strong> group URLs with dynamic segments. For example,{' '}
-            <code className="bg-muted text-foreground rounded px-1">/blog/hello</code> and{' '}
-            <code className="bg-muted text-foreground rounded px-1">/blog/world</code> are grouped under{' '}
+            <strong>Route patterns</strong> group URLs with dynamic segments. For example,{" "}
+            <code className="bg-muted text-foreground rounded px-1">/blog/hello</code> and{" "}
+            <code className="bg-muted text-foreground rounded px-1">/blog/world</code> are grouped under{" "}
             <code className="bg-muted text-foreground rounded px-1">/blog/[slug]</code>.
           </p>
         </TooltipContent>

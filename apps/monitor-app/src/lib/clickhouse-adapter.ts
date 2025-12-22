@@ -1,7 +1,7 @@
-import { createAdapterFactory, type CustomAdapter, type DBAdapterDebugLogOption } from 'better-auth/adapters';
-import { sql } from '@/app/server/lib/clickhouse/client';
-import { isEmpty, mapValues, omit, first } from 'remeda';
-import { z } from 'zod';
+import { createAdapterFactory, type CustomAdapter, type DBAdapterDebugLogOption } from "better-auth/adapters";
+import { sql } from "@/app/server/lib/clickhouse/client";
+import { isEmpty, mapValues, omit, first } from "remeda";
+import { z } from "zod";
 
 type ClickHouseAdapterConfig = {
   debugLogs?: DBAdapterDebugLogOption;
@@ -9,23 +9,23 @@ type ClickHouseAdapterConfig = {
 };
 
 type WhereOperator =
-  | 'eq'
-  | 'ne'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'contains'
-  | 'starts_with'
-  | 'ends_with'
-  | 'in'
-  | 'not_in';
+  | "eq"
+  | "ne"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "contains"
+  | "starts_with"
+  | "ends_with"
+  | "in"
+  | "not_in";
 
 type WhereCondition = {
   field: string;
   value?: unknown;
   operator: WhereOperator;
-  connector: 'AND' | 'OR';
+  connector: "AND" | "OR";
 };
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
@@ -33,7 +33,7 @@ type FieldNameGetter = (opts: { model: string; field: string }) => string;
 
 const formatDateValue = (value: unknown): unknown => {
   if (value instanceof Date) {
-    return value.toISOString().slice(0, 19).replace('T', ' ');
+    return value.toISOString().slice(0, 19).replace("T", " ");
   }
   return value;
 };
@@ -42,7 +42,7 @@ const formatDataForInsert = (data: Record<string, unknown>): Record<string, unkn
   mapValues(data, formatDateValue);
 
 const joinSql = (fragments: SqlFragment[], separator: SqlFragment): SqlFragment => {
-  if (fragments.length === 0) throw new Error('Cannot join empty fragments');
+  if (fragments.length === 0) throw new Error("Cannot join empty fragments");
   const [firstFragment, ...rest] = fragments;
   for (const fragment of rest) {
     firstFragment.append(separator);
@@ -62,18 +62,18 @@ const withWhere = (query: SqlFragment, whereClause: SqlFragment): SqlFragment =>
 };
 
 const withLimit = (query: SqlFragment, limit: number): SqlFragment => {
-  query.append(sql` LIMIT ${sql.param(limit, 'UInt32')}`);
+  query.append(sql` LIMIT ${sql.param(limit, "UInt32")}`);
   return query;
 };
 
 const withOffset = (query: SqlFragment, offset: number): SqlFragment => {
-  query.append(sql` OFFSET ${sql.param(offset, 'UInt32')}`);
+  query.append(sql` OFFSET ${sql.param(offset, "UInt32")}`);
   return query;
 };
 
-const withOrderBy = (query: SqlFragment, field: string, direction: 'asc' | 'desc' = 'asc'): SqlFragment => {
+const withOrderBy = (query: SqlFragment, field: string, direction: "asc" | "desc" = "asc"): SqlFragment => {
   query.append(sql` ORDER BY ${sql.identifier(field)}`);
-  query.append(direction === 'desc' ? sql` DESC` : sql` ASC`);
+  query.append(direction === "desc" ? sql` DESC` : sql` ASC`);
   return query;
 };
 
@@ -88,14 +88,14 @@ const buildColumnValuePairs = (
   fieldNameGetter: FieldNameGetter
 ): { columns: SqlFragment; values: SqlFragment } => {
   const entries = Object.entries(formatDataForInsert(data));
-  if (isEmpty(entries)) throw new Error('No fields to insert');
+  if (isEmpty(entries)) throw new Error("No fields to insert");
 
   const columns = joinSql(
     entries.map(([key]) => sql`${sql.identifier(fieldNameGetter({ model, field: key }))}`),
     sql`, `
   );
   const values = joinSql(
-    entries.map(([, value]) => sql`${sql.param(value, 'String')}`),
+    entries.map(([, value]) => sql`${sql.param(value, "String")}`),
     sql`, `
   );
 
@@ -134,8 +134,8 @@ const selectOne = async (model: string, whereClause: SqlFragment): Promise<Recor
 export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
   createAdapterFactory({
     config: {
-      adapterId: 'clickhouse',
-      adapterName: 'ClickHouse',
+      adapterId: "clickhouse",
+      adapterName: "ClickHouse",
       usePlural: config.usePlural ?? false,
       debugLogs: config.debugLogs ?? false,
       supportsJSON: false,
@@ -149,7 +149,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         const fieldName = getFieldName({ model, field: cond.field });
         const formattedValue = formatDateValue(value);
         const field = sql`${sql.identifier(fieldName)}`;
-        const param = sql`${sql.param(formattedValue, 'String')}`;
+        const param = sql`${sql.param(formattedValue, "String")}`;
 
         const formatArrayValues = () =>
           Array.isArray(value) ? value.map((v) => formatDateValue(v)) : [formatDateValue(value)];
@@ -161,16 +161,16 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           gte: () => sql`${field} >= ${param}`,
           lt: () => sql`${field} < ${param}`,
           lte: () => sql`${field} <= ${param}`,
-          contains: () => sql`${field} ILIKE ${sql.param(`%${String(value)}%`, 'String')}`,
-          starts_with: () => sql`${field} ILIKE ${sql.param(`${String(value)}%`, 'String')}`,
-          ends_with: () => sql`${field} ILIKE ${sql.param(`%${String(value)}`, 'String')}`,
+          contains: () => sql`${field} ILIKE ${sql.param(`%${String(value)}%`, "String")}`,
+          starts_with: () => sql`${field} ILIKE ${sql.param(`${String(value)}%`, "String")}`,
+          ends_with: () => sql`${field} ILIKE ${sql.param(`%${String(value)}`, "String")}`,
           in: () => {
             const vals = formatArrayValues();
-            return vals.length === 0 ? sql`1=1` : sql`${field} IN (${sql.param(vals, 'String')})`;
+            return vals.length === 0 ? sql`1=1` : sql`${field} IN (${sql.param(vals, "String")})`;
           },
           not_in: () => {
             const vals = formatArrayValues();
-            return vals.length === 0 ? sql`1=1` : sql`${field} NOT IN (${sql.param(vals, 'String')})`;
+            return vals.length === 0 ? sql`1=1` : sql`${field} NOT IN (${sql.param(vals, "String")})`;
           }
         };
 
@@ -184,7 +184,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         const clause = buildCondition(firstCond, model);
 
         for (const cond of rest) {
-          clause.append(cond.connector === 'OR' ? sql` OR ` : sql` AND `);
+          clause.append(cond.connector === "OR" ? sql` OR ` : sql` AND `);
           clause.append(buildCondition(cond, model));
         }
 
@@ -203,12 +203,12 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
 
       const buildSetClause = (data: Record<string, unknown>, model: string): SqlFragment => {
         const entries = Object.entries(data);
-        if (isEmpty(entries)) throw new Error('No fields to update');
+        if (isEmpty(entries)) throw new Error("No fields to update");
 
         return joinSql(
           entries.map(
             ([key, value]) =>
-              sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`
+              sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), "String")}`
           ),
           sql`, `
         );
@@ -231,7 +231,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           if (sortBy) {
             query = withOrderBy(query, sortBy.field, sortBy.direction);
           } else if (offset) {
-            query = withOrderBy(query, 'id');
+            query = withOrderBy(query, "id");
           }
 
           if (limit) {
@@ -250,7 +250,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         },
 
         update: async ({ model, where, update: updateData }) => {
-          const safeData = omit(updateDataSchema.parse(updateData), ['id', 'createdAt', 'updatedAt']);
+          const safeData = omit(updateDataSchema.parse(updateData), ["id", "createdAt", "updatedAt"]);
           const whereClause = buildWhereClause(where, model);
 
           if (!isEmpty(safeData)) {
@@ -262,7 +262,7 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         },
 
         updateMany: async ({ model, where, update: updateData }) => {
-          const safeData = omit(updateDataSchema.parse(updateData), ['id', 'createdAt', 'updatedAt']);
+          const safeData = omit(updateDataSchema.parse(updateData), ["id", "createdAt", "updatedAt"]);
           const whereClause = buildWhereClause(where, model);
           const count = await executeCount(model, whereClause);
 
