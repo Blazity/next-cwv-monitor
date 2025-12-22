@@ -9,19 +9,19 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
 
   const requestHeaders = request.headers;
-  
+
   const fullPath = `${pathname}${search}`;
   requestHeaders.set('x-current-path', fullPath);
 
   if (isPublicRoute) {
     return NextResponse.next({
-      request: { headers: requestHeaders },
+      request: { headers: requestHeaders }
     });
   }
 
   try {
     const session = await auth.api.getSession({
-      headers: requestHeaders, 
+      headers: requestHeaders
     });
 
     if (!session) {
@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
     }
 
     return NextResponse.next({
-      request: { headers: requestHeaders },
+      request: { headers: requestHeaders }
     });
   } catch {
     const loginUrl = new URL('/login', request.url);

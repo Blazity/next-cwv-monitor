@@ -7,9 +7,9 @@ export async function getServerSessionDataOrRedirect() {
   const sessionData = await auth.api.getSession({ headers: resolvedHeaders });
 
   if (!sessionData) {
-    const currentPath = resolvedHeaders.get("x-current-path"); 
+    const currentPath = resolvedHeaders.get('x-current-path');
     const loginUrl = currentPath ? `/login?callbackUrl=${encodeURIComponent(currentPath)}` : '/login';
-    
+
     redirect(loginUrl);
   }
 

@@ -43,9 +43,9 @@ const args = [
 ];
 
 let child = spawn('clickhouse-migrations', args, {
-    stdio: 'inherit',
-    env: process.env,
-    shell: process.platform === 'win32'
+  stdio: 'inherit',
+  env: process.env,
+  shell: process.platform === 'win32'
 });
 
 child.on('exit', (code) => {
