@@ -1,23 +1,22 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { onCLS, onFCP, onTTFB, onINP, onLCP, Metric } from 'web-vitals';
 import type { WebVitalEventV1In } from 'cwv-monitor-contracts';
-import { getFullPath, getNormalizedRoute } from '../utils/navigation';
 import { useCWV } from '../cwv-context';
 
 type Payload = WebVitalEventV1In;
 
 export const useMetrics = () => {
   const { runtime } = useCWV();
-  const { ingestQueue, getSessionId } = runtime;
+  const { ingestQueue, getSessionId, getView } = runtime;
   const metrics = useRef(ingestQueue.getCwvEventQueue());
 
   const addToMetric = useCallback(
     (metric: Metric) => {
-      const route = getNormalizedRoute();
-      const path = getFullPath();
+      const { route, path } = getView();
       const recordedAt = new Date().toISOString();
+      const sessionId = getSessionId();
       const payload: Payload = {
-        sessionId: getSessionId(),
+        sessionId,
         route,
         path,
         metric: metric.name,
@@ -28,7 +27,7 @@ export const useMetrics = () => {
 
       ingestQueue.enqueueCwvEvent(payload);
     },
-    [getSessionId, ingestQueue]
+    [getSessionId, getView, ingestQueue]
   );
 
   const addToMetricRef = useRef(addToMetric);
