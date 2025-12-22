@@ -1,11 +1,11 @@
 import { MetricName } from '@/app/server/domain/dashboard/overview/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn, formatMetricValue } from '@/lib/utils';
+import { WebVitalRatingV1 } from 'cwv-monitor-contracts';
 import { ChevronDown } from 'lucide-react';
 
-type StatusType = 'poor' | 'needs-improvement' | 'good';
 type Props = {
-  percentiles: { label: string; value: number; type: StatusType }[];
+  percentiles: { label: string; value: number; type: WebVitalRatingV1 }[];
   thresholds: { good: number; needsImprovement: number };
   fixedPercentile?: boolean;
   title: string;
