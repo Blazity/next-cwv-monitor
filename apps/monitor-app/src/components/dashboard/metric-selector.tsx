@@ -47,8 +47,8 @@ function isNotCoreWebVital(metric: MetricName): metric is MetricName {
   return !isCoreWebVital(metric);
 }
 
-const CORE_WEB_VITALS = METRIC_NAMES.filter(isCoreWebVital);
-const OTHER_METRICS = METRIC_NAMES.filter(isNotCoreWebVital);
+const CORE_WEB_VITALS = METRIC_NAMES.filter((metric) => isCoreWebVital(metric));
+const OTHER_METRICS = METRIC_NAMES.filter((metric) => isNotCoreWebVital(metric));
 
 type MetricSelectorProps = {
   selected: MetricName;

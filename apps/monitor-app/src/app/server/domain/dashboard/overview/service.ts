@@ -36,6 +36,10 @@ function toQuantileSummary(values: number[] | undefined): QuantileSummary | null
   };
 }
 
+function isMetricName(value: string): value is MetricName {
+  return METRIC_NAMES.includes(value as MetricName);
+}
+
 function emptyStatusDistribution(): StatusDistribution {
   return {
     good: 0,
@@ -87,22 +91,18 @@ export class DashboardOverviewService {
       };
     });
 
-    // Build time series map for all metrics
-    const timeSeriesByMetric = METRIC_NAMES.reduce(
-      (acc, metric) => {
-        acc[metric] = [];
-        return acc;
-      },
-      {} as Record<MetricName, DailySeriesPoint[]>
-    );
+    const timeSeriesByMetric = new Map(METRIC_NAMES.map((metric) => [metric, [] as DailySeriesPoint[]]));
 
     for (const row of allMetricsSeriesRows) {
-      const metric = row.metric_name as MetricName;
+      const metric = row.metric_name;
+
+      if (!isMetricName(metric)) continue;
+
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
       const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
 
-      timeSeriesByMetric[metric].push({
+      timeSeriesByMetric.get(metric)?.push({
         date: row.event_date,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
