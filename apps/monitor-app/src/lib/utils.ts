@@ -2,10 +2,19 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
-import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
+import { OVERVIEW_DEVICE_TYPES, type MetricName } from '@/app/server/domain/dashboard/overview/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function isObject(value: unknown): value is object {
+  return typeof value === 'object' && !!value;
+}
+
+export function isDeviceType(value: string | string[] | undefined): value is (typeof OVERVIEW_DEVICE_TYPES)[number] {
+  if (Array.isArray(value) || !value) return false;
+  return OVERVIEW_DEVICE_TYPES.some((deviceType) => deviceType === value);
 }
 
 export function validatePasswordStrength(password: string): { valid: true } | { valid: false; message: string } {

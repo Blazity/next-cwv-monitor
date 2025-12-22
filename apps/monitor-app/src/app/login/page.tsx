@@ -1,26 +1,27 @@
 import { LoginForm } from '@/components/login-form';
 import { auth } from '@/lib/auth';
+import { Route } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function LoginPage({
-    searchParams,
-  }: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }) {
+  searchParams
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const params = await searchParams;
-  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : params.callbackUrl ?? '/projects'
+  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : (params.callbackUrl ?? '/projects');
 
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: await headers()
   });
-  
+
   if (session) {
-    redirect(callbackUrl);
+    redirect(callbackUrl as Route);
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex min-h-screen flex-col items-center justify-center">
       <LoginForm callbackUrl={callbackUrl} />
     </div>
   );

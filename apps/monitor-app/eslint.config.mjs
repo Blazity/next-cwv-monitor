@@ -32,6 +32,7 @@ const eslintConfig = defineConfig([
       '@eslint-react/no-nested-component-definitions': 'warn',
       '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
       '@eslint-react/no-unstable-context-value': 'error',
+      'unicorn/prefer-includes': 'off',
       'no-restricted-syntax': [
         'error',
         {

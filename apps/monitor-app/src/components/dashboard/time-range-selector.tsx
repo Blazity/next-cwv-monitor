@@ -8,12 +8,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQueryParam } from '@/lib/use-query-params';
-
-const timeRanges = [
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' }
-];
+import { timeRanges } from '@/lib/time-range';
 
 const DEFAULT_TIME_RANGE = '7d';
 
