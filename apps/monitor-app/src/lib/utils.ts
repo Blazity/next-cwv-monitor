@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
-import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
+import type { DateRange, MetricName, TimeRange } from '@/app/server/domain/dashboard/overview/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,4 +40,16 @@ export function formatCompactNumber(value: number): string {
     compactDisplay: 'short',
     maximumFractionDigits: 1
   }).format(value);
+}
+
+export function timeRangeToDateRange(timeRange: TimeRange): DateRange {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+
+  const start = new Date(end);
+  const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+  start.setDate(start.getDate() - days);
+  start.setHours(0, 0, 0, 0);
+
+  return { start, end };
 }

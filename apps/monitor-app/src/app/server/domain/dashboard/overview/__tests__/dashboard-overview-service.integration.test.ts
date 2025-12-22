@@ -176,13 +176,40 @@ describe('dashboard-overview-service (integration)', () => {
     expect(cls.sampleSize).toBe(15); // 3 routes * 5 events (desktop), in-range
     expect(cls.status).toBe('good');
 
-    // Time series is per-day for selected metric (LCP), ordered by date.
-    expect(data.timeSeries).toHaveLength(2);
-    expect(data.timeSeries[0].date).toBe('2025-01-10');
-    expect(data.timeSeries[1].date).toBe('2025-01-11');
-    expect(data.timeSeries[0].sampleSize).toBe(30); // 3 routes * 10 events for day1
-    expect(data.timeSeries[1].sampleSize).toBe(30); // 3 routes * 10 events for day2
-    expect(data.timeSeries[0].status).toBe('poor');
+    // timeSeriesByMetric should contain time series for all metrics
+    expect(data.timeSeriesByMetric).toBeDefined();
+    expect(data.timeSeriesByMetric).toHaveProperty('LCP');
+    expect(data.timeSeriesByMetric).toHaveProperty('INP');
+    expect(data.timeSeriesByMetric).toHaveProperty('CLS');
+    expect(data.timeSeriesByMetric).toHaveProperty('FCP');
+    expect(data.timeSeriesByMetric).toHaveProperty('TTFB');
+
+    // LCP time series is per-day for selected metric (LCP), ordered by date.
+    expect(data.timeSeriesByMetric.LCP).toHaveLength(2);
+    expect(data.timeSeriesByMetric.LCP[0].date).toBe('2025-01-10');
+    expect(data.timeSeriesByMetric.LCP[1].date).toBe('2025-01-11');
+    expect(data.timeSeriesByMetric.LCP[0].sampleSize).toBe(30); // 3 routes * 10 events for day1
+    expect(data.timeSeriesByMetric.LCP[1].sampleSize).toBe(30); // 3 routes * 10 events for day2
+    expect(data.timeSeriesByMetric.LCP[0].status).toBe('poor');
+
+    // CLS time series should have data (we added CLS events for day2)
+    expect(data.timeSeriesByMetric.CLS).toBeDefined();
+    expect(Array.isArray(data.timeSeriesByMetric.CLS)).toBe(true);
+    // CLS events were only added for day2, so we should have at least one data point
+    const clsSeries = data.timeSeriesByMetric.CLS;
+    if (clsSeries.length > 0) {
+      const clsDay2 = clsSeries.find((point) => point.date === '2025-01-11');
+      expect(clsDay2).toBeDefined();
+      if (clsDay2) {
+        expect(clsDay2.status).toBe('good');
+        expect(clsDay2.sampleSize).toBeGreaterThan(0);
+      }
+    }
+
+    // Metrics without data (INP, FCP, TTFB) should have empty arrays or valid structure
+    expect(Array.isArray(data.timeSeriesByMetric.INP)).toBe(true);
+    expect(Array.isArray(data.timeSeriesByMetric.FCP)).toBe(true);
+    expect(Array.isArray(data.timeSeriesByMetric.TTFB)).toBe(true);
 
     // Worst routes should be sorted by p75 desc and include per-route status.
     expect(data.worstRoutes.map((r) => r.route)).toEqual(['/poor', '/needs', '/good']);

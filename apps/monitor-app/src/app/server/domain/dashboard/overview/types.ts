@@ -7,6 +7,9 @@ export type OverviewDeviceType = DeviceType | 'all';
 export const METRIC_NAMES = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] as const;
 export type MetricName = (typeof METRIC_NAMES)[number];
 
+export const TIME_RANGES = ['7d', '30d', '90d'] as const;
+export type TimeRange = (typeof TIME_RANGES)[number];
+
 export type DateRange = {
   start: Date;
   end: Date;
@@ -53,7 +56,7 @@ export type StatusDistribution = Record<WebVitalRatingV1, number>;
 
 export type DashboardOverview = {
   metricOverview: MetricOverviewItem[];
-  timeSeries: DailySeriesPoint[];
+  timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]>;
   worstRoutes: WorstRouteItem[];
   statusDistribution: StatusDistribution;
 };
@@ -62,5 +65,3 @@ export type GetDashboardOverviewResult =
   | { kind: 'ok'; data: DashboardOverview }
   | { kind: 'project-not-found'; projectId: string }
   | { kind: 'unsupported-metric'; metricName: string };
-
-

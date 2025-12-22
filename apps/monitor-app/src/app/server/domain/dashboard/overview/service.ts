@@ -13,11 +13,13 @@ import type {
   DailySeriesPoint,
   GetDashboardOverviewQuery,
   GetDashboardOverviewResult,
+  MetricName,
   MetricOverviewItem,
   QuantileSummary,
   StatusDistribution,
   WorstRouteItem
 } from '@/app/server/domain/dashboard/overview/types';
+import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -65,11 +67,19 @@ export class DashboardOverviewService {
       deviceType: query.deviceType
     } as const;
 
-    const [metricsRows, seriesRows, worstRouteRows, distributionRows] = await Promise.all([
+    // Fetch time series for all metrics in parallel
+    const allMetricsSeriesPromises = METRIC_NAMES.map((metric) =>
+      fetchMetricDailySeries(filters, metric).then((rows) => ({
+        metric,
+        rows
+      }))
+    );
+
+    const [metricsRows, worstRouteRows, distributionRows, ...allMetricsSeries] = await Promise.all([
       fetchMetricsOverview(filters),
-      fetchMetricDailySeries(filters, query.selectedMetric),
       fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
-      fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds)
+      fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
+      ...allMetricsSeriesPromises
     ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
@@ -84,17 +94,22 @@ export class DashboardOverviewService {
       };
     });
 
-    const timeSeries: DailySeriesPoint[] = seriesRows.map((row) => {
-      const quantiles = toQuantileSummary(row.percentiles);
-      const p75 = quantiles?.p75;
-      const status = typeof p75 === 'number' ? getRatingForValue(query.selectedMetric, p75) : null;
-      return {
-        date: row.event_date,
-        sampleSize: Number(row.sample_size || 0),
-        quantiles,
-        status
-      };
-    });
+    // Build time series map for all metrics
+    const timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]> = {} as Record<MetricName, DailySeriesPoint[]>;
+
+    for (const { metric, rows } of allMetricsSeries) {
+      timeSeriesByMetric[metric] = rows.map((row) => {
+        const quantiles = toQuantileSummary(row.percentiles);
+        const p75 = quantiles?.p75;
+        const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
+        return {
+          date: row.event_date,
+          sampleSize: Number(row.sample_size || 0),
+          quantiles,
+          status
+        };
+      });
+    }
 
     const worstRoutes: WorstRouteItem[] = worstRouteRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
@@ -116,20 +131,20 @@ export class DashboardOverviewService {
 
     return {
       kind: 'ok',
-      data: mapDashboardOverview(metricOverview, timeSeries, worstRoutes, statusDistribution)
+      data: mapDashboardOverview(metricOverview, timeSeriesByMetric, worstRoutes, statusDistribution)
     };
   }
 }
 
 function mapDashboardOverview(
   metricOverview: MetricOverviewItem[],
-  timeSeries: DailySeriesPoint[],
+  timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]>,
   worstRoutes: WorstRouteItem[],
   statusDistribution: StatusDistribution
 ): DashboardOverview {
   return {
     metricOverview,
-    timeSeries,
+    timeSeriesByMetric,
     worstRoutes,
     statusDistribution
   };

@@ -7,7 +7,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQueryParam } from '@/lib/use-query-params';
+import { useQueryState } from 'nuqs';
+import { parseAsString } from 'nuqs';
 
 const timeRanges = [
   { value: '7d', label: 'Last 7 days' },
@@ -18,8 +19,10 @@ const timeRanges = [
 const DEFAULT_TIME_RANGE = '7d';
 
 export function TimeRangeSelector() {
-  const [timeRange, setTimeRange] = useQueryParam('timeRange', DEFAULT_TIME_RANGE);
-
+  const [timeRange, setTimeRange] = useQueryState(
+    'timeRange',
+    parseAsString.withDefault(DEFAULT_TIME_RANGE).withOptions({ shallow: false })
+  );
   const handleTimeRangeChange = (value: string) => {
     setTimeRange(value);
   };

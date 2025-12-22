@@ -5,7 +5,8 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Monitor, Smartphone, Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { useQueryParam } from '@/lib/use-query-params';
+import { useQueryState } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
 
 type DeviceType = 'all' | 'desktop' | 'mobile';
 
@@ -16,7 +17,10 @@ const devices: { value: DeviceType; label: string; shortLabel: string; icon: Rea
 ];
 
 export function DeviceSelector() {
-  const [deviceType, setDeviceType] = useQueryParam('deviceType', 'all');
+  const [deviceType, setDeviceType] = useQueryState(
+    'deviceType',
+    parseAsStringEnum(['all', 'desktop', 'mobile']).withDefault('all').withOptions({ shallow: false })
+  );
 
   const handleDeviceChange = (value: DeviceType) => {
     setDeviceType(value);
