@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/app-router.tsx', 'src/pages-router.tsx'],
   format: ['cjs', 'esm'],
   dts: true,
   splitting: false,
@@ -9,5 +9,5 @@ export default defineConfig({
   sourcemap: true,
   minify: true,
   treeshake: true,
-  external: ['react', 'react-dom']
+  external: ['react', 'react-dom', 'next', 'next/*']
 });
