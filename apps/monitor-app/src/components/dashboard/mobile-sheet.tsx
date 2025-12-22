@@ -6,12 +6,12 @@ import { Menu, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
-import { useSession } from '@/app/hooks/use-session';
+import { useUser } from '@/app/hooks/use-session';
 import { NavItem } from '@/components/dashboard/nav-items';
 import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
-  const { user } = useSession();
+  const user = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 

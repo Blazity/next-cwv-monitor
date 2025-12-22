@@ -9,5 +9,5 @@ export async function signOut() {
     headers: await headers()
   });
 
-  redirect('/sign-in');
+  redirect('/login');
 }

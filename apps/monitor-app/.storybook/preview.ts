@@ -1,5 +1,8 @@
 import type { Preview } from '@storybook/nextjs-vite';
+import { initialize, mswLoader } from 'msw-storybook-addon'
 import '@/app/globals.css';
+
+initialize();
 
 const preview: Preview = {
   parameters: {
@@ -15,8 +18,9 @@ const preview: Preview = {
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
       test: 'todo'
-    }
-  }
+    },
+  },
+  loaders: [mswLoader],
 };
 
 export default preview;

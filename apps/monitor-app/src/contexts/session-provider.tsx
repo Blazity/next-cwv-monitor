@@ -1,16 +1,18 @@
 'use client';
 
-import { type ReactNode } from 'react';
-import type { User, Session } from 'better-auth';
+import { SessionData } from '@/lib/auth-client';
+import { useMemo } from 'react';
 import { SessionContext } from '@/contexts/session-context';
 
-type SessionProviderProps = {
-  user: User;
-  session: Session;
-  children: ReactNode;
-};
+export function SessionProvider({ initialSessionData, children }: {
+  initialSessionData: SessionData | null;
+  children: React.ReactNode;
+}) {
+  const value = useMemo(() => initialSessionData, [initialSessionData]);
 
-export function SessionProvider({ user, session, children }: SessionProviderProps) {
-  // eslint-disable-next-line @eslint-react/no-unstable-context-value
-  return <SessionContext value={{ user, session }}>{children}</SessionContext>;
+  return (
+    <SessionContext value={value}>
+      {children}
+    </SessionContext>
+  );
 }
