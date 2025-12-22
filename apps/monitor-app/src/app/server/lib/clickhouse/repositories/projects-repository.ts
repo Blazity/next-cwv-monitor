@@ -54,3 +54,27 @@ export async function listProjects(): Promise<ProjectRow[]> {
     ORDER BY created_at DESC
   `;
 }
+
+export type ProjectWithViews = ProjectRow & {
+  trackedViews: number;
+};
+
+export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
+  return sql<ProjectWithViews>`
+    SELECT 
+      p.id, 
+      p.slug, 
+      p.name, 
+      p.created_at, 
+      p.updated_at,
+      toUInt64(stats.count) as trackedViews
+    FROM projects AS p FINAL
+    LEFT JOIN (
+      SELECT project_id, count() as count 
+      FROM cwv_events 
+      GROUP BY project_id
+    ) AS stats ON p.id = stats.project_id
+    ORDER BY p.created_at DESC
+  `;
+}
+
