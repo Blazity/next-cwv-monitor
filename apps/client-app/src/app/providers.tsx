@@ -1,6 +1,6 @@
 'use client';
 
-import { CWVMonitor } from 'cwv-monitor-sdk';
+import { CWVMonitor } from 'cwv-monitor-sdk/app-router';
 import { env } from '../env';
 
 interface Props {
