@@ -39,8 +39,16 @@ const METRIC_INFO: Record<
   }
 };
 
-const CORE_WEB_VITALS = METRIC_NAMES.filter((metric) => METRIC_INFO[metric].isCoreWebVital) as MetricName[];
-const OTHER_METRICS = METRIC_NAMES.filter((metric) => !METRIC_INFO[metric].isCoreWebVital) as MetricName[];
+function isCoreWebVital(metric: MetricName): metric is MetricName {
+  return METRIC_INFO[metric].isCoreWebVital;
+}
+
+function isNotCoreWebVital(metric: MetricName): metric is MetricName {
+  return !isCoreWebVital(metric);
+}
+
+const CORE_WEB_VITALS = METRIC_NAMES.filter(isCoreWebVital);
+const OTHER_METRICS = METRIC_NAMES.filter(isNotCoreWebVital);
 
 type MetricSelectorProps = {
   selected: MetricName;

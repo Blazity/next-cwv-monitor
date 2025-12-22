@@ -88,11 +88,13 @@ export class DashboardOverviewService {
     });
 
     // Build time series map for all metrics
-    const timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]> = {} as Record<MetricName, DailySeriesPoint[]>;
-
-    for (const metric of METRIC_NAMES) {
-      timeSeriesByMetric[metric] = [];
-    }
+    const timeSeriesByMetric = METRIC_NAMES.reduce(
+      (acc, metric) => {
+        acc[metric] = [];
+        return acc;
+      },
+      {} as Record<MetricName, DailySeriesPoint[]>
+    );
 
     for (const row of allMetricsSeriesRows) {
       const metric = row.metric_name as MetricName;
