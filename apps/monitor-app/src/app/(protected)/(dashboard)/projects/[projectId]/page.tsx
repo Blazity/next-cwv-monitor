@@ -1,9 +1,10 @@
+import { Suspense } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
 import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metric';
 import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
-import { unstable_cache } from 'next/cache';
+import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
 import { loadDashboardSearchParams } from '@/lib/search-params';
 import type { TimeRange } from '@/app/server/domain/dashboard/overview/types';
@@ -11,25 +12,27 @@ import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashb
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-const getCachedOverview = unstable_cache(
-  async (projectId: string, deviceType: DeviceType, timeRange: TimeRange) => {
-    const dateRange = timeRangeToDateRange(timeRange);
+async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRange) {
+  'use cache';
 
-    const query = buildDashboardOverviewQuery({
-      projectId,
-      deviceType,
-      range: dateRange
-    });
+  cacheLife({
+    stale: 300,
+    revalidate: 600,
+    expire: 86_400
+  });
 
-    return dashboardOverviewService.getOverview(query);
-  },
-  ['dashboard-overview'],
-  {
-    revalidate: 60
-  }
-);
+  const dateRange = timeRangeToDateRange(timeRange);
 
-async function ProjectPage({
+  const query = buildDashboardOverviewQuery({
+    projectId,
+    deviceType,
+    range: dateRange
+  });
+
+  return await dashboardOverviewService.getOverview(query);
+}
+
+async function ProjectPageContent({
   params,
   searchParams
 }: {
@@ -61,4 +64,25 @@ async function ProjectPage({
   );
 }
 
-export default ProjectPage;
+function ProjectPageLoading() {
+  return (
+    <div>
+      <PageHeader title="Project" description="Project description" />
+      <div className="mt-6 space-y-6">
+        <div className="bg-muted h-64 animate-pulse rounded-lg" />
+        <div className="bg-muted h-96 animate-pulse rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export default function ProjectPage(props: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  return (
+    <Suspense fallback={<ProjectPageLoading />}>
+      <ProjectPageContent {...props} />
+    </Suspense>
+  );
+}
