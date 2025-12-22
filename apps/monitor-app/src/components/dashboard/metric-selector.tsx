@@ -64,6 +64,7 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
               <TooltipTrigger asChild>
                 <button
                   role="tab"
+                  type="button"
                   aria-selected={selected === metric}
                   onClick={() => onChange(metric)}
                   className={cn(

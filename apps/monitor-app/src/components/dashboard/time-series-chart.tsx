@@ -37,11 +37,6 @@ type ChartDataPoint = {
 };
 
 export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartProps) {
-  const thresholds = getMetricThresholds(metric);
-  if (!thresholds) {
-    return <div>Invalid metric: {metric}</div>;
-  }
-
   const chartData = React.useMemo(() => {
     return data.map((point): ChartDataPoint => {
       const value = point.quantiles?.p75 ?? null;
@@ -61,7 +56,11 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
     });
   }, [data]);
 
-  // Calculate Y axis domain
+  const thresholds = getMetricThresholds(metric);
+  if (!thresholds) {
+    return <div>Invalid metric: {metric}</div>;
+  }
+
   const maxValue = Math.max(
     ...data.map((d) => d.quantiles?.p75 ?? null).filter((v): v is number => v !== null),
     thresholds.needsImprovement * 1.1
@@ -117,8 +116,8 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
           />
           <RechartsTooltip
             content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const point = payload[0]?.payload as ChartDataPoint | undefined;
+              if (!active || payload.length === 0) return null;
+              const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
 
               if (point.value === null) {

@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TimeSeriesChart } from './time-series-chart';
-import { MetricSelector } from './metric-selector';
+import { TimeSeriesChart } from '@/components/dashboard/time-series-chart';
+import { MetricSelector } from '@/components/dashboard/metric-selector';
 import type { DashboardOverview } from '@/app/server/domain/dashboard/overview/types';
 import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
 
@@ -19,7 +19,7 @@ export function TrendChartByMetric({
   title = 'Trend Over Time'
 }: TrendChartByMetricProps) {
   const [selectedMetric, setSelectedMetric] = useState<MetricName>(initialMetric);
-  const data = timeSeriesByMetric[selectedMetric] || [];
+  const data = timeSeriesByMetric[selectedMetric];
 
   return (
     <Card className="bg-card border-border">

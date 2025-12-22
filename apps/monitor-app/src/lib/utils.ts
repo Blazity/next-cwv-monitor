@@ -8,6 +8,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const daysToNumber = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90
+};
+
 export function validatePasswordStrength(password: string): { valid: true } | { valid: false; message: string } {
   const result = zxcvbn(password);
 
@@ -47,7 +53,7 @@ export function timeRangeToDateRange(timeRange: TimeRange): DateRange {
   end.setHours(23, 59, 59, 999);
 
   const start = new Date(end);
-  const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+  const days = daysToNumber[timeRange];
   start.setDate(start.getDate() - days);
   start.setHours(0, 0, 0, 0);
 

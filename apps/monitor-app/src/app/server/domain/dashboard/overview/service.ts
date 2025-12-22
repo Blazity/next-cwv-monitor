@@ -19,7 +19,6 @@ import type {
   StatusDistribution,
   WorstRouteItem
 } from '@/app/server/domain/dashboard/overview/types';
-import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -92,10 +91,6 @@ export class DashboardOverviewService {
 
     for (const row of allMetricsSeriesRows) {
       const metric = row.metric_name as MetricName;
-      if (!timeSeriesByMetric[metric]) {
-        timeSeriesByMetric[metric] = [];
-      }
-
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
       const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
