@@ -6,50 +6,51 @@ const meta: Meta<typeof QuickStats> = {
   title: 'Dashboard/QuickStats',
   component: QuickStats,
   parameters: {
-    layout: 'padded',
+    layout: 'padded'
   },
   tags: ['autodocs'],
   argTypes: {
     selectedMetric: {
       control: 'select',
-      options: ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] as MetricName[],
-    },
-  },
+      options: ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] as MetricName[]
+    }
+  }
 };
 
 export default meta;
 type Story = StoryObj<typeof QuickStats>;
 
 const baseData = {
-    statusDistribution: {
-      good: 45,
-      'needs-improvement': 12,
-      poor: 5,
-    },
-    timeRangeLabel: '7 Days',
-    totalViews: 1_250_000,
-    viewTrend: 12.5,
+  timeRangeLabel: '7 Days',
+  totalViews: 1_250_000,
+  viewTrend: 12.5
 };
-  
 
+const baseStatusDistribution = {
+  good: 45,
+  'needs-improvement': 12,
+  poor: 5
+};
 
 export const WithTrends: Story = {
-    args: {
-      projectId: 'project-123',
-      selectedMetric: 'LCP',
-      data: baseData,
-    },
+  args: {
+    projectId: 'project-123',
+    selectedMetric: 'LCP',
+    data: baseData,
+    statusDistribution: baseStatusDistribution
+  }
 };
-  
+
 export const NegativeTrend: Story = {
-    args: {
-      ...WithTrends.args,
-      data: {
-        ...baseData, // No optional chaining or assertions needed
-        totalViews: 8500,
-        viewTrend: -4.2,
-      },
+  args: {
+    ...WithTrends.args,
+    data: {
+      ...baseData,
+      totalViews: 8500,
+      viewTrend: -4.2
     },
+    statusDistribution: baseStatusDistribution
+  }
 };
 
 export const ZeroState: Story = {
@@ -57,14 +58,14 @@ export const ZeroState: Story = {
     projectId: 'project-empty',
     selectedMetric: 'CLS',
     data: {
-      statusDistribution: {
-        good: 0,
-        'needs-improvement': 0,
-        poor: 0,
-      },
       timeRangeLabel: '24 Hours',
       totalViews: 0,
-      viewTrend: 0,
+      viewTrend: 0
     },
-  },
+    statusDistribution: {
+      good: 0,
+      'needs-improvement': 0,
+      poor: 0
+    }
+  }
 };
