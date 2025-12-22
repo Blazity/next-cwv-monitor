@@ -19,6 +19,7 @@ import type {
   StatusDistribution,
   WorstRouteItem
 } from '@/app/server/domain/dashboard/overview/types';
+import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -88,6 +89,10 @@ export class DashboardOverviewService {
 
     // Build time series map for all metrics
     const timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]> = {} as Record<MetricName, DailySeriesPoint[]>;
+
+    for (const metric of METRIC_NAMES) {
+      timeSeriesByMetric[metric] = [];
+    }
 
     for (const row of allMetricsSeriesRows) {
       const metric = row.metric_name as MetricName;
