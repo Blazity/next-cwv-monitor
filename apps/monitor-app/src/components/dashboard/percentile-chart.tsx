@@ -1,6 +1,6 @@
+import { MetricName } from '@/app/server/domain/dashboard/overview/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { formatMetricValue, Unit } from '@/lib/cwv-data';
-import { cn } from '@/lib/utils';
+import { cn, formatMetricValue } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 
 type StatusType = 'poor' | 'needs-improvement' | 'good';
@@ -10,12 +10,13 @@ type Props = {
   fixedPercentile?: boolean;
   title: string;
   value: number;
-  unit: Unit;
+  metric: MetricName;
 };
 
-export default function PercentileChart({ percentiles, thresholds, title, unit, fixedPercentile, value }: Props) {
+export default function PercentileChart({ percentiles, thresholds, title, metric, fixedPercentile, value }: Props) {
   const maxPercentileValue = Math.max(...percentiles.map((p) => p.value));
   const activeTileValue = percentiles.filter((p) => p.value > value).toSorted((a, b) => a.value - b.value)[0].value;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -53,14 +54,14 @@ export default function PercentileChart({ percentiles, thresholds, title, unit, 
                   {p.label}
                   {!fixedPercentile && activeTileValue === p.value && ' (selected)'}
                 </span>
-                <span className="text-foreground relative font-mono text-sm">{formatMetricValue(unit, p.value)}</span>
+                <span className="text-foreground relative font-mono text-sm">{formatMetricValue(metric, p.value)}</span>
               </div>
             );
           })}
           <div className="border-border mt-3 border-t pt-2">
             <div className="text-muted-foreground text-xs">
-              Thresholds: Good ≤ {formatMetricValue(unit, thresholds.good)}, Poor &gt;{' '}
-              {formatMetricValue(unit, thresholds.needsImprovement)}
+              Thresholds: Good ≤ {formatMetricValue(metric, thresholds.good)}, Poor &gt;{' '}
+              {formatMetricValue(metric, thresholds.needsImprovement)}
             </div>
           </div>
         </div>

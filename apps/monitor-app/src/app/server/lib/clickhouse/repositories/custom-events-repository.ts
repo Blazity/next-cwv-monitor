@@ -90,4 +90,3 @@ export async function fetchCustomEvents(filters: CustomEventFilters): Promise<Cu
 
   return query;
 }
-

@@ -27,6 +27,6 @@ export const Primary: Story = {
     title: 'My test tooltip',
     fixedPercentile: true,
     value: 300,
-    unit: 'second'
+    metric: 'LCP'
   }
 };

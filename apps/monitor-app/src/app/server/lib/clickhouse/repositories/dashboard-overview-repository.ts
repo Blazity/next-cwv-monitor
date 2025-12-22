@@ -1,8 +1,8 @@
+import { MetricName } from '@/app/server/domain/dashboard/overview/types';
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { DeviceType } from '@/app/server/lib/device-types';
 
 export type OverviewDeviceFilter = DeviceType | 'all';
-export type MetricName = 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB';
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -137,4 +137,3 @@ export async function fetchRouteStatusDistribution(
     GROUP BY status
   `;
 }
-

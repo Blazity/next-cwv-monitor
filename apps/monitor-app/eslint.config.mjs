@@ -5,12 +5,12 @@ import prettier from 'eslint-config-prettier/flat';
 import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import eslintReact from '@eslint-react/eslint-plugin';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   reactRefresh.configs.next,
-  prettier,
   {
     ...eslintPluginUnicorn.configs.recommended,
     extends: [eslintReact.configs['recommended-typescript']],
@@ -29,6 +29,7 @@ const eslintConfig = defineConfig([
       }
     },
     rules: {
+      indent: 'error',
       '@eslint-react/no-nested-component-definitions': 'warn',
       '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
       '@eslint-react/no-unstable-context-value': 'error',
@@ -52,6 +53,8 @@ const eslintConfig = defineConfig([
       ]
     }
   },
+  { ...eslintPluginPrettierRecommended, ignores: ['components/ui'] },
+  prettier,
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

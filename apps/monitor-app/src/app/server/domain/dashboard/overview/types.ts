@@ -62,5 +62,3 @@ export type GetDashboardOverviewResult =
   | { kind: 'ok'; data: DashboardOverview }
   | { kind: 'project-not-found'; projectId: string }
   | { kind: 'unsupported-metric'; metricName: string };
-
-
