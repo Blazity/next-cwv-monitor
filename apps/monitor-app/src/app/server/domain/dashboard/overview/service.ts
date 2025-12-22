@@ -1,7 +1,7 @@
 import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import {
   fetchMetricsOverview,
-  fetchMetricDailySeries,
+  fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes
 } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
@@ -67,19 +67,12 @@ export class DashboardOverviewService {
       deviceType: query.deviceType
     } as const;
 
-    // Fetch time series for all metrics in parallel
-    const allMetricsSeriesPromises = METRIC_NAMES.map((metric) =>
-      fetchMetricDailySeries(filters, metric).then((rows) => ({
-        metric,
-        rows
-      }))
-    );
-
-    const [metricsRows, worstRouteRows, distributionRows, ...allMetricsSeries] = await Promise.all([
+    // Fetch all metrics time series in a single query
+    const [metricsRows, worstRouteRows, distributionRows, allMetricsSeriesRows] = await Promise.all([
       fetchMetricsOverview(filters),
       fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
       fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-      ...allMetricsSeriesPromises
+      fetchAllMetricsDailySeries(filters)
     ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
@@ -97,17 +90,21 @@ export class DashboardOverviewService {
     // Build time series map for all metrics
     const timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]> = {} as Record<MetricName, DailySeriesPoint[]>;
 
-    for (const { metric, rows } of allMetricsSeries) {
-      timeSeriesByMetric[metric] = rows.map((row) => {
-        const quantiles = toQuantileSummary(row.percentiles);
-        const p75 = quantiles?.p75;
-        const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
-        return {
-          date: row.event_date,
-          sampleSize: Number(row.sample_size || 0),
-          quantiles,
-          status
-        };
+    for (const row of allMetricsSeriesRows) {
+      const metric = row.metric_name as MetricName;
+      if (!timeSeriesByMetric[metric]) {
+        timeSeriesByMetric[metric] = [];
+      }
+
+      const quantiles = toQuantileSummary(row.percentiles);
+      const p75 = quantiles?.p75;
+      const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
+
+      timeSeriesByMetric[metric].push({
+        date: row.event_date,
+        sampleSize: Number(row.sample_size || 0),
+        quantiles,
+        status
       });
     }
 
