@@ -18,6 +18,7 @@ import { getMetricThresholds } from '@/app/server/lib/cwv-thresholds';
 import type { DashboardOverview } from '@/app/server/domain/dashboard/overview/types';
 import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
+import { useMemo } from 'react';
 
 type DailySeriesPoint = DashboardOverview['timeSeriesByMetric'][MetricName][number];
 
@@ -36,7 +37,7 @@ type ChartDataPoint = {
 };
 
 export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartProps) {
-  const chartData = React.useMemo(() => {
+  const chartData = useMemo(() => {
     return data.map((point): ChartDataPoint => {
       const value = point.quantiles?.p75 ?? null;
       const date = new Date(point.date);

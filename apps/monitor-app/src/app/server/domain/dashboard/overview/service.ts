@@ -128,9 +128,14 @@ export class DashboardOverviewService {
       statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
+    const timeSeriesByMetricRecord = Object.fromEntries(timeSeriesByMetric.entries()) as Record<
+      MetricName,
+      DailySeriesPoint[]
+    >;
+
     return {
       kind: 'ok',
-      data: mapDashboardOverview(metricOverview, timeSeriesByMetric, worstRoutes, statusDistribution)
+      data: mapDashboardOverview(metricOverview, timeSeriesByMetricRecord, worstRoutes, statusDistribution)
     };
   }
 }
