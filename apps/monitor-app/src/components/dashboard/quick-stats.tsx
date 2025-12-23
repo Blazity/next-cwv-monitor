@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Route, TrendingDown, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
-import { MetricName } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
-import { QuickStatsData, StatusDistribution } from '@/app/server/domain/dashboard/overview/types';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, Route, TrendingDown, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { MetricName } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
+import { QuickStatsData, StatusDistribution } from "@/app/server/domain/dashboard/overview/types";
 
 type QuickStatsProps = {
   projectId: string;
@@ -25,7 +25,7 @@ export function QuickStats({ projectId, selectedMetric, data, statusDistribution
             <StatusRow label="Good" count={statusDistribution.good} dotClass="bg-status-good" />
             <StatusRow
               label="Needs improvement"
-              count={statusDistribution['needs-improvement']}
+              count={statusDistribution["needs-improvement"]}
               dotClass="bg-status-needs-improvement"
             />
             <StatusRow label="Poor" count={statusDistribution.poor} dotClass="bg-status-poor" />
@@ -61,14 +61,14 @@ export function QuickStats({ projectId, selectedMetric, data, statusDistribution
           <div className="space-y-3">
             <div className="flex items-baseline gap-2">
               <span className="text-foreground font-mono text-2xl font-semibold">
-                {Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(totalViews)}
+                {Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 2 }).format(totalViews)}
               </span>
               <div
-                className={`flex items-center gap-0.5 text-xs ${viewTrend < 0 ? 'text-status-poor' : 'text-status-good'}`}
+                className={`flex items-center gap-0.5 text-xs ${viewTrend < 0 ? "text-status-poor" : "text-status-good"}`}
               >
                 {viewTrend < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
                 <span>
-                  {viewTrend > 0 ? '+' : ''}
+                  {viewTrend > 0 ? "+" : ""}
                   {viewTrend}%
                 </span>
               </div>
@@ -89,7 +89,7 @@ function StatusRow({ label, count, dotClass }: { label: string; count: number; d
         <span className="text-muted-foreground text-sm">{label}</span>
       </div>
       <span className="text-foreground font-mono text-sm">
-        {count.toLocaleString()} {count === 1 ? 'route' : 'routes'}
+        {count.toLocaleString()} {count === 1 ? "route" : "routes"}
       </span>
     </div>
   );
