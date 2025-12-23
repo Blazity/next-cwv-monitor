@@ -11,10 +11,17 @@ export type CWVConfig = {
   sampleRate?: number;
 };
 
+export type CWVView = {
+  route: string;
+  path: string;
+};
+
 export type CWVRuntime = {
   ingestQueue: IngestQueue;
   getSessionId: () => string;
   rotateSessionId: () => string;
+  getView: () => CWVView;
+  onViewChange: (view: CWVView) => void;
 };
 
 export type CWVContextValue = {
@@ -33,6 +40,8 @@ export const useCWV = (): CWVContextValue => {
 export const CWVProvider = ({ children, config }: PropsWithChildren<{ config: CWVConfig }>) => {
   const ingestQueue = useMemo(() => new IngestQueue(), []);
   const sessionIdRef = useRef<string | undefined>(undefined);
+  const viewRef = useRef<CWVView | undefined>(undefined);
+  const lastTrackedPathRef = useRef<string | undefined>(undefined);
 
   const getSessionId = useCallback(() => {
     sessionIdRef.current ??= generateSessionId();
@@ -44,9 +53,41 @@ export const CWVProvider = ({ children, config }: PropsWithChildren<{ config: CW
     return sessionIdRef.current;
   }, []);
 
+  const getView = useCallback((): CWVView => {
+    if (viewRef.current) return viewRef.current;
+    if (typeof window === 'undefined') return { route: '/', path: '/' };
+    const path = window.location.pathname || '/';
+    return { route: path, path };
+  }, []);
+
+  const onViewChange = useCallback(
+    (nextView: CWVView): void => {
+      const route = nextView.route?.trim() || '/';
+      const path = nextView.path?.trim() || '/';
+
+      viewRef.current = { route, path };
+
+      if (typeof window === 'undefined') return;
+      if (path === lastTrackedPathRef.current) return;
+      lastTrackedPathRef.current = path;
+
+      const sessionId = rotateSessionId();
+      ingestQueue.primeCwvSamplingDecision(sessionId);
+
+      ingestQueue.enqueueCustomEvent({
+        name: '$page_view',
+        sessionId,
+        route,
+        path,
+        recordedAt: new Date().toISOString()
+      });
+    },
+    [ingestQueue, rotateSessionId]
+  );
+
   const runtime = useMemo(
-    () => ({ ingestQueue, getSessionId, rotateSessionId }),
-    [getSessionId, ingestQueue, rotateSessionId]
+    () => ({ ingestQueue, getSessionId, rotateSessionId, getView, onViewChange }),
+    [getSessionId, getView, ingestQueue, onViewChange, rotateSessionId]
   );
 
   const value = useMemo(() => ({ config, runtime }), [config, runtime]);

@@ -1,14 +1,16 @@
+/* eslint-disable react-refresh/only-export-components */
 import { CWVConfig, CWVProvider as CWVContextProvider } from './cwv-context';
-import { useMetrics } from './hooks/use-metrics';
 import { useIngestQueueLifecycle } from './hooks/use-ingest-queue';
-import { usePageViewTracking } from './hooks/use-page-view-tracking';
+import { useMetrics } from './hooks/use-metrics';
+import { PagesRouterRouteTracker } from './next-route-tracker/pages-router';
+
+export { useTrackCustomEvent } from './hooks/use-track-custom-event';
 
 const HookCaller = () => {
   useIngestQueueLifecycle();
-  usePageViewTracking();
   useMetrics();
 
-  return null;
+  return <PagesRouterRouteTracker />;
 };
 
 type CWVMonitorProps = CWVConfig & {

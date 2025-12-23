@@ -44,13 +44,12 @@ async function ProjectPageContent({
 
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
-  if (overview.kind !== 'ok') {
-    return (
-      <div>
-        <PageHeader title="Project" description="Project description" />
-        <div>Error: {overview.kind}</div>
-      </div>
-    );
+   if (result.kind === 'project-not-found') {
+    notFound();
+  }
+
+  if (result.kind !== 'ok') {
+    throw new Error(`Failed to load dashboard: ${result.kind}`);
   }
 
   const { worstRoutes, timeSeriesByMetric } = overview.data;
@@ -60,6 +59,13 @@ async function ProjectPageContent({
       <PageHeader title="Project" description="Project description" />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
+      <QuickStats
+        projectId={projectId}
+        selectedMetric={query.selectedMetric}
+        data={data.quickStats}
+        statusDistribution={data.statusDistribution}
+      />
+
     </div>
   );
 }

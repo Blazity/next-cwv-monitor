@@ -96,9 +96,13 @@ export class IngestQueue {
 
     const sessionId = event.sessionId;
     if (sessionId) {
-      if (!this.isCwvSampledForSession(sessionId)) return;
+      if (!this.isCwvSampledForSession(sessionId)) {
+        return;
+      }
     } else {
-      if (!this.randomlySampleCwv()) return;
+      if (!this.randomlySampleCwv()) {
+        return;
+      }
     }
 
     this.cwvEvents.add(event);
