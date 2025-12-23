@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   transpilePackages: ['@t3-oss/env-nextjs', '@t3-oss/env-core', 'cwv-monitor-contracts'],
   serverExternalPackages: ['pino'],
+  cacheComponents: true,
   headers() {
     return [
       {

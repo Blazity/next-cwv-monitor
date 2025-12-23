@@ -3,7 +3,7 @@ import type { Mock } from 'vitest';
 import * as React from 'react';
 import { render, act } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
-import { CWVMonitor, useTrackCustomEvent } from '../index';
+import { CWVMonitor, useTrackCustomEvent } from '../app-router';
 vi.mock('web-vitals', () => ({
   onCLS: vi.fn(),
   onFCP: vi.fn(),

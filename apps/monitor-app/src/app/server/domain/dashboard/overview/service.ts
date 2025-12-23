@@ -1,7 +1,7 @@
 import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import {
   fetchMetricsOverview,
-  fetchMetricDailySeries,
+  fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes
 } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
@@ -13,11 +13,14 @@ import type {
   DailySeriesPoint,
   GetDashboardOverviewQuery,
   GetDashboardOverviewResult,
+  MetricName,
   MetricOverviewItem,
   QuantileSummary,
   StatusDistribution,
-  WorstRouteItem
+  WorstRouteItem,
+  QuickStatsData
 } from '@/app/server/domain/dashboard/overview/types';
+import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -34,6 +37,10 @@ function toQuantileSummary(values: number[] | undefined): QuantileSummary | null
   };
 }
 
+function isMetricName(value: string): value is MetricName {
+  return METRIC_NAMES.includes(value as MetricName);
+}
+
 function emptyStatusDistribution(): StatusDistribution {
   return {
     good: 0,
@@ -44,6 +51,14 @@ function emptyStatusDistribution(): StatusDistribution {
 
 function isRating(value: string | null | undefined): value is WebVitalRatingV1 {
   return value === 'good' || value === 'needs-improvement' || value === 'poor';
+}
+
+function getPreviousPeriod(start: Date, end: Date): { start: Date; end: Date } {
+  const duration = end.getTime() - start.getTime();
+  return {
+    start: new Date(start.getTime() - duration),
+    end: new Date(end.getTime() - duration)
+  };
 }
 
 export class DashboardOverviewService {
@@ -65,12 +80,21 @@ export class DashboardOverviewService {
       deviceType: query.deviceType
     } as const;
 
-    const [metricsRows, seriesRows, worstRouteRows, distributionRows] = await Promise.all([
-      fetchMetricsOverview(filters),
-      fetchMetricDailySeries(filters, query.selectedMetric),
-      fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
-      fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds)
-    ]);
+    const previousRange = getPreviousPeriod(query.range.start, query.range.end);
+    const previousFilters = {
+      ...filters,
+      start: toDateOnlyString(previousRange.start),
+      end: toDateOnlyString(previousRange.end)
+    };
+
+    const [metricsRows, worstRouteRows, previousMetricsRows, distributionRows, allMetricsSeriesRows] =
+      await Promise.all([
+        fetchMetricsOverview(filters),
+        fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
+        fetchMetricsOverview(previousFilters),
+        fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
+        fetchAllMetricsDailySeries(filters)
+      ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
@@ -84,17 +108,24 @@ export class DashboardOverviewService {
       };
     });
 
-    const timeSeries: DailySeriesPoint[] = seriesRows.map((row) => {
+    const timeSeriesByMetric = new Map(METRIC_NAMES.map((metric) => [metric, [] as DailySeriesPoint[]]));
+
+    for (const row of allMetricsSeriesRows) {
+      const metric = row.metric_name;
+
+      if (!isMetricName(metric)) continue;
+
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
-      const status = typeof p75 === 'number' ? getRatingForValue(query.selectedMetric, p75) : null;
-      return {
+      const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
+
+      timeSeriesByMetric.get(metric)?.push({
         date: row.event_date,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
         status
-      };
-    });
+      });
+    }
 
     const worstRoutes: WorstRouteItem[] = worstRouteRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
@@ -114,23 +145,44 @@ export class DashboardOverviewService {
       statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
+    const currentTotalViews = metricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
+    const previousTotalViews = previousMetricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
+
+    let viewTrend = 0;
+    if (previousTotalViews > 0) {
+      viewTrend = Math.round(((currentTotalViews - previousTotalViews) / previousTotalViews) * 100);
+    }
+
+    const timeSeriesByMetricRecord = Object.fromEntries(timeSeriesByMetric.entries()) as Record<
+      MetricName,
+      DailySeriesPoint[]
+    >;
+
+    const quickStats: QuickStatsData = {
+      totalViews: currentTotalViews,
+      viewTrend: viewTrend,
+      timeRangeLabel: `${Math.ceil((query.range.end.getTime() - query.range.start.getTime()) / (1000 * 60 * 60 * 24))} Days`
+    };
+
     return {
       kind: 'ok',
-      data: mapDashboardOverview(metricOverview, timeSeries, worstRoutes, statusDistribution)
+      data: mapDashboardOverview(metricOverview, timeSeriesByMetricRecord, worstRoutes, statusDistribution, quickStats)
     };
   }
 }
 
 function mapDashboardOverview(
   metricOverview: MetricOverviewItem[],
-  timeSeries: DailySeriesPoint[],
+  timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]>,
   worstRoutes: WorstRouteItem[],
-  statusDistribution: StatusDistribution
+  statusDistribution: StatusDistribution,
+  quickStats: QuickStatsData
 ): DashboardOverview {
   return {
     metricOverview,
-    timeSeries,
+    timeSeriesByMetric,
     worstRoutes,
-    statusDistribution
+    statusDistribution,
+    quickStats
   };
 }

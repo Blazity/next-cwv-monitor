@@ -5,20 +5,26 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Monitor, Smartphone, Layers } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { useQueryParam } from '@/lib/use-query-params';
+import { useQueryState } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { OVERVIEW_DEVICE_TYPES } from '@/app/server/domain/dashboard/overview/types';
+import type { OverviewDeviceType } from '@/app/server/domain/dashboard/overview/types';
 
-type DeviceType = 'all' | 'desktop' | 'mobile';
-
-const devices: { value: DeviceType; label: string; shortLabel: string; icon: ReactNode }[] = [
+const devices: { value: OverviewDeviceType; label: string; shortLabel: string; icon: ReactNode }[] = [
   { value: 'all', label: 'All devices', shortLabel: 'All', icon: <Layers className="h-3.5 w-3.5" /> },
   { value: 'desktop', label: 'Desktop', shortLabel: 'Desktop', icon: <Monitor className="h-3.5 w-3.5" /> },
   { value: 'mobile', label: 'Mobile', shortLabel: 'Mobile', icon: <Smartphone className="h-3.5 w-3.5" /> }
 ];
 
 export function DeviceSelector() {
-  const [deviceType, setDeviceType] = useQueryParam('deviceType', 'all');
+  const [deviceType, setDeviceType] = useQueryState(
+    'deviceType',
+    parseAsStringEnum([...OVERVIEW_DEVICE_TYPES])
+      .withDefault('all')
+      .withOptions({ shallow: false })
+  );
 
-  const handleDeviceChange = (value: DeviceType) => {
+  const handleDeviceChange = (value: OverviewDeviceType) => {
     setDeviceType(value);
   };
 

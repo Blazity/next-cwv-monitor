@@ -42,6 +42,42 @@ To develop client-sdk you can run
 
 - A custom sendBeacon method that was created using the native fetch API. Thanks to this, the application supports cases where a server-side error occurs and allows you to ensure that the data has been sent.
 - Hook-based custom event tracking (`useTrackCustomEvent`) for correlating product events with CWV.
+- Next.js route detection (App Router + Pages Router) with dynamic route normalization (e.g. `/blog/hello-world` → `/blog/[slug]`).
+
+## Client SDK usage (Next.js)
+
+Use the router-specific entrypoint for best performance and smallest bundle:
+(`cwv-monitor-sdk` root import is intentionally not exported.)
+
+### App Router (`app/`)
+
+```tsx
+'use client';
+
+import { CWVMonitor } from 'cwv-monitor-sdk/app-router';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <CWVMonitor projectId="YOUR_PROJECT_UUID" endpoint="https://your-monitor.example">
+      {children}
+    </CWVMonitor>
+  );
+}
+```
+
+### Pages Router (`pages/`)
+
+```tsx
+import { CWVMonitor } from 'cwv-monitor-sdk/pages-router';
+
+export default function App({ Component, pageProps }: any) {
+  return (
+    <CWVMonitor projectId="YOUR_PROJECT_UUID" endpoint="https://your-monitor.example">
+      <Component {...pageProps} />
+    </CWVMonitor>
+  );
+}
+```
 
 ## ClickHouse Schema
 

@@ -2,9 +2,19 @@
   "name": "cwv-monitor-sdk",
   "type": "module",
   "version": "1.0.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    "./app-router": {
+      "types": "./dist/app-router.d.ts",
+      "import": "./dist/app-router.js",
+      "require": "./dist/app-router.cjs"
+    },
+    "./pages-router": {
+      "types": "./dist/pages-router.d.ts",
+      "import": "./dist/pages-router.js",
+      "require": "./dist/pages-router.cjs"
+    }
+  },
   "scripts": {
     "lint": "eslint",
     "dev": "tsup --watch",
@@ -22,6 +32,7 @@
     "web-vitals": "^5.1.0"
   },
   "peerDependencies": {
+    "next": ">=13",
     "react": ">=18",
     "react-dom": ">=18"
   },

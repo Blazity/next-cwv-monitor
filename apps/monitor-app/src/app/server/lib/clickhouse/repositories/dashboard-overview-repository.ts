@@ -83,6 +83,7 @@ export async function fetchWorstRoutes(
 }
 
 export type MetricDailySeriesRow = {
+  metric_name: string;
   event_date: string;
   percentiles: number[];
   sample_size: string;
@@ -91,10 +92,10 @@ export type MetricDailySeriesRow = {
 export async function fetchMetricDailySeries(
   filters: BaseFilters,
   metricName: MetricName
-): Promise<MetricDailySeriesRow[]> {
+): Promise<Omit<MetricDailySeriesRow, 'metric_name'>[]> {
   const where = buildWhereClause(filters, metricName);
 
-  return sql<MetricDailySeriesRow>`
+  return sql<Omit<MetricDailySeriesRow, 'metric_name'>>`
     SELECT
       event_date,
       quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
@@ -103,6 +104,22 @@ export async function fetchMetricDailySeries(
     ${where}
     GROUP BY event_date
     ORDER BY event_date ASC
+  `;
+}
+
+export async function fetchAllMetricsDailySeries(filters: BaseFilters): Promise<MetricDailySeriesRow[]> {
+  const where = buildWhereClause(filters);
+
+  return sql<MetricDailySeriesRow>`
+    SELECT
+      metric_name,
+      event_date,
+      quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+      toString(countMerge(sample_size)) AS sample_size
+    FROM cwv_daily_aggregates
+    ${where}
+    GROUP BY metric_name, event_date
+    ORDER BY metric_name, event_date ASC
   `;
 }
 
@@ -137,4 +154,3 @@ export async function fetchRouteStatusDistribution(
     GROUP BY status
   `;
 }
-

@@ -1,0 +1,42 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#A855F7" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#22C55E" stop-opacity="0.12"/>
+    </linearGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(520 340) rotate(22) scale(640 420)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-120" y="-120" width="1840" height="1140" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" rx="48" fill="url(#g1)"/>
+  <path d="M180 650C340 520 420 470 600 430C820 380 980 310 1140 190" stroke="#0EA5E9" stroke-width="4" stroke-opacity="0.45"/>
+  <path d="M260 760C430 600 520 540 720 500C940 455 1090 395 1320 240" stroke="#A855F7" stroke-width="4" stroke-opacity="0.40"/>
+  <path d="M110 520C260 420 360 360 530 330C760 290 920 240 1100 120" stroke="#22C55E" stroke-width="4" stroke-opacity="0.38"/>
+
+  <g filter="url(#blur)">
+    <ellipse cx="520" cy="340" rx="560" ry="360" fill="url(#g2)"/>
+  </g>
+
+  <g opacity="0.55">
+    <circle cx="1220" cy="220" r="88" fill="#0EA5E9" fill-opacity="0.14"/>
+    <circle cx="1310" cy="320" r="56" fill="#A855F7" fill-opacity="0.14"/>
+    <circle cx="1200" cy="360" r="40" fill="#22C55E" fill-opacity="0.12"/>
+  </g>
+
+  <g opacity="0.85">
+    <text x="84" y="152" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="44" font-weight="700" fill="#0B1220">
+      CWV Demo Blog
+    </text>
+    <text x="84" y="206" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial" font-size="22" fill="#0B1220" fill-opacity="0.72">
+      Dynamic routes + images to make LCP/CLS/INP easier to observe.
+    </text>
+  </g>
+</svg>
+
+

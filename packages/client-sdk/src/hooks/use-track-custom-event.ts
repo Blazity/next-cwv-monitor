@@ -1,7 +1,6 @@
 import type { CustomEventV1In } from 'cwv-monitor-contracts';
 import { useCallback } from 'react';
 import { useCWV } from '../cwv-context';
-import { getFullPath, getNormalizedRoute } from '../utils/navigation';
 
 export type TrackCustomEventOptions = {
   route?: string;
@@ -13,22 +12,23 @@ export type TrackCustomEvent = (name: string, options?: TrackCustomEventOptions)
 
 export function useTrackCustomEvent(): TrackCustomEvent {
   const { runtime } = useCWV();
-  const { ingestQueue, getSessionId } = runtime;
+  const { ingestQueue, getSessionId, getView } = runtime;
 
   return useCallback<TrackCustomEvent>(
     (name, options) => {
       if (typeof window === 'undefined') return;
+      const view = getView();
 
       const payload: CustomEventV1In = {
         name,
         sessionId: getSessionId(),
-        route: options?.route ?? getNormalizedRoute(),
-        path: options?.path ?? getFullPath(),
+        route: options?.route ?? view.route,
+        path: options?.path ?? view.path,
         recordedAt: options?.recordedAt ?? new Date().toISOString()
       };
 
       ingestQueue.enqueueCustomEvent(payload);
     },
-    [getSessionId, ingestQueue]
+    [getSessionId, getView, ingestQueue]
   );
 }

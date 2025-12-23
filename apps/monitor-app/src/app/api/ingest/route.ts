@@ -8,8 +8,6 @@ import { ipRateLimiter } from '@/app/server/lib/rate-limit';
 import { buildIngestCommand } from '@/app/server/domain/ingest/mappers';
 import { IngestService } from '@/app/server/domain/ingest/service';
 
-export const dynamic = 'force-dynamic';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
