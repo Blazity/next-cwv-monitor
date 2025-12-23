@@ -1,8 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Route, TrendingDown, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { MetricName } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
-import { QuickStatsData, StatusDistribution } from "@/app/server/domain/dashboard/overview/types";
+import { MetricName, QuickStatsData, StatusDistribution } from "@/app/server/domain/dashboard/overview/types";
 
 type QuickStatsProps = {
   projectId: string;

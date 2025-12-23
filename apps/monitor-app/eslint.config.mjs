@@ -5,7 +5,6 @@ import prettier from "eslint-config-prettier/flat";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import eslintReact from "@eslint-react/eslint-plugin";
 import reactRefresh from "eslint-plugin-react-refresh";
-import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -53,7 +52,6 @@ const eslintConfig = defineConfig([
       ]
     }
   },
-  { ...eslintPluginPrettierRecommended, ignores: ["components/ui"] },
   prettier,
   // Override default ignores of eslint-config-next.
   globalIgnores([
