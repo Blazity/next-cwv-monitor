@@ -1,7 +1,7 @@
 export const METRIC_INFO = {
     LCP: {
       name: "Largest Contentful Paint",
-      friendlyLabel: "Loading",
+      friendlyLabel: "Loading speed",
       description: "Measures loading performance - time until the largest content element is visible.",
     },
     INP: {

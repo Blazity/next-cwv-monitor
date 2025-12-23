@@ -58,8 +58,8 @@ async function ProjectPageContent({
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
   return (
-    <div>
-      <PageHeader title="Project" description="Project description" />
+    <div className="space-y-6">
+      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
       <QuickStats
         projectId={projectId}
         selectedMetric="LCP"
@@ -67,8 +67,8 @@ async function ProjectPageContent({
         statusDistribution={statusDistribution}
       />
       <CoreWebVitals metricOverview={metricOverview}/>
-      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
+      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>
   );
 }
@@ -76,7 +76,7 @@ async function ProjectPageContent({
 function ProjectPageLoading() {
   return (
     <div>
-      <PageHeader title="Project" description="Project description" />
+      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
       <div className="mt-6 space-y-6">
         <div className="bg-muted h-64 animate-pulse rounded-lg" />
         <div className="bg-muted h-96 animate-pulse rounded-lg" />
