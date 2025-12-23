@@ -1,4 +1,4 @@
-import { ProjectWithViews } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
 import type { ProjectRow } from '@/app/server/lib/clickhouse/schema';
 
 export type ListProjectsResult = ProjectRow[];

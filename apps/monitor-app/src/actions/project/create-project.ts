@@ -1,20 +1,20 @@
 'use server';
 
 import { CreateProjectService } from '@/app/server/domain/projects/create/service';
-import { createProjectSchema } from '@/app/server/domain/projects/create/schema';
+import { alterProjectSchema } from '@/app/server/domain/projects/create/schema';
 import { redirect } from 'next/navigation';
 import { ArkErrors } from 'arktype';
 
 type ProjectState = {
   errors?: {
-    name?: string;
-    slug?: string;
+    name?: string | string[];
+    slug?: string | string[];
   };
   message?: string | null;
 } | null;
 
 export async function createProjectAction(_prevState: ProjectState, formData: FormData) {
-  const projectInputValidated = createProjectSchema({
+  const projectInputValidated = alterProjectSchema({
     name: formData.get('name'),
     slug: formData.get('slug')
   });
@@ -24,8 +24,8 @@ export async function createProjectAction(_prevState: ProjectState, formData: Fo
 
     return {
       errors: {
-        name: flatErrors.name[0],
-        slug: flatErrors.slug[0]
+        name: flatErrors.name,
+        slug: flatErrors.slug
       },
       message: 'Missing Fields. Failed to Create Project.'
     };

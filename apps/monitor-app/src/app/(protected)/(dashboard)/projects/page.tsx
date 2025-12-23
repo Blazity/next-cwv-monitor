@@ -1,10 +1,10 @@
-import { EmptyState } from '@/app/(protected)/(dashboard)/projects/empty-state';
-import { projectsService } from '@/app/server/domain/projects/list/service';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { ProjectList } from '@/components/dashboard/projects-list';
-import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import { projectsService } from "@/app/server/domain/projects/list/service";
+import { getAuthorizedSession } from "@/app/server/lib/auth-check";
+import { ProjectList } from "@/components/projects/projects-list";
+import { Button } from "@/components/ui/button";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { FolderKanban, Plus } from "lucide-react";
+import Link from "next/link";
 
 export default async function ProjectsPage() {
   await getAuthorizedSession();
@@ -29,7 +29,30 @@ export default async function ProjectsPage() {
         )}
       </div>
 
-      {hasProjects ? <ProjectList initialProjects={projects} /> : <EmptyState />}
+      {hasProjects ? (
+        <ProjectList initialProjects={projects} />
+      ) : (
+        <Empty className="border-border bg-card rounded-lg border">
+          <EmptyHeader>
+            <EmptyMedia>
+              <FolderKanban className="text-muted-foreground h-10 w-10" />
+            </EmptyMedia>
+            <EmptyTitle>No projects yet</EmptyTitle>
+            <EmptyDescription>
+              Create your first project to start monitoring Core Web Vitals and track performance across your web
+              applications.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button className="gap-2" asChild>
+              <Link href="/projects/new">
+                <Plus className="h-4 w-4" />
+                Create your first project
+              </Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
+      )}
     </div>
   );
 }

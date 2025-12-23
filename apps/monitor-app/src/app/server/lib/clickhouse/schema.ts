@@ -61,3 +61,7 @@ export type InsertableCwvEventRow = Omit<CwvEventRow, 'recorded_at' | 'ingested_
 
 export type InsertableCustomEventRow = Omit<CustomEventRow, 'recorded_at' | 'ingested_at'> &
   Partial<Pick<CustomEventRow, 'recorded_at' | 'ingested_at'>>;
+  
+export type ProjectWithViews = ProjectRow & {
+  trackedViews: number;
+};
