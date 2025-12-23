@@ -5,34 +5,12 @@ import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metr
 import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
 import { QuickStats } from '@/components/dashboard/quick-stats';
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
-import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
 import { dashboardSearchParamsSchema } from '@/lib/search-params';
-import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
-import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
+import { isClickhouseErrorType } from '@/lib/is-clickhouse-error-type';
 
 const dashboardOverviewService = new DashboardOverviewService();
-
-async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
-  'use cache';
-
-  cacheLife({
-    stale: 300,
-    revalidate: 600,
-    expire: 86_400
-  });
-
-  const dateRange = timeRangeToDateRange(timeRange);
-
-  const query = buildDashboardOverviewQuery({
-    projectId,
-    deviceType,
-    range: dateRange
-  });
-
-  return await dashboardOverviewService.getOverview(query);
-}
 
 async function ProjectPageContent({
   params,
@@ -43,8 +21,24 @@ async function ProjectPageContent({
 }) {
   const { projectId } = await params;
   const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
+  let overview;
+  try {
+    const dateRange = timeRangeToDateRange(timeRange);
 
-  const overview = await getCachedOverview(projectId, deviceType, timeRange);
+    const query = buildDashboardOverviewQuery({
+      projectId,
+      deviceType,
+      range: dateRange
+    });
+
+    overview = await dashboardOverviewService.getOverview(query);
+  } catch (error) {
+    if (isClickhouseErrorType(error, ['CANNOT_PARSE_UUID', 'TYPE_MISMATCH'])) {
+      notFound();
+    } else {
+      throw error;
+    }
+  }
 
   if (overview.kind === 'project-not-found') {
     notFound();

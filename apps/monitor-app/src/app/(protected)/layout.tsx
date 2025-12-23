@@ -1,6 +1,8 @@
 import { Suspense, type ReactNode } from 'react';
 import { SessionProvider } from '@/contexts/session-provider';
 import { getServerSessionDataOrRedirect } from '@/lib/get-server-session-data-or-redirect';
+import { ProjectsListService } from '@/app/server/domain/projects/list/service';
+import { Navbar } from '@/components/dashboard/navbar';
 
 async function ProtectedLayoutContent({ children }: { children: ReactNode }) {
   const sessionData = await getServerSessionDataOrRedirect();
@@ -18,10 +20,23 @@ function ProtectedLayoutLoading() {
   );
 }
 
+const projectsService = new ProjectsListService();
+async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const projectsData = await projectsService.list();
+  return (
+    <>
+      <Navbar projects={projectsData} />
+      <main className="p-3 sm:p-4 lg:p-6">{children}</main>
+    </>
+  );
+}
+
 export default function ProtectedLayout({ children }: { children: ReactNode }) {
   return (
     <Suspense fallback={<ProtectedLayoutLoading />}>
-      <ProtectedLayoutContent>{children}</ProtectedLayoutContent>
+      <ProtectedLayoutContent>
+        <DashboardLayout>{children}</DashboardLayout>
+      </ProtectedLayoutContent>
     </Suspense>
   );
 }
