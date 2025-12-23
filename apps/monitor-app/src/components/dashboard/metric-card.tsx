@@ -44,8 +44,16 @@ export function MetricCard({ metric }: MetricCardProps) {
   
     if (!quantiles || !thresholds) {
         return (
-            <Card className="flex items-center justify-center p-6 border-dashed">
-                <p className="text-sm text-muted-foreground">No data available for {metricName}</p>
+              <Card className="bg-card border-border opacity-60">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                    <div className="space-y-1">
+                        <CardTitle className="text-lg">{info.friendlyLabel}</CardTitle>
+                        <CardDescription className="font-medium">{metricName}</CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center justify-center py-4 border-t border-dashed mt-2">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider">No Data Available</p>
+                </CardContent>
             </Card>
         );
     }
@@ -102,7 +110,7 @@ export function MetricCard({ metric }: MetricCardProps) {
           <PercentileChart
             title="View all percentiles"
             value={p75Value}
-            unit={unit}
+            metric={metricName}
             thresholds={thresholds}
             percentiles={percentileItems}
             fixedPercentile={true}

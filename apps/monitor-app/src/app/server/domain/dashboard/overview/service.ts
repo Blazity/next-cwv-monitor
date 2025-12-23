@@ -19,7 +19,8 @@ import {
   type QuantileSummary,
   type StatusDistribution,
   type WorstRouteItem,
-  METRIC_NAMES
+  METRIC_NAMES,
+  QuickStatsData
 } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {

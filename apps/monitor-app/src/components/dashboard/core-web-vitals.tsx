@@ -1,16 +1,24 @@
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MetricCard } from '@/components/dashboard/metric-card';
-import type { MetricOverviewItem } from '@/app/server/domain/dashboard/overview/types';
+import type { MetricName, MetricOverviewItem } from '@/app/server/domain/dashboard/overview/types';
 
 type CoreWebVitalsProps = {
   metricOverview: MetricOverviewItem[];
 }
 
+const CORE_METRICS: Array<MetricName> = ['LCP', 'INP', 'CLS'];
 export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
-  const coreMetrics = metricOverview.filter((m) => 
-    ['LCP', 'INP', 'CLS'].includes(m.metricName)
-  );
+
+  const coreMetrics = CORE_METRICS.map((name) => {
+    const data = metricOverview.find((m) => m.metricName === name);
+    return data || { 
+      metricName: name, 
+      quantiles: null, 
+      status: null, 
+      sampleSize: 0 
+    };
+  });
 
   return (
     <TooltipProvider>
