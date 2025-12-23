@@ -2,11 +2,17 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
-import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
+import type { DateRange, MetricName, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const daysToNumber = {
+  '7d': 7,
+  '30d': 30,
+  '90d': 90
+} as const;
 
 export function validatePasswordStrength(password: string): { valid: true } | { valid: false; message: string } {
   const result = zxcvbn(password);
@@ -40,4 +46,20 @@ export function formatCompactNumber(value: number): string {
     compactDisplay: 'short',
     maximumFractionDigits: 1
   }).format(value);
+}
+
+export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
+  // Set end date to the end of the current day (23:59:59.999)
+  // This ensures we include all data from today
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+
+  // Calculate start date by subtracting the time range days from the end date
+  // Set to the beginning of that day (00:00:00.000) to include the full day
+  const start = new Date(end);
+  const days = daysToNumber[timeRange];
+  start.setDate(start.getDate() - days);
+  start.setHours(0, 0, 0, 0);
+
+  return { start, end };
 }

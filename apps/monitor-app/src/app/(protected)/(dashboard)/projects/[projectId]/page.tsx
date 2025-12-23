@@ -1,60 +1,95 @@
-import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
-import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
-import { isMetricName, isOverviewDeviceType, parseTimeRange } from '@/app/server/domain/dashboard/overview/types';
+import { Suspense } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
+import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metric';
+import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
 import { QuickStats } from '@/components/dashboard/quick-stats';
+import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
+import { cacheLife } from 'next/cache';
+import { timeRangeToDateRange } from '@/lib/utils';
+import { dashboardSearchParamsSchema } from '@/lib/search-params';
+import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
 
-type ProjectPageProps = {
-  params: Promise<{
-    projectId: string;
-  }>;
-  searchParams: Promise<{
-    deviceType?: string;
-    metric?: string;
-    timeRange?: string;
-  }>;
-};
+const dashboardOverviewService = new DashboardOverviewService();
 
-async function ProjectPage({ params, searchParams }: ProjectPageProps) {
-  const { projectId } = await params;
+async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
+  'use cache';
 
-  const queryParams = await searchParams;
+  cacheLife({
+    stale: 300,
+    revalidate: 600,
+    expire: 86_400
+  });
 
-  const deviceType = isOverviewDeviceType(queryParams.deviceType) ? queryParams.deviceType : 'all';
-  const selectedMetric = isMetricName(queryParams.metric) ? queryParams.metric : 'LCP';
-  const range = parseTimeRange(queryParams.timeRange);
+  const dateRange = timeRangeToDateRange(timeRange);
 
-  const dashboardService = new DashboardOverviewService();
   const query = buildDashboardOverviewQuery({
     projectId,
     deviceType,
-    selectedMetric,
-    range
+    range: dateRange
   });
-  const result = await dashboardService.getOverview(query);
 
-  if (result.kind === 'project-not-found') {
+  return await dashboardOverviewService.getOverview(query);
+}
+
+async function ProjectPageContent({
+  params,
+  searchParams
+}: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const { projectId } = await params;
+  const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
+
+  const overview = await getCachedOverview(projectId, deviceType, timeRange);
+
+  if (overview.kind === 'project-not-found') {
     notFound();
   }
 
-  if (result.kind !== 'ok') {
-    throw new Error(`Failed to load dashboard: ${result.kind}`);
+  if (overview.kind !== 'ok') {
+    throw new Error(`Failed to load dashboard: ${overview.kind}`);
   }
 
-  const { data } = result;
+  const { worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
   return (
     <div>
       <PageHeader title="Project" description="Project description" />
       <QuickStats
         projectId={projectId}
-        selectedMetric={query.selectedMetric}
-        data={data.quickStats}
-        statusDistribution={data.statusDistribution}
+        selectedMetric="LCP"
+        data={quickStats}
+        statusDistribution={statusDistribution}
       />
+      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
+      <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
     </div>
   );
 }
 
-export default ProjectPage;
+function ProjectPageLoading() {
+  return (
+    <div>
+      <PageHeader title="Project" description="Project description" />
+      <div className="mt-6 space-y-6">
+        <div className="bg-muted h-64 animate-pulse rounded-lg" />
+        <div className="bg-muted h-96 animate-pulse rounded-lg" />
+      </div>
+    </div>
+  );
+}
+
+export default function ProjectPage(props: {
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  return (
+    <Suspense fallback={<ProjectPageLoading />}>
+      <ProjectPageContent {...props} />
+    </Suspense>
+  );
+}
