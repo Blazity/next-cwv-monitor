@@ -87,14 +87,14 @@ export class DashboardOverviewService {
       end: toDateOnlyString(previousRange.end)
     };
 
-    const [metricsRows, seriesRows, worstRouteRows, distributionRows, previousMetricsRows, allMetricsSeriesRows] = await Promise.all([
-      fetchMetricsOverview(filters),
-      fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
-      fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-      fetchAllMetricsDailySeries(filters)
-      fetchMetricsOverview(previousFilters)
-      fetchAllMetricsDailySeries(filters)
-    ]);
+    const [metricsRows, worstRouteRows, previousMetricsRows, distributionRows, allMetricsSeriesRows] =
+      await Promise.all([
+        fetchMetricsOverview(filters),
+        fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
+        fetchMetricsOverview(previousFilters),
+        fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
+        fetchAllMetricsDailySeries(filters)
+      ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
@@ -153,7 +153,7 @@ export class DashboardOverviewService {
       viewTrend = Math.round(((currentTotalViews - previousTotalViews) / previousTotalViews) * 100);
     }
 
-  const timeSeriesByMetricRecord = Object.fromEntries(timeSeriesByMetric.entries()) as Record<
+    const timeSeriesByMetricRecord = Object.fromEntries(timeSeriesByMetric.entries()) as Record<
       MetricName,
       DailySeriesPoint[]
     >;

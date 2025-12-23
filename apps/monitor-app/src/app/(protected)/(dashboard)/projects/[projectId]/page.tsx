@@ -3,16 +3,18 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
 import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metric';
 import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
+import { QuickStats } from '@/components/dashboard/quick-stats';
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
 import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
 import { dashboardSearchParamsSchema } from '@/lib/search-params';
-import type { TimeRange } from '@/app/server/domain/dashboard/overview/types';
+import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
+import { notFound } from 'next/navigation';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRange) {
+async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
   'use cache';
 
   cacheLife({
@@ -44,28 +46,27 @@ async function ProjectPageContent({
 
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
-   if (result.kind === 'project-not-found') {
+  if (overview.kind === 'project-not-found') {
     notFound();
   }
 
-  if (result.kind !== 'ok') {
-    throw new Error(`Failed to load dashboard: ${result.kind}`);
+  if (overview.kind !== 'ok') {
+    throw new Error(`Failed to load dashboard: ${overview.kind}`);
   }
 
-  const { worstRoutes, timeSeriesByMetric } = overview.data;
+  const { worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
   return (
     <div>
       <PageHeader title="Project" description="Project description" />
-      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
-      <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
       <QuickStats
         projectId={projectId}
-        selectedMetric={query.selectedMetric}
-        data={data.quickStats}
-        statusDistribution={data.statusDistribution}
+        selectedMetric="LCP"
+        data={quickStats}
+        statusDistribution={statusDistribution}
       />
-
+      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
+      <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
     </div>
   );
 }

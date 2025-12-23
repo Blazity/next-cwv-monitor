@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
-import type { DateRange, MetricName, TimeRange } from '@/app/server/domain/dashboard/overview/types';
+import type { DateRange, MetricName, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -48,7 +48,7 @@ export function formatCompactNumber(value: number): string {
   }).format(value);
 }
 
-export function timeRangeToDateRange(timeRange: TimeRange): DateRange {
+export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
   // Set end date to the end of the current day (23:59:59.999)
   // This ensures we include all data from today
   const end = new Date();
