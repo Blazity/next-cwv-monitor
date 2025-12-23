@@ -43,12 +43,8 @@ function isCoreWebVital(metric: MetricName): metric is MetricName {
   return METRIC_INFO[metric].isCoreWebVital;
 }
 
-function isNotCoreWebVital(metric: MetricName): metric is MetricName {
-  return !isCoreWebVital(metric);
-}
-
 const CORE_WEB_VITALS = METRIC_NAMES.filter((metric) => isCoreWebVital(metric));
-const OTHER_METRICS = METRIC_NAMES.filter((metric) => isNotCoreWebVital(metric));
+const OTHER_METRICS = METRIC_NAMES.filter((metric) => !isCoreWebVital(metric));
 
 type MetricSelectorProps = {
   selected: MetricName;
