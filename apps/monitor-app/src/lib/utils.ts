@@ -49,9 +49,13 @@ export function formatCompactNumber(value: number): string {
 }
 
 export function timeRangeToDateRange(timeRange: TimeRange): DateRange {
+  // Set end date to the end of the current day (23:59:59.999)
+  // This ensures we include all data from today
   const end = new Date();
   end.setHours(23, 59, 59, 999);
 
+  // Calculate start date by subtracting the time range days from the end date
+  // Set to the beginning of that day (00:00:00.000) to include the full day
   const start = new Date(end);
   const days = daysToNumber[timeRange];
   start.setDate(start.getDate() - days);
