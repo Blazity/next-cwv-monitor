@@ -6,7 +6,7 @@ import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
 import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
-import { loadDashboardSearchParams } from '@/lib/search-params';
+import { dashboardSearchParamsSchema } from '@/lib/search-params';
 import type { TimeRange } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 
@@ -40,7 +40,7 @@ async function ProjectPageContent({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { projectId } = await params;
-  const { timeRange, deviceType } = await loadDashboardSearchParams(searchParams);
+  const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
 
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
