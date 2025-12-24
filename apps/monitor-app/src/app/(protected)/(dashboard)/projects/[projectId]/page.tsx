@@ -8,9 +8,30 @@ import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overv
 import { timeRangeToDateRange } from '@/lib/utils';
 import { dashboardSearchParamsSchema } from '@/lib/search-params';
 import { notFound } from 'next/navigation';
-import { isClickhouseErrorType } from '@/lib/is-clickhouse-error-type';
+import { OverviewDeviceType, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import { cacheLife } from 'next/cache';
 
 const dashboardOverviewService = new DashboardOverviewService();
+
+async function getCachedOverview(projectId: string, deviceType: OverviewDeviceType, timeRange: TimeRangeKey) {
+  'use cache';
+
+  cacheLife({
+    stale: 300,
+    revalidate: 600,
+    expire: 86_400
+  });
+
+  const dateRange = timeRangeToDateRange(timeRange);
+
+  const query = buildDashboardOverviewQuery({
+    projectId,
+    deviceType,
+    range: dateRange
+  });
+
+  return await dashboardOverviewService.getOverview(query);
+}
 
 async function ProjectPageContent({
   params,
@@ -23,21 +44,9 @@ async function ProjectPageContent({
   const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
   let overview;
   try {
-    const dateRange = timeRangeToDateRange(timeRange);
-
-    const query = buildDashboardOverviewQuery({
-      projectId,
-      deviceType,
-      range: dateRange
-    });
-
-    overview = await dashboardOverviewService.getOverview(query);
-  } catch (error) {
-    if (isClickhouseErrorType(error, ['CANNOT_PARSE_UUID', 'TYPE_MISMATCH'])) {
-      notFound();
-    } else {
-      throw error;
-    }
+    overview = await getCachedOverview(projectId, deviceType, timeRange);
+  } catch {
+    notFound();
   }
 
   if (overview.kind === 'project-not-found') {

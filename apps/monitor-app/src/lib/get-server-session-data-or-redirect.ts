@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 export async function getServerSessionDataOrRedirect() {
   const resolvedHeaders = await headers();
-  headers();
+
   const sessionData = await auth.api.getSession({ headers: resolvedHeaders });
 
   if (!sessionData) {
