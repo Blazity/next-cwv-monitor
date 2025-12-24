@@ -83,17 +83,29 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 }
 
 export async function updateProject(id: string, name: string, slug: string): Promise<void> {
-  const updatedAt = Math.floor(Date.now() / 1000);
+  const existing = await getProjectById(id);
+  if (!existing) throw new Error('Project not found');
+  const createdAt = new Date(existing.created_at);
+  const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
+  const updatedAtSeconds = Math.floor(Date.now() / 1000);
 
   await sql`
-    INSERT INTO projects (id, name, slug, updated_at)
-    VALUES (${id}, ${name}, ${slug}, toDateTime(${updatedAt}))
+    INSERT INTO projects (id, name, slug, created_at, updated_at)
+    VALUES (
+      ${id}, 
+      ${name}, 
+      ${slug}, 
+      toDateTime(${createdAtSeconds}), 
+      toDateTime(${updatedAtSeconds})
+    )
   `.command();
 }
 
 export async function deleteProject(id: string): Promise<void> {
   await sql`DELETE FROM projects WHERE id = ${id}`.command();
   await sql`DELETE FROM cwv_events WHERE project_id = ${id}`.command();
+  await sql`DELETE FROM custom_events WHERE project_id = ${id}`.command();
+  await sql`DELETE FROM cwv_daily_aggregates WHERE project_id = ${id}`.command();
 }
 
 export async function resetProjectData(id: string): Promise<void> {

@@ -1,31 +1,47 @@
 'use server';
 
-import { updateProject } from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
+import { redirectToLogin } from '@/lib/auth-utils';
 import { revalidatePath } from 'next/cache';
-import { alterProjectSchema } from '@/app/server/domain/projects/create/schema';
+import { updateProjectNameSchema } from '@/app/server/domain/projects/schema';
 import { ArkErrors } from 'arktype';
+import { projectsUpdateService } from '@/app/server/domain/projects/update/service';
+import { ActionResponse, AlterProjectErrors } from '@/actions/types';
 
-export async function updateProjectNameAction(projectId: string, formData: FormData) {
-  await getAuthorizedSession();
-  const projectInputValidated = alterProjectSchema({
-    name: formData.get('name'),
-    slug: formData.get('slug')
+export async function updateProjectNameAction(
+  projectId: string, 
+  slug: string,
+  formData: FormData
+): Promise<ActionResponse<AlterProjectErrors>> {
+  const projectInputValidated = updateProjectNameSchema({
+    name: formData.get('name')
   });
 
   if (projectInputValidated instanceof ArkErrors) {
-    const flatErrors = projectInputValidated.flatProblemsByPath;
-
     return {
-      errors: {
-        name: flatErrors.name,
-        slug: flatErrors.slug
-      },
-      message: 'Missing Fields. Failed to Create Project.'
+      success: false,
+      errors: projectInputValidated.flatProblemsByPath,
+      message: 'Validation failed.'
     };
   }
 
-  await updateProject(projectId, projectInputValidated.name, projectInputValidated.slug);
-  revalidatePath(`/projects/${projectId}/settings`);
-  return { success: true };
+  const result = await projectsUpdateService.execute({
+    id: projectId,
+    slug,
+    ...projectInputValidated
+  });
+
+  switch (result.kind) {
+    case 'ok': {
+      revalidatePath(`/projects/${projectId}/settings`);
+      return { success: true, message: 'Project updated successfully.' };
+    }
+    
+    case 'error': {
+      return { success: false, message: result.message };
+    }
+      
+    case 'unauthorized': {
+      return redirectToLogin();
+    }
+  }
 }

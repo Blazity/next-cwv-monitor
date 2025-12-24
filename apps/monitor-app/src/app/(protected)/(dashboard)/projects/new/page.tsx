@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createProjectAction } from '@/actions/project/create-project';
-import { alterProjectSchema, type AlterProjectInput } from '@/app/server/domain/projects/create/schema';
+import { createProjectSchema, type CreateProjectInput } from '@/app/server/domain/projects/schema';
 
 export default function NewProjectPage() {
   const [isPending, startTransition] = useTransition();
@@ -25,8 +25,8 @@ export default function NewProjectPage() {
     clearErrors,
     control,
     formState: { errors, dirtyFields }
-  } = useForm<AlterProjectInput>({
-    resolver: arktypeResolver(alterProjectSchema),
+  } = useForm<CreateProjectInput>({
+    resolver: arktypeResolver(createProjectSchema),
     mode: 'onBlur',
     reValidateMode: 'onSubmit',
     defaultValues: {
@@ -50,18 +50,18 @@ export default function NewProjectPage() {
     }
   }, [watchedName, dirtyFields.slug, setValue]);
 
-  const onSubmit = (data: AlterProjectInput) => {
+  const onSubmit = (data: CreateProjectInput) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('name', data.name);
       formData.append('slug', data.slug);
 
-      const result = await createProjectAction(null, formData);
+      const result = await createProjectAction(formData);
 
       if (result.errors) {
         for (const [key, value] of Object.entries(result.errors)) {
-          if (value) {
-            setError(key as keyof AlterProjectInput, {
+          if (value.length > 0) {
+            setError(key as keyof CreateProjectInput, {
               type: 'server',
               message: Array.isArray(value) ? value[0] : value
             });

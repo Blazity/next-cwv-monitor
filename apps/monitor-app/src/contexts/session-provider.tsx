@@ -1,6 +1,6 @@
 'use client';
 
-import { SessionData } from '@/lib/auth-client';
+import { SessionData } from '@/lib/auth';
 import { useMemo } from 'react';
 import { SessionContext } from '@/contexts/session-context';
 

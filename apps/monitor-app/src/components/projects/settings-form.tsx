@@ -35,10 +35,9 @@ import { updateProjectNameAction } from '@/actions/project/update-project';
 import { resetProjectDataAction } from '@/actions/project/reset-project-action';
 import { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
 import { cn } from '@/lib/utils';
-import { AlterProjectInput } from '@/app/server/domain/projects/create/schema';
+import { UpdateProjectNameInput, updateProjectNameSchema } from '@/app/server/domain/projects/schema';
 import { useForm } from 'react-hook-form';
-
-type ProjectSettingsValues = Omit<AlterProjectInput, 'slug'>;
+import { arktypeResolver } from '@hookform/resolvers/arktype';
 
 const handleCopy = async (text: string, setter: (v: boolean) => void) => {
   await navigator.clipboard.writeText(text);
@@ -61,26 +60,29 @@ export default function SettingsForm({ project }: SettingsFormProps) {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors, isDirty }
-  } = useForm<ProjectSettingsValues>({
+  } = useForm<UpdateProjectNameInput>({
+    resolver: arktypeResolver(updateProjectNameSchema),
     defaultValues: {
       name: project.name
     }
   });
 
-  const onSubmit = (data: ProjectSettingsValues) => {
+  const onSubmit = (data: UpdateProjectNameInput) => {
     startTransition(async () => {
       const formData = new FormData();
       formData.append('name', data.name);
-      formData.append('slug', project.slug || '');
 
-      const result = await updateProjectNameAction(project.id, formData);
-
+      const result = await updateProjectNameAction(project.id, project.slug, formData);
       if (result.errors) {
-        setError('name', { type: 'server', message: result.errors.name.join(', ') });
+        if(result.errors.name && result.errors.name.length > 0){
+          setError('name', { type: 'server', message: result.errors.name.join(', ') });
+        }
         toast.error(result.message || 'Validation failed');
       } else if (result.success) {
         toast.success('Project updated successfully');
+        reset(data);
       }
     });
   };
@@ -252,7 +254,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 buttonLabel="Delete"
                 icon={Trash2}
                 isPending={isPending}
-                onConfirm={() => startTransition(() => deleteProjectAction(project.id))}
+                onConfirm={() => {
+                  startTransition(async () => {
+                    const res = await deleteProjectAction(project.id);
+                    toast.error(res.message);
+                  });
+                }}
               />
             </div>
           </CardContent>
@@ -340,14 +347,14 @@ export function DangerAction({
             <AlertTriangle className="h-5 w-5" />
             <AlertDialogTitle>{title}</AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="space-y-4">
-            <p>{description}</p>
-            <div className="select-none">
-              <p className="text-foreground text-sm leading-none font-medium select-none">
-                Type
-                <code className="px-2 font-mono font-black">{confirmText}</code>
-                to confirm
-              </p>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4">
+              <p>{description}</p>
+              <div className="select-none">
+                <div className="text-foreground text-sm leading-none font-medium">
+                  Type <code className="px-2 font-mono font-black">{confirmText}</code> to confirm
+                </div>
+              </div>
             </div>
           </AlertDialogDescription>
 

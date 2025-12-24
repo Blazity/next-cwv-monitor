@@ -1,11 +1,23 @@
 'use server';
 
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { deleteProject } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import { redirect } from 'next/navigation';
+import { projectsDeleteService } from '@/app/server/domain/projects/delete/service';
+import { redirectToLogin } from '@/lib/auth-utils';
+import { ActionResponse } from '@/actions/types';
 
-export async function deleteProjectAction(projectId: string) {
-  await getAuthorizedSession();
-  await deleteProject(projectId);
-  redirect('/projects');
+export async function deleteProjectAction(projectId: string): Promise<ActionResponse<never>> {
+  const result = await projectsDeleteService.execute(projectId);
+
+  switch (result.kind) {
+    case 'ok': {
+      redirect('/projects');
+    } 
+    case 'error': {
+      return { success: false, message: result.message };
+    }
+    case 'unauthorized': {
+      return redirectToLogin();
+    }
+  }
+
 }

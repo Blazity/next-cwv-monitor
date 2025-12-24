@@ -1,15 +1,15 @@
-import { projectsService } from "@/app/server/domain/projects/list/service";
-import { getAuthorizedSession } from "@/app/server/lib/auth-check";
+import { projectsListService } from "@/app/server/domain/projects/list/service";
 import { ProjectList } from "@/components/projects/projects-list";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { getAuthorizedSession } from "@/lib/auth-utils";
 import { FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProjectsPage() {
   await getAuthorizedSession();
 
-  const projects = await projectsService.listWithViews();
+  const projects = await projectsListService.listWithViews();
 
   const hasProjects = projects.length > 0;
 

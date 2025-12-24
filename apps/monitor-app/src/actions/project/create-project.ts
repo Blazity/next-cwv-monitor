@@ -1,58 +1,54 @@
 'use server';
 
-import { CreateProjectService } from '@/app/server/domain/projects/create/service';
-import { alterProjectSchema } from '@/app/server/domain/projects/create/schema';
+import { CreateProjectResult, projectsCreateService } from '@/app/server/domain/projects/create/service';
+import { createProjectSchema } from '@/app/server/domain/projects/schema';
 import { redirect } from 'next/navigation';
 import { ArkErrors } from 'arktype';
+import { redirectToLogin } from '@/lib/auth-utils';
+import { ActionResponse, AlterProjectErrors } from '@/actions/types';
 
-type ProjectState = {
-  errors?: {
-    name?: string | string[];
-    slug?: string | string[];
-  };
-  message?: string | null;
-} | null;
-
-export async function createProjectAction(_prevState: ProjectState, formData: FormData) {
-  const projectInputValidated = alterProjectSchema({
+export async function createProjectAction(formData: FormData) : Promise<ActionResponse<AlterProjectErrors>> {
+  const projectInputValidated = createProjectSchema({
     name: formData.get('name'),
     slug: formData.get('slug')
   });
 
   if (projectInputValidated instanceof ArkErrors) {
-    const flatErrors = projectInputValidated.flatProblemsByPath;
-
     return {
-      errors: {
-        name: flatErrors.name,
-        slug: flatErrors.slug
-      },
-      message: 'Missing Fields. Failed to Create Project.'
+      success: false,
+      errors: projectInputValidated.flatProblemsByPath,
+      message: 'Validation failed.'
     };
   }
 
-  const service = new CreateProjectService();
-  const result = await service.execute(projectInputValidated);
+  let result: CreateProjectResult;
+
+  try {
+    result = await projectsCreateService.execute(projectInputValidated);
+  } catch (error) {
+    console.error(error)
+    return { 
+      success: false, 
+      message: 'An unexpected internal error occurred.' 
+    };
+  }
 
   switch (result.kind) {
+    case 'ok': {
+      return redirect(`/projects/${result.projectId}`);
+    }
+    case 'unauthorized': {
+      return redirectToLogin();
+    }
     case 'already-exists': {
       return {
-        errors: { slug: 'This slug is already taken.' },
+        success: false,
+        errors: { slug: ['This slug is already taken.'] },
         message: 'Slug conflict.'
       };
     }
     case 'error': {
-      return {
-        message: result.message
-      };
-    }
-    case 'ok': {
-      break;
-    }
-    default: {
-      return { message: 'An unexpected error occurred.' };
+      return { success: false, message: result.message };
     }
   }
-
-  redirect(`/projects/${result.projectId}`);
 }
