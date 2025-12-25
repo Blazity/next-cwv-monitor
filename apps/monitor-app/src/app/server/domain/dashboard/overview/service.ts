@@ -4,8 +4,7 @@ import {
   fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes,
-  MetricName,
-  MetricsOverviewRow
+  MetricName
 } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
 import { getMetricThresholds, getRatingForValue } from '@/app/server/lib/cwv-thresholds';
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
@@ -70,9 +69,6 @@ export class DashboardOverviewService {
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
-    if (!selectedThresholds) {
-      return { kind: 'unsupported-metric', metricName: query.selectedMetric };
-    }
 
     const filters = {
       projectId: query.projectId,
@@ -97,9 +93,7 @@ export class DashboardOverviewService {
         fetchAllMetricsDailySeries(filters)
       ]);
 
-    const metricOverview: MetricOverviewItem[] = metricsRows.filter((row): row is MetricsOverviewRow & { metric_name: MetricName } => 
-      METRIC_NAMES.includes(row.metric_name as MetricName)
-    ).map((row) => {
+    const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
       const status = typeof p75 === 'number' ? getRatingForValue(row.metric_name, p75) : null;
