@@ -1,13 +1,14 @@
-import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import {
   fetchMetricsOverview,
   fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes,
-  MetricName
-} from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
-import { getMetricThresholds, getRatingForValue } from '@/app/server/lib/cwv-thresholds';
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
+  MetricName,
+} from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
+import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
+import { toQuantileSummary } from "@/app/server/lib/quantiles";
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 
 import {
   type DashboardOverview,
@@ -15,26 +16,14 @@ import {
   type GetDashboardOverviewQuery,
   type GetDashboardOverviewResult,
   type MetricOverviewItem,
-  type QuantileSummary,
   type StatusDistribution,
   type WorstRouteItem,
   METRIC_NAMES,
-  QuickStatsData
-} from '@/app/server/domain/dashboard/overview/types';
+  QuickStatsData,
+} from "@/app/server/domain/dashboard/overview/types";
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
-}
-
-function toQuantileSummary(values: number[] | undefined): QuantileSummary | null {
-  if (!values || values.length < 5) return null;
-  return {
-    p50: values[0],
-    p75: values[1],
-    p90: values[2],
-    p95: values[3],
-    p99: values[4]
-  };
 }
 
 function isMetricName(value: string): value is MetricName {
@@ -44,20 +33,20 @@ function isMetricName(value: string): value is MetricName {
 function emptyStatusDistribution(): StatusDistribution {
   return {
     good: 0,
-    'needs-improvement': 0,
-    poor: 0
+    "needs-improvement": 0,
+    poor: 0,
   };
 }
 
 function isRating(value: string | null | undefined): value is WebVitalRatingV1 {
-  return value === 'good' || value === 'needs-improvement' || value === 'poor';
+  return value === "good" || value === "needs-improvement" || value === "poor";
 }
 
 function getPreviousPeriod(start: Date, end: Date): { start: Date; end: Date } {
   const duration = end.getTime() - start.getTime();
   return {
     start: new Date(start.getTime() - duration),
-    end: new Date(end.getTime() - duration)
+    end: new Date(end.getTime() - duration),
   };
 }
 
@@ -65,7 +54,7 @@ export class DashboardOverviewService {
   async getOverview(query: GetDashboardOverviewQuery): Promise<GetDashboardOverviewResult> {
     const project = await getProjectById(query.projectId);
     if (!project) {
-      return { kind: 'project-not-found', projectId: query.projectId };
+      return { kind: "project-not-found", projectId: query.projectId };
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
@@ -74,14 +63,14 @@ export class DashboardOverviewService {
       projectId: query.projectId,
       start: toDateOnlyString(query.range.start),
       end: toDateOnlyString(query.range.end),
-      deviceType: query.deviceType
+      deviceType: query.deviceType,
     } as const;
 
     const previousRange = getPreviousPeriod(query.range.start, query.range.end);
     const previousFilters = {
       ...filters,
       start: toDateOnlyString(previousRange.start),
-      end: toDateOnlyString(previousRange.end)
+      end: toDateOnlyString(previousRange.end),
     };
 
     const [metricsRows, worstRouteRows, previousMetricsRows, distributionRows, allMetricsSeriesRows] =
@@ -90,18 +79,18 @@ export class DashboardOverviewService {
         fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
         fetchMetricsOverview(previousFilters),
         fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-        fetchAllMetricsDailySeries(filters)
+        fetchAllMetricsDailySeries(filters),
       ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
-      const status = typeof p75 === 'number' ? getRatingForValue(row.metric_name, p75) : null;
+      const status = typeof p75 === "number" ? getRatingForValue(row.metric_name, p75) : null;
       return {
         metricName: row.metric_name,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
-        status
+        status,
       };
     });
 
@@ -114,25 +103,25 @@ export class DashboardOverviewService {
 
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
-      const status = typeof p75 === 'number' ? getRatingForValue(metric, p75) : null;
+      const status = typeof p75 === "number" ? getRatingForValue(metric, p75) : null;
 
       timeSeriesByMetric.get(metric)?.push({
         date: row.event_date,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
-        status
+        status,
       });
     }
 
     const worstRoutes: WorstRouteItem[] = worstRouteRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;
-      const status = typeof p75 === 'number' ? getRatingForValue(query.selectedMetric, p75) : null;
+      const status = typeof p75 === "number" ? getRatingForValue(query.selectedMetric, p75) : null;
       return {
         route: row.route,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
-        status
+        status,
       };
     });
 
@@ -158,12 +147,12 @@ export class DashboardOverviewService {
     const quickStats: QuickStatsData = {
       totalViews: currentTotalViews,
       viewTrend: viewTrend,
-      timeRangeLabel: `${Math.ceil((query.range.end.getTime() - query.range.start.getTime()) / (1000 * 60 * 60 * 24))} Days`
+      timeRangeLabel: `${Math.ceil((query.range.end.getTime() - query.range.start.getTime()) / (1000 * 60 * 60 * 24))} Days`,
     };
 
     return {
-      kind: 'ok',
-      data: mapDashboardOverview(metricOverview, timeSeriesByMetricRecord, worstRoutes, statusDistribution, quickStats)
+      kind: "ok",
+      data: mapDashboardOverview(metricOverview, timeSeriesByMetricRecord, worstRoutes, statusDistribution, quickStats),
     };
   }
 }
@@ -173,13 +162,13 @@ function mapDashboardOverview(
   timeSeriesByMetric: Record<MetricName, DailySeriesPoint[]>,
   worstRoutes: WorstRouteItem[],
   statusDistribution: StatusDistribution,
-  quickStats: QuickStatsData
+  quickStats: QuickStatsData,
 ): DashboardOverview {
   return {
     metricOverview,
     timeSeriesByMetric,
     worstRoutes,
     statusDistribution,
-    quickStats
+    quickStats,
   };
 }
