@@ -221,7 +221,8 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         },
 
         findOne: async ({ model, where }) => {
-          return selectOne(model, buildWhereClause(where, model));
+          const result = await selectOne(model, buildWhereClause(where, model));
+          return result;
         },
 
         findMany: async ({ model, where, limit, offset, sortBy }) => {

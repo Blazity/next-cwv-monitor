@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
+import 'dotenv/config';
 
 const {
   CH_MIGRATIONS_HOST,
@@ -42,10 +43,12 @@ const args = [
   ...extraArgs
 ];
 
+console.log(args);
+
 let child = spawn('clickhouse-migrations', args, {
-    stdio: 'inherit',
-    env: process.env,
-    shell: process.platform === 'win32'
+  stdio: 'inherit',
+  env: process.env,
+  shell: process.platform === 'win32'
 });
 
 child.on('exit', (code) => {

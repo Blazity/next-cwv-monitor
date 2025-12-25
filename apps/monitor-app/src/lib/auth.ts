@@ -10,9 +10,10 @@ export const auth = betterAuth({
   user: {
     fields: {
       emailVerified: 'email_verified',
+      role: 'role',
       createdAt: 'created_at',
       updatedAt: 'updated_at'
-    }, 
+    }
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
