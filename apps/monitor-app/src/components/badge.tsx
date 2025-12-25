@@ -41,7 +41,7 @@ export type BadgeProps = VariantProps<typeof badge> & {
 };
 type BadgeType = NonNullable<BadgeProps['type']>;
 
-const defaultIcons: Record<BadgeType, React.ElementType> = {
+const defaultIcons: Partial<Record<BadgeType, React.ElementType>> = {
   error: XCircle,
   success: CheckCircle2,
   warning: AlertTriangle
@@ -52,7 +52,7 @@ export function Badge({ type = 'success', LeftIcon, size = 'sm', defaultIcon, cl
   return (
     <div className={badge({ type, size, className })}>
       {!!LeftIcon && <LeftIcon className={icon({ size })} />}
-      {defaultIcon && <Icon className={icon({ size })} />}
+      {defaultIcon && !!Icon && <Icon className={icon({ size })} />}
       {label && <span>{label}</span>}
     </div>
   );

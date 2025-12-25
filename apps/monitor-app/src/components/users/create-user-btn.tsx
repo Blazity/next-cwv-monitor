@@ -30,8 +30,8 @@ export function CreateUserBtn() {
     reValidateMode: 'onSubmit',
     defaultValues: {
       email: '',
-      username: '',
-      role: 'user' as const
+      name: '',
+      role: 'member' as const
     }
   });
   const {
@@ -45,19 +45,26 @@ export function CreateUserBtn() {
 
   const onSubmit = handleSubmit(async (data) => {
     startTransition(async () => {
-      const { success } = await createUserAction(data);
+      const { success, message } = await createUserAction(data);
       if (success) {
         toast.success('User created successfully!');
-        setIsDialogOpen(false);
         methods.reset();
+        setIsDialogOpen(false);
       } else {
-        toast.error('Failed to create user. Please try again.');
+        toast.error(message ?? 'Failed to create user. Please try again.');
       }
     });
   });
 
+  const handleTogle = (value: boolean) => {
+    if (value === true) {
+      methods.reset();
+    }
+    setIsDialogOpen(value);
+  };
+
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={handleTogle}>
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
@@ -79,7 +86,7 @@ export function CreateUserBtn() {
               onSubmit(e);
             }}
           >
-            <CustomInput type="text" placeholder="John" label="Name" {...register('username')} />
+            <CustomInput type="text" placeholder="John" label="Name" {...register('name')} />
             <CustomInput type="email" placeholder="john@example.com" label="Email" {...register('email')} />
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
@@ -88,7 +95,7 @@ export function CreateUserBtn() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user" defaultChecked>
+                  <SelectItem value="member" defaultChecked>
                     User
                   </SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
@@ -96,7 +103,7 @@ export function CreateUserBtn() {
               </Select>
             </div>
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => handleTogle(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={!isValid || isPending}>

@@ -1,9 +1,34 @@
 import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { CreateUserBtn } from '@/components/users/create-user-btn';
+import UsersList from '@/components/users/users-list';
+import UsersStats from '@/components/users/users-stats';
+import { adminAuth } from '@/lib/auth';
+import { cacheTag } from 'next/cache';
+import { notFound } from 'next/navigation';
 
-async function UsersPage() {
-  // TODO: verify whether user has access to users page
-  const { user: _ } = await getAuthorizedSession();
+async function getCachedUsers() {
+  'use cache';
+  cacheTag('users');
+  return adminAuth.admin.listUsers({ query: {} });
+}
+
+export default async function UsersPage() {
+  try {
+    adminAuth.admin.checkRolePermission({
+      role: 'admin',
+      permission: { user: ['list'] }
+    });
+    await getAuthorizedSession(['admin']);
+  } catch {
+    notFound();
+  }
+
+  let users;
+  try {
+    users = await getCachedUsers();
+  } catch {
+    notFound();
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -14,8 +39,8 @@ async function UsersPage() {
         </div>
         <CreateUserBtn />
       </div>
+      <UsersStats users={users} />
+      <UsersList users={users} />
     </div>
   );
 }
-
-export default UsersPage;

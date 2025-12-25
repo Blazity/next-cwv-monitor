@@ -1,7 +1,14 @@
 import { betterAuth } from 'better-auth';
+import { admin } from 'better-auth/plugins';
 import { env } from '@/env';
 import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
 import { nextCookies } from 'better-auth/next-js';
+import { createAuthClient } from 'better-auth/client';
+import { adminClient } from 'better-auth/client/plugins';
+
+export const adminAuth = createAuthClient({
+  plugins: [adminClient()]
+});
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -52,7 +59,7 @@ export const auth = betterAuth({
       updatedAt: 'updated_at'
     }
   },
-  plugins: [nextCookies()],
+  plugins: [admin(), nextCookies()],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {
@@ -68,6 +75,8 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    // TODO: Enable
+    requireEmailVerification: false,
     password: {
       async hash(password: string) {
         /* FIXME: this should be moved to account creation/password change logic */
