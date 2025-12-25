@@ -10,10 +10,10 @@ import { ActionResponse, AlterProjectErrors } from '@/actions/types';
 export async function updateProjectNameAction(
   projectId: string, 
   slug: string,
-  formData: FormData
+  name: string
 ): Promise<ActionResponse<AlterProjectErrors>> {
   const projectInputValidated = updateProjectNameSchema({
-    name: formData.get('name')
+    name
   });
 
   if (projectInputValidated instanceof ArkErrors) {

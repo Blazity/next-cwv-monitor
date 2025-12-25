@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useTransition } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { arktypeResolver } from '@hookform/resolvers/arktype';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -13,9 +12,24 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { createProjectAction } from '@/actions/project/create-project';
 import { createProjectSchema, type CreateProjectInput } from '@/app/server/domain/projects/schema';
+import { capitalizeFirstLetter } from '@/lib/utils';
+
+const slugify = (name: string) =>
+  name
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replaceAll(/\s+/g, '-')
+    .replaceAll(/-+/g, '-');
 
 export default function NewProjectPage() {
   const [isPending, startTransition] = useTransition();
+
+  const form = useForm<CreateProjectInput>({
+    resolver: arktypeResolver(createProjectSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', slug: '' }
+  });
 
   const {
     register,
@@ -23,50 +37,26 @@ export default function NewProjectPage() {
     setError,
     setValue,
     clearErrors,
-    control,
     formState: { errors, dirtyFields }
-  } = useForm<CreateProjectInput>({
-    resolver: arktypeResolver(createProjectSchema),
-    mode: 'onBlur',
-    reValidateMode: 'onSubmit',
-    defaultValues: {
-      name: '',
-      slug: ''
+  } = form;
+
+  const applyServerErrors = (serverErrors: Record<string, string | string[]>) => {
+    for (const [key, value] of Object.entries(serverErrors)) {
+      setError(key as keyof CreateProjectInput, {
+        type: 'server',
+        message: Array.isArray(value) ? value[0] : value
+      });
     }
-  });
-
-  const watchedName = useWatch({ control, name: 'name' });
-
-  useEffect(() => {
-    if (!dirtyFields.slug && watchedName) {
-      const slugified = watchedName
-        .toLowerCase()
-        .replaceAll(/[^a-z0-9\s-]/g, '')
-        .trim()
-        .replaceAll(/\s+/g, '-')
-        .replaceAll(/-+/g, '-');
-
-      setValue('slug', slugified, { shouldValidate: true });
-    }
-  }, [watchedName, dirtyFields.slug, setValue]);
+  };
 
   const onSubmit = (data: CreateProjectInput) => {
     startTransition(async () => {
       const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('slug', data.slug);
+      for (const [key, val] of Object.entries(data)) formData.append(key, val);
 
       const result = await createProjectAction(formData);
-
       if (result.errors) {
-        for (const [key, value] of Object.entries(result.errors)) {
-          if (value.length > 0) {
-            setError(key as keyof CreateProjectInput, {
-              type: 'server',
-              message: Array.isArray(value) ? value[0] : value
-            });
-          }
-        }
+        applyServerErrors(result.errors);
       }
     });
   };
@@ -95,25 +85,27 @@ export default function NewProjectPage() {
               <Label htmlFor="project-name">Project name</Label>
               <Input
                 {...register('name', {
-                  onChange: () => {
+                  onChange: (e) => {
                     clearErrors('name');
+                    if (!dirtyFields.slug) {
+                      setValue('slug', slugify(e.target.value), { shouldValidate: true });
+                    }
                   }
                 })}
                 id="project-name"
                 placeholder="My Awesome App"
                 disabled={isPending}
               />
-              {errors.name && <p className="text-destructive text-sm">{errors.name.message}</p>}
+              <p className="text-muted-foreground text-xs">
+                A friendly name to identify your project.
+              </p>
+              {errors.name?.message && <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.name.message)}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="project-domain">Slug</Label>
               <Input
-                {...register('slug', {
-                  onChange: () => {
-                    clearErrors('slug');
-                  }
-                })}
+                {...register('slug', { onChange: () => clearErrors('slug') })}
                 id="project-domain"
                 placeholder="my-awesome-app"
                 disabled={isPending}
@@ -121,7 +113,7 @@ export default function NewProjectPage() {
               <p className="text-muted-foreground text-xs">
                 This will be used in your dashboard URL and API identifiers.
               </p>
-              {errors.slug && <p className="text-destructive text-sm">{errors.slug.message}</p>}
+              {errors.slug?.message && <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>}
             </div>
 
             <div className="flex items-center gap-3 pt-2">

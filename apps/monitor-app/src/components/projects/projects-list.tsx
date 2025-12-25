@@ -1,6 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { FolderKanban, Globe, Calendar, Eye, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,16 +10,17 @@ const formatViews = (count: number) => {
 };
 
 export function ProjectList({ initialProjects }: { initialProjects: ProjectWithViews[] }) {
-  const router = useRouter();
-
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {initialProjects.map((project) => (
         <Card
           key={project.id}
-          className="bg-card border-border hover:border-primary/50 cursor-pointer transition-all"
-          onClick={() => router.push(`/projects/${project.id}`)}
+          className="bg-card border-border hover:border-primary/50 relative transition-all"
         >
+          <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0">
+            <span className="sr-only">View {project.name}</span>
+          </Link>
+
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -38,6 +37,7 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
               </div>
             </div>
           </CardHeader>
+
           <CardContent className="pt-0">
             <div className="flex items-center justify-between text-sm">
               <div className="text-muted-foreground flex items-center gap-4">
@@ -50,17 +50,22 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
                   <span>{new Date(project.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  e.stopPropagation();
-                  router.push(`/projects/${project.id}/settings`);
-                }}
+
+              <Link 
+                href={`/projects/${project.id}/settings`}
+                className="relative z-10"
               >
-                <Settings className="h-4 w-4" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  asChild
+                >
+                  <div>
+                    <Settings className="h-4 w-4" />
+                  </div>
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -63,3 +63,8 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
 
   return { start, end };
 }
+
+export function capitalizeFirstLetter(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+}
