@@ -7,7 +7,7 @@ type CoreWebVitalsProps = {
   metricOverview: MetricOverviewItem[];
 }
 
-const CORE_METRICS: Array<MetricName> = ['LCP', 'INP', 'CLS'];
+const CORE_METRICS = ['LCP', 'INP', 'CLS'] as const satisfies MetricName[];
 export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
 
   const coreMetrics = CORE_METRICS.map((name) => {
