@@ -1,5 +1,5 @@
 ALTER TABLE user
-ADD COLUMN role String DEFAULT 'member',
+ADD COLUMN role String DEFAULT 'user',
 ADD COLUMN banned Bool DEFAULT false,
 ADD COLUMN ban_reason Nullable(String),
 ADD COLUMN ban_expires Nullable(DateTime);

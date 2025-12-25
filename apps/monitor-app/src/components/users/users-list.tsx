@@ -2,7 +2,6 @@
 
 import { useUser } from '@/app/hooks/use-session';
 import { deleteUserAction } from '@/app/server/actions/users/delete-user';
-import { UserRow } from '@/app/server/lib/clickhouse/schema';
 import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
@@ -28,20 +27,18 @@ import { Input } from '@/components/ui/input';
 import { Key, MoreHorizontal, Search, Shield, ShieldOff, Trash2, Users } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { useMemo, useTransition } from 'react';
-
-type User = Pick<UserRow, 'role' | 'email' | 'name' | 'created_at'>;
+import { AdminApiResult } from '@/lib/auth';
+import { setRoleAction } from '@/app/server/actions/users/update-user';
 
 type Props = {
-  users: User[];
+  users: AdminApiResult<'listUsers'>['users'];
 };
 
-const handleResetPassword = (_user: User) => {
+const handleResetPassword = (_user: unknown) => {
   //
+  // TODO: we have to send this password anyway
 };
 
-const handleToggleRole = (_user: User) => {
-  //
-};
 export default function UsersList({ users }: Props) {
   const [isPending, startTransition] = useTransition();
   const currentUser = useUser();
@@ -52,9 +49,16 @@ export default function UsersList({ users }: Props) {
     return users.filter((user) => user.name.includes(searchQuery) || user.email.includes(searchQuery));
   }, [searchQuery, users]);
 
-  const handleDeleteUser = (user: User) => {
+  const handleDeleteUser = (user: Props['users'][number]) => {
     startTransition(async () => {
       await deleteUserAction(user.email);
+    });
+  };
+
+  const handleToggleRole = (user: Props['users'][number]) => {
+    startTransition(async () => {
+      const newRole = user.role === 'admin' ? 'user' : 'admin';
+      await setRoleAction({ newRole, userId: user.id });
     });
   };
 
@@ -107,7 +111,7 @@ export default function UsersList({ users }: Props) {
 
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground hidden text-xs sm:inline">
-                  Joined {new Date(user.created_at).toLocaleDateString()}
+                  Joined {new Date(user.createdAt).toLocaleDateString()}
                 </span>
 
                 <DropdownMenu>

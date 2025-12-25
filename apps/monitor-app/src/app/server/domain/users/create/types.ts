@@ -7,7 +7,7 @@ export const createUserSchema = arkType({
   email: arkType('string.email & string >= 1')
     .describe('a valid email address')
     .configure({ actual: () => '' }),
-  role: arkType("'admin' | 'member'")
+  role: arkType("'admin' | 'user'")
     .describe("user's role")
-    .configure({ actual: () => 'member' })
+    .configure({ actual: () => 'user' })
 });

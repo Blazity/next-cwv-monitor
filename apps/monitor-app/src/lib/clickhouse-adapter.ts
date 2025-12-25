@@ -198,7 +198,6 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         query.append(sql`) VALUES (`);
         query.append(values);
         query.append(sql`)`);
-        console.log(query.toSQL());
         return query;
       };
 
@@ -207,10 +206,13 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         if (isEmpty(entries)) throw new Error('No fields to update');
 
         return joinSql(
-          entries.map(
-            ([key, value]) =>
-              sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`
-          ),
+          entries
+            .map(([key, value]) => {
+              // TODO: we have to fix database to allow us updating this column
+              if (key === 'updated_at') return null;
+              return sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`;
+            })
+            .filter((v) => v !== null),
           sql`, `
         );
       };

@@ -31,7 +31,7 @@ export function CreateUserBtn() {
     defaultValues: {
       email: '',
       name: '',
-      role: 'member' as const
+      role: 'user' as const
     }
   });
   const {
@@ -95,7 +95,7 @@ export function CreateUserBtn() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="member" defaultChecked>
+                  <SelectItem value="user" defaultChecked>
                     User
                   </SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>

@@ -59,7 +59,7 @@ export const auth = betterAuth({
       updatedAt: 'updated_at'
     }
   },
-  plugins: [admin(), nextCookies()],
+  plugins: [nextCookies(), admin()],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {
@@ -92,3 +92,5 @@ export const auth = betterAuth({
     }
   }
 });
+
+export type AdminApiResult<T extends keyof typeof auth.api> = Awaited<ReturnType<(typeof auth.api)[T]>>;

@@ -1,14 +1,17 @@
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { deleteUserByEmail } from '@/app/server/lib/clickhouse/repositories/users-repository';
+import { auth } from '@/lib/auth';
 import { updateTag } from 'next/cache';
+import { headers } from 'next/headers';
 
 class UsersDeleteService {
   async execute(userEmail: string) {
-    const authorizedUser = await getAuthorizedSession(['admin']);
-    if (authorizedUser.user.email === userEmail) {
-      return { success: false, message: 'You are not able to remove yourself' };
+    const data = await auth.api.listUsers({
+      headers: await headers(),
+      query: { searchField: 'email', filterOperator: 'contains', searchValue: userEmail.toLocaleLowerCase() }
+    });
+    if (!data.users[0]) {
+      throw new Error('User not found');
     }
-    await deleteUserByEmail(userEmail);
+    await auth.api.removeUser({ body: { userId: data.users[0].id }, headers: await headers() });
     updateTag('users');
   }
 }

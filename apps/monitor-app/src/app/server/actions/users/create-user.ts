@@ -1,11 +1,10 @@
 'use server';
 
 import { usersCreateService } from '@/app/server/domain/users/create/service';
-import { InsertUserRow } from '@/app/server/lib/clickhouse/repositories/users-repository';
+import { User } from 'better-auth';
 import { ApiError } from 'next/dist/server/api-utils';
-import { AssertionError } from 'node:assert';
 
-export async function createUserAction(user: InsertUserRow) {
+export async function createUserAction(user: Pick<User, 'email' | 'name'>) {
   try {
     await usersCreateService.execute(user);
     return { success: true };

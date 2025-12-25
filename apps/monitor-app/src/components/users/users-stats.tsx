@@ -1,12 +1,13 @@
-import { UserRow } from '@/app/server/lib/clickhouse/schema';
 import { Card } from '@/components/ui/card';
+import { AdminApiResult } from '@/lib/auth';
 import { Shield, Users } from 'lucide-react';
 
 type Props = {
-  users: Pick<UserRow, 'name' | 'role'>[];
+  users: AdminApiResult<'listUsers'>['users'];
+  total: number;
 };
 
-export default function UsersStats({ users }: Props) {
+export default function UsersStats({ users, total }: Props) {
   const admins = users.filter((u) => u.role === 'admin');
 
   return (
@@ -18,7 +19,7 @@ export default function UsersStats({ users }: Props) {
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Total Users</div>
-            <div className="text-foreground text-2xl font-semibold">{users.length}</div>
+            <div className="text-foreground text-2xl font-semibold">{total}</div>
           </div>
         </div>
       </Card>
@@ -40,7 +41,7 @@ export default function UsersStats({ users }: Props) {
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Regular Users</div>
-            <div className="text-foreground text-2xl font-semibold">{users.length - admins.length}</div>
+            <div className="text-foreground text-2xl font-semibold">{total - admins.length}</div>
           </div>
         </div>
       </Card>
