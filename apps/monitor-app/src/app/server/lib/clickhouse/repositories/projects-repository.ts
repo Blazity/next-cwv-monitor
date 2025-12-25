@@ -1,5 +1,5 @@
 import { sql } from '@/app/server/lib/clickhouse/client';
-import type { InsertableProjectRow, ProjectRow, ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
+import type { InsertableProjectRow, ProjectRow, ProjectWithViews, UpdatableProjectRow } from '@/app/server/lib/clickhouse/schema';
 
 export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();
@@ -82,10 +82,9 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   `;
 }
 
-export async function updateProject(id: string, name: string, slug: string): Promise<void> {
-  const existing = await getProjectById(id);
-  if (!existing) throw new Error('Project not found');
-  const createdAt = new Date(existing.created_at);
+export async function updateProject(project: UpdatableProjectRow): Promise<void> {
+  const {id, name, slug, created_at} = project;
+  const createdAt = created_at instanceof Date ? created_at : new Date(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
 

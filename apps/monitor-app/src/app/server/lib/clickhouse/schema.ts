@@ -53,9 +53,11 @@ export type TableName = keyof ClickHouseSchema;
 
 export type TableRow<TName extends TableName> = ClickHouseSchema[TName];
 
+export type UpdatableProjectRow = Omit<ProjectRow, 'updated_at'>
+
 export type InsertableProjectRow = Omit<ProjectRow, 'created_at' | 'updated_at'> &
   Partial<Pick<ProjectRow, 'created_at' | 'updated_at'>>;
-
+  
 export type InsertableCwvEventRow = Omit<CwvEventRow, 'recorded_at' | 'ingested_at'> &
   Partial<Pick<CwvEventRow, 'recorded_at' | 'ingested_at'>>;
 

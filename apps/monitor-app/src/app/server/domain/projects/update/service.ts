@@ -20,7 +20,7 @@ export type UpdateProjectResult =
           return { kind: 'ok' };
         }
         
-        await updateProject(input.id, input.name, input.slug);
+      await updateProject({id: input.id, name: input.name, slug: input.slug, created_at:current.created_at});
         return { kind: 'ok' };
       } catch (error) {
         console.error("Update Service Error:", error);
