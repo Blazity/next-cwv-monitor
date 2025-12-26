@@ -13,7 +13,7 @@ export function CustomInput({
   label,
   placeholder,
   autoComplete = 'off',
-  'data-1p-ignore': data1pIgnore = 'true',
+  'data-1p-ignore': data1pIgnore = 'false',
   ...props
 }: Props) {
   const { errors } = useFormState();
@@ -23,13 +23,7 @@ export function CustomInput({
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        data-1p-ignore={data1pIgnore}
-        {...props}
-      />
+      <Input id={id} placeholder={placeholder} autoComplete={autoComplete} data-1p-ignore={data1pIgnore} {...props} />
       {typeof error === 'string' && <p className="text-red-500">{error}</p>}
     </div>
   );
