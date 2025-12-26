@@ -1,6 +1,7 @@
 'use server';
 
 import { SetRole, usersUpdateService } from '@/app/server/domain/users/update/service';
+import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { auth, AuthRole } from '@/lib/auth';
 import { assertNever } from '@/lib/utils';
 import { updateTag } from 'next/cache';
@@ -13,6 +14,7 @@ function isValidRole(role: AuthRole): role is AvailableRole {
 }
 
 export async function setRoleAction(payload: SetRole) {
+  await getAuthorizedSession();
   const role = payload.newRole;
   if (!isValidRole(role)) {
     assertNever(role);

@@ -1,11 +1,13 @@
 'use server';
 
 import { usersStatusService } from '@/app/server/domain/users/status/service';
+import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { checkBanReason } from '@/app/server/lib/ban-reasons';
 import { APIError } from 'better-auth';
 import { updateTag } from 'next/cache';
 
 export async function toggleAccountStatusAction(userId: string, currentStatus?: string | null) {
+  await getAuthorizedSession();
   try {
     if (!userId) {
       throw new Error('Userid is required');

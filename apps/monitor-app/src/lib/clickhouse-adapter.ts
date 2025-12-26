@@ -256,7 +256,6 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           const safeData = omit(updateDataSchema.parse(updateData), ['id', 'createdAt', 'updatedAt']);
           const userToUpdate = await selectOne(model, buildWhereClause(where, model));
           const setUser = { ...userToUpdate, ...updateData };
-          console.log(setUser);
           if (!isEmpty(safeData)) {
             await buildInsertQuery(model, setUser).command();
           }

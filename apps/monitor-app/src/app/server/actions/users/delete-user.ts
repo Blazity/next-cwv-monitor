@@ -1,9 +1,11 @@
 'use server';
 import { usersDeleteService } from '@/app/server/domain/users/delete/service';
+import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { APIError } from 'better-auth';
 import { updateTag } from 'next/cache';
 
 export async function deleteUserAction(userId: string) {
+  await getAuthorizedSession();
   try {
     if (!userId) {
       throw new Error('Userid is required');
