@@ -208,7 +208,6 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         return joinSql(
           entries
             .map(([key, value]) => {
-              // TODO: we have to fix database to allow us updating this column
               if (key === 'updated_at') return null;
               return sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`;
             })
@@ -255,11 +254,11 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
 
         update: async ({ model, where, update: updateData }) => {
           const safeData = omit(updateDataSchema.parse(updateData), ['id', 'createdAt', 'updatedAt']);
-          const whereClause = buildWhereClause(where, model);
-
+          const userToUpdate = await selectOne(model, buildWhereClause(where, model));
+          const setUser = { ...userToUpdate, ...updateData };
+          console.log(setUser);
           if (!isEmpty(safeData)) {
-            const setClause = buildSetClause(safeData, model);
-            await buildUpdateQuery(model, setClause, whereClause).command();
+            await buildInsertQuery(model, setUser).command();
           }
 
           return selectOne(model, buildWhereClause(where, model));
