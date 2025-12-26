@@ -57,9 +57,6 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
   }, [data]);
 
   const thresholds = getMetricThresholds(metric);
-  if (!thresholds) {
-    return <div>Invalid metric: {metric}</div>;
-  }
 
   const maxValue = Math.max(
     ...data.map((d) => d.quantiles?.p75 ?? null).filter((v): v is number => v !== null),

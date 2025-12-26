@@ -11,6 +11,7 @@ import { dashboardSearchParamsSchema } from '@/lib/search-params';
 import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
+import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
@@ -54,19 +55,20 @@ async function ProjectPageContent({
     throw new Error(`Failed to load dashboard: ${overview.kind}`);
   }
 
-  const { worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
+  const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
   return (
-    <div>
-      <PageHeader title="Project" description="Project description" />
+    <div className="space-y-6">
+      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
       <QuickStats
         projectId={projectId}
         selectedMetric="LCP"
         data={quickStats}
         statusDistribution={statusDistribution}
       />
-      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
+      <CoreWebVitals metricOverview={metricOverview}/>
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
+      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>
   );
 }
@@ -74,7 +76,7 @@ async function ProjectPageContent({
 function ProjectPageLoading() {
   return (
     <div>
-      <PageHeader title="Project" description="Project description" />
+      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
       <div className="mt-6 space-y-6">
         <div className="bg-muted h-64 animate-pulse rounded-lg" />
         <div className="bg-muted h-96 animate-pulse rounded-lg" />
