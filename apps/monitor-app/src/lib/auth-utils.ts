@@ -10,25 +10,17 @@ export class UnauthorizedError extends Error {
   }
 }
 
-const getSession = cache(async () => {
-  try {
-    return await auth.api.getSession({
-      headers: await headers()
-    });
-  } catch {
-    return null;
-  }
-});
+export const getAuthorizedSession = cache(async (): Promise<SessionData> => {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  }).catch(() => null);
 
-export async function getAuthorizedSession(): Promise<SessionData> {
-  const sessionData = await getSession();
-
-  if (!sessionData) {
+  if (!session) {
     throw new UnauthorizedError();
   }
 
-  return sessionData;
-}
+  return session;
+});
 
 export async function getServerSessionDataOrRedirect(): Promise<SessionData> {
   try {
