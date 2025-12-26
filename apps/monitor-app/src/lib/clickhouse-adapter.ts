@@ -198,7 +198,6 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         query.append(sql`) VALUES (`);
         query.append(values);
         query.append(sql`)`);
-        console.log(query.toSQL());
         return query;
       };
 
