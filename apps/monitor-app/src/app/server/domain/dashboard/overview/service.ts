@@ -3,24 +3,24 @@ import {
   fetchMetricsOverview,
   fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
-  fetchWorstRoutes
+  fetchWorstRoutes,
+  MetricName
 } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
 import { getMetricThresholds, getRatingForValue } from '@/app/server/lib/cwv-thresholds';
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
 
-import type {
-  DashboardOverview,
-  DailySeriesPoint,
-  GetDashboardOverviewQuery,
-  GetDashboardOverviewResult,
-  MetricName,
-  MetricOverviewItem,
-  QuantileSummary,
-  StatusDistribution,
-  WorstRouteItem,
+import {
+  type DashboardOverview,
+  type DailySeriesPoint,
+  type GetDashboardOverviewQuery,
+  type GetDashboardOverviewResult,
+  type MetricOverviewItem,
+  type QuantileSummary,
+  type StatusDistribution,
+  type WorstRouteItem,
+  METRIC_NAMES,
   QuickStatsData
 } from '@/app/server/domain/dashboard/overview/types';
-import { METRIC_NAMES } from '@/app/server/domain/dashboard/overview/types';
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -69,9 +69,6 @@ export class DashboardOverviewService {
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
-    if (!selectedThresholds) {
-      return { kind: 'unsupported-metric', metricName: query.selectedMetric };
-    }
 
     const filters = {
       projectId: query.projectId,

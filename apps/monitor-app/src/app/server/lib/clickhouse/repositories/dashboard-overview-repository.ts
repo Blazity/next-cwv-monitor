@@ -31,7 +31,7 @@ function buildWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFra
 }
 
 export type MetricsOverviewRow = {
-  metric_name: string;
+  metric_name: MetricName;
   percentiles: number[];
   sample_size: string;
 };
