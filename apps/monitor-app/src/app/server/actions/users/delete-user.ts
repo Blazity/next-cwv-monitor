@@ -9,7 +9,7 @@ export async function deleteUserAction(userId: string) {
     updateTag('users');
     return { success: true };
   } catch (error) {
-    if (error instanceof APIError) {
+    if (error instanceof APIError || error instanceof Error) {
       return { success: false, message: error.message };
     }
     return { success: false };

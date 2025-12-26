@@ -4,6 +4,7 @@ import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
 import { randomInt } from 'node:crypto';
 import type { DateRange, MetricName, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import { AuthRole } from '@/lib/auth';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -92,4 +93,11 @@ export function generateTempPassword(length = 16) {
   while (chars.length < length) chars.push(pick(all));
 
   return shuffle(chars).join('');
+}
+
+// User have to have ALL roles
+export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
+  if (!value) return false;
+  const userRoles = value.split(',');
+  return roles.every((role) => userRoles.includes(role));
 }

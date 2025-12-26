@@ -32,7 +32,7 @@ import { toggleAccountStatusAction } from '@/app/server/actions/users/toggle-use
 import { UserWithRole } from 'better-auth/plugins';
 import { checkBanReason } from '@/app/server/lib/ban-reasons';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, hasRoles } from '@/lib/utils';
 
 type Props = {
   users: UserWithRole[];
@@ -59,7 +59,7 @@ export default function UsersList({ users }: Props) {
       if (success) {
         toast.success(`User's have been deleted`);
       } else {
-        toast.error(message ?? 'Failed to remove user');
+        toast.error(message || 'Failed to remove user');
       }
     });
   };
@@ -71,7 +71,7 @@ export default function UsersList({ users }: Props) {
       if (success) {
         toast.success(`User's role has been changed`);
       } else {
-        toast.error(message ?? 'Failed to change role');
+        toast.error(message || 'Failed to change role');
       }
     });
   };
@@ -82,7 +82,7 @@ export default function UsersList({ users }: Props) {
       if (success) {
         toast.success('User status has been disabled');
       } else {
-        toast.error(message ?? 'Failed to set user status');
+        toast.error(message || 'Failed to set user status');
       }
     });
   };
@@ -122,7 +122,7 @@ export default function UsersList({ users }: Props) {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-foreground truncate text-sm font-medium">{user.name}</span>
-                      {user.role === 'admin' && (
+                      {hasRoles(user.role, ['admin']) && (
                         <Badge variant="secondary" className="text-xs">
                           Admin
                         </Badge>
@@ -154,7 +154,10 @@ export default function UsersList({ users }: Props) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                      <DropdownMenuItem
+                        onClick={() => handleResetPassword(user)}
+                        disabled={!!user.banned || hasRoles(user.role, ['admin'])}
+                      >
                         <Key className="mr-2 h-4 w-4" />
                         Reset Password
                       </DropdownMenuItem>
@@ -177,9 +180,9 @@ export default function UsersList({ users }: Props) {
                       {/* TODO: Consider which admin is better than other admin to avoid cases where any admin can remove admin from different admins */}
                       <DropdownMenuItem
                         onClick={() => handleToggleRole(user)}
-                        disabled={currentUser.email === user.email}
+                        disabled={currentUser.email === user.email || !!user.banned}
                       >
-                        {user.role === 'admin' ? (
+                        {hasRoles(user.role, ['admin']) ? (
                           <>
                             <ShieldOff className="mr-2 h-4 w-4" />
                             Remove Admin
@@ -196,7 +199,7 @@ export default function UsersList({ users }: Props) {
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            disabled={currentUser.email === user.email || isDisabled}
+                            disabled={currentUser.email === user.email || isDisabled || hasRoles(user.role, ['admin'])}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />

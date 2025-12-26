@@ -51,7 +51,7 @@ export function CreateUserBtn() {
         methods.reset();
         setIsDialogOpen(false);
       } else {
-        toast.error(message ?? 'Failed to create user. Please try again.');
+        toast.error(message || 'Failed to create user. Please try again.');
       }
     });
   });
