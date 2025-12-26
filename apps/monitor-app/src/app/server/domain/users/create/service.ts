@@ -8,6 +8,7 @@ class UsersCreateService {
     await auth.api.createUser({
       body: { email: user.email, name: user.name, password: tempPassword, data: { isPasswordTemporary: true } }
     });
+    //TODO: implement sending email
     console.log(tempPassword, 'Temporary password for user');
   }
 }
