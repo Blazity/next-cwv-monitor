@@ -31,7 +31,7 @@ export function CreateUserBtn() {
     defaultValues: {
       email: '',
       name: '',
-      role: 'user' as const
+      role: 'member' as const
     }
   });
   const {
