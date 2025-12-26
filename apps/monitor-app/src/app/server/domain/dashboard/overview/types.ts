@@ -9,6 +9,7 @@ export type MetricName = (typeof METRIC_NAMES)[number];
 
 export type TimeRange = (typeof TIME_RANGES)[number];
 export const TIME_RANGES = [
+  { value: '1d', label: 'Last 24 hours', days: 1 },
   { value: '7d', label: 'Last 7 days', days: 7 },
   { value: '30d', label: 'Last 30 days', days: 30 },
   { value: '90d', label: 'Last 90 days', days: 90 }
