@@ -1,11 +1,18 @@
 'use server';
 
 import { usersCreateService } from '@/app/server/domain/users/create/service';
+import { createUserSchema } from '@/app/server/domain/users/create/types';
 import { User } from 'better-auth';
 import { updateTag } from 'next/cache';
 import { ApiError } from 'next/dist/server/api-utils';
+import { type as arkType } from 'arktype';
 
 export async function createUserAction(user: Pick<User, 'email' | 'name'>) {
+  const out = createUserSchema(user);
+  if (out instanceof arkType.errors) {
+    return { success: false, message: 'Invalid user schema' };
+  }
+
   try {
     await usersCreateService.execute(user);
     updateTag('users');

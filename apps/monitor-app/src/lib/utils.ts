@@ -101,3 +101,7 @@ export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
   const userRoles = value.split(',');
   return roles.every((role) => userRoles.includes(role));
 }
+
+export function assertNever(v: never) {
+  console.error(`Failed, expected ${v} to be never`);
+}

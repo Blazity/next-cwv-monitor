@@ -5,6 +5,10 @@ import { updateTag } from 'next/cache';
 
 export async function deleteUserAction(userId: string) {
   try {
+    if (!userId) {
+      throw new Error('Userid is required');
+    }
+
     await usersDeleteService.execute(userId);
     updateTag('users');
     return { success: true };
