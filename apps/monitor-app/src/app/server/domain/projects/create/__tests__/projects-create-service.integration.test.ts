@@ -2,23 +2,23 @@ import type { StartedTestContainer } from 'testcontainers';
 import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vitest';
 import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
 
-const getAuthorizedSessionMock = vi.hoisted(() => vi.fn());
-
-vi.mock('@/lib/auth-utils', () => ({
-  getAuthorizedSession: getAuthorizedSessionMock,
-}));
-
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let projectsCreateService: typeof import('../service').projectsCreateService;
+let sqlClient: typeof import('@/app/server/lib/clickhouse/client').sql;
+let service: typeof import('../service').projectsCreateService;
+let projectsRepo: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository');
 
 describe('ProjectsCreateService (integration)', () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ projectsCreateService } = await import('../service'));
+    const repoModule = await import('@/app/server/lib/clickhouse/repositories/projects-repository');
+    const { sql } = await import('@/app/server/lib/clickhouse/client');
+    const { projectsCreateService } = await import('../service');
+
+    projectsRepo = repoModule;
+    sqlClient = sql;
+    service = projectsCreateService;
   }, 120_000);
 
   afterAll(async () => {
@@ -26,24 +26,10 @@ describe('ProjectsCreateService (integration)', () => {
   });
 
   beforeEach(async () => {
-    await sql`TRUNCATE TABLE projects`.command();
-    
-    getAuthorizedSessionMock.mockReset();
-    getAuthorizedSessionMock.mockResolvedValue({
-      kind: 'authorized',
-      user: { id: 'test-user' }
-    });
-  });
+    await sqlClient`TRUNCATE TABLE projects`.command();
 
-  it('returns unauthorized if session is invalid', async () => {
-    getAuthorizedSessionMock.mockResolvedValue({ kind: 'unauthorized' });
-
-    const result = await projectsCreateService.execute({
-      name: 'New Project',
-      slug: 'new-project'
-    });
-
-    expect(result).toEqual({ kind: 'unauthorized' });
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('successfully creates a new project', async () => {
@@ -52,15 +38,15 @@ describe('ProjectsCreateService (integration)', () => {
       slug: 'my-web-app'
     };
 
-    const result = await projectsCreateService.execute(input);
+    const result = await service.execute(input);
 
     expect(result.kind).toBe('ok');
     if (result.kind === 'ok') {
       expect(result.projectId).toBeDefined();
-      
-      const rows = await sql`
+
+      const rows = await sqlClient<{ id: string; name: string; slug: string }>`
         SELECT id, name, slug 
-        FROM projects 
+        FROM projects FINAL
         WHERE id = ${result.projectId}
       `.query();
 
@@ -72,23 +58,29 @@ describe('ProjectsCreateService (integration)', () => {
 
   it('returns already-exists if the slug is taken', async () => {
     const slug = 'duplicate-slug';
-    
-    await projectsCreateService.execute({ name: 'First', slug });
-    const result = await projectsCreateService.execute({ name: 'Second', slug });
+
+    await service.execute({ name: 'First', slug });
+
+    const result = await service.execute({ name: 'Second', slug });
 
     expect(result).toEqual({
       kind: 'already-exists',
       slug: slug
     });
 
-    const rows = await sql`SELECT count() as count FROM projects WHERE slug = ${slug}`.query();
-    expect(rows[0].count).toBe("1");
+    const rows = await sqlClient<{ count: string }>`
+      SELECT count() as count FROM projects WHERE slug = ${slug}
+    `.query();
+
+    expect(Number(rows[0].count)).toBe(1);
   });
 
   it('handles database errors gracefully', async () => {
-    getAuthorizedSessionMock.mockRejectedValue(new Error('Unexpected Database Crash'));
+    const repoSpy = vi
+      .spyOn(projectsRepo, 'getProjectBySlug')
+      .mockRejectedValue(new Error('ClickHouse Connection Timeout'));
 
-    const result = await projectsCreateService.execute({
+    const result = await service.execute({
       name: 'Error Project',
       slug: 'error-project'
     });
@@ -97,5 +89,7 @@ describe('ProjectsCreateService (integration)', () => {
       kind: 'error',
       message: 'Failed to create project'
     });
+
+    expect(repoSpy).toHaveBeenCalled();
   });
 });

@@ -3,9 +3,12 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
 
-export type AuthResult = 
-| { kind: 'authorized'; session: SessionData["session"]; user: SessionData["user"]; } 
-| { kind: 'unauthorized'; };
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("User is not authorized");
+    this.name = "UnauthorizedError";
+  }
+}
 
 const getSession = cache(async () => {
   try {
@@ -17,27 +20,22 @@ const getSession = cache(async () => {
   }
 });
 
-export async function getAuthorizedSession(): Promise<AuthResult> {
+export async function getAuthorizedSession(): Promise<SessionData> {
   const sessionData = await getSession();
 
   if (!sessionData) {
-    return { kind: 'unauthorized' };
+    throw new UnauthorizedError();
   }
 
-  return {
-    kind: 'authorized',
-    ...sessionData
-  };
+  return sessionData;
 }
 
 export async function getServerSessionDataOrRedirect(): Promise<SessionData> {
-  const result = await getAuthorizedSession();
-
-  if (result.kind === 'authorized') {
-    return result;
+  try {
+    return await getAuthorizedSession();
+  } catch {
+    return await redirectToLogin();
   }
-
-  return await redirectToLogin();
 }
 
 export async function redirectToLogin(): Promise<never> {

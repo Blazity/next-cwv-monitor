@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createProjectAction } from '@/actions/project/create-project';
+import { createProjectAction } from '@/app/server/actions/project/create-project';
 import { createProjectSchema, type CreateProjectInput } from '@/app/server/domain/projects/schema';
 import { capitalizeFirstLetter } from '@/lib/utils';
 
@@ -96,10 +96,10 @@ export default function NewProjectPage() {
                 placeholder="My Awesome App"
                 disabled={isPending}
               />
-              <p className="text-muted-foreground text-xs">
-                A friendly name to identify your project.
-              </p>
-              {errors.name?.message && <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.name.message)}</p>}
+              <p className="text-muted-foreground text-xs">A friendly name to identify your project.</p>
+              {errors.name?.message && (
+                <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.name.message)}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -113,7 +113,9 @@ export default function NewProjectPage() {
               <p className="text-muted-foreground text-xs">
                 This will be used in your dashboard URL and API identifiers.
               </p>
-              {errors.slug?.message && <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>}
+              {errors.slug?.message && (
+                <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 pt-2">

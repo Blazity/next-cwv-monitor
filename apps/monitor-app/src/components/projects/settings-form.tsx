@@ -34,9 +34,9 @@ import {
   AlertDialogTrigger
 } from '@/components/ui/alert-dialog';
 
-import { updateProjectNameAction } from '@/actions/project/update-project';
-import { deleteProjectAction } from '@/actions/project/delete-project';
-import { resetProjectDataAction } from '@/actions/project/reset-project-action';
+import { updateProjectNameAction } from '@/app/server/actions/project/update-project';
+import { deleteProjectAction } from '@/app/server/actions/project/delete-project';
+import { resetProjectDataAction } from '@/app/server/actions/project/reset-project';
 import { UpdateProjectNameInput, updateProjectNameSchema } from '@/app/server/domain/projects/schema';
 import { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
 import { capitalizeFirstLetter, cn } from '@/lib/utils';
@@ -237,7 +237,7 @@ function UpdateNameForm({ project }: { project: ProjectWithViews }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <Label htmlFor="name">Project Name</Label>
       <div className="flex gap-2">
-        <Input {...register('name')} id="name" className="bg-background w-full" autoComplete="off" />
+        <Input {...register('name')} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" />
         <Button type="submit" disabled={!isDirty || isPending}>
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Save
@@ -379,6 +379,7 @@ function DangerAction({
               value={confirmInput}
               onChange={(e) => setConfirmInput(e.target.value)}
               onPaste={handlePreventPaste}
+              data-1p-ignore
               autoComplete="off"
               spellCheck="false"
               placeholder={confirmText}

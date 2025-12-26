@@ -3,25 +3,23 @@ import type { StartedTestContainer } from 'testcontainers';
 import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vitest';
 import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
 
-const getAuthorizedSessionMock = vi.hoisted(() => vi.fn());
-
-vi.mock('@/lib/auth-utils', () => ({
-  getAuthorizedSession: getAuthorizedSessionMock,
-}));
-
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
-let projectsUpdateService: typeof import('../service').projectsUpdateService;
+let sqlClient: typeof import('@/app/server/lib/clickhouse/client').sql;
+let service: typeof import('../service').projectsUpdateService;
+let projectsRepo: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository');
 
 describe('ProjectsUpdateService (integration)', () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
-    ({ projectsUpdateService } = await import('../service'));
+    const repoModule = await import('@/app/server/lib/clickhouse/repositories/projects-repository');
+    const { sql } = await import('@/app/server/lib/clickhouse/client');
+    const { projectsUpdateService } = await import('../service');
+
+    projectsRepo = repoModule;
+    sqlClient = sql;
+    service = projectsUpdateService;
   }, 120_000);
 
   afterAll(async () => {
@@ -29,29 +27,14 @@ describe('ProjectsUpdateService (integration)', () => {
   });
 
   beforeEach(async () => {
-    await sql`TRUNCATE TABLE projects`.command();
-    
-    getAuthorizedSessionMock.mockReset();
-    getAuthorizedSessionMock.mockResolvedValue({
-      kind: 'authorized',
-      user: { id: 'test-user' }
-    });
-  });
+    await sqlClient`TRUNCATE TABLE projects`.command();
 
-  it('returns unauthorized if session is invalid', async () => {
-    getAuthorizedSessionMock.mockResolvedValue({ kind: 'unauthorized' });
-
-    const result = await projectsUpdateService.execute({
-      id: randomUUID(),
-      slug: 'any',
-      name: 'New Name'
-    });
-
-    expect(result).toEqual({ kind: 'unauthorized' });
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   it('returns error if project does not exist', async () => {
-    const result = await projectsUpdateService.execute({
+    const result = await service.execute({
       id: randomUUID(),
       slug: 'missing',
       name: 'New Name'
@@ -66,9 +49,14 @@ describe('ProjectsUpdateService (integration)', () => {
   it('returns ok and does nothing if the name is identical', async () => {
     const projectId = randomUUID();
     const name = 'Original Name';
-    await createProject({ id: projectId, slug: 'orig-slug', name });
+    
+    await projectsRepo.createProject({ 
+      id: projectId, 
+      slug: 'orig-slug', 
+      name 
+    });
 
-    const result = await projectsUpdateService.execute({
+    const result = await service.execute({
       id: projectId,
       slug: 'new-slug',
       name: name
@@ -76,15 +64,22 @@ describe('ProjectsUpdateService (integration)', () => {
 
     expect(result).toEqual({ kind: 'ok' });
     
-    const project = await sql`SELECT slug FROM projects WHERE id = ${projectId}`.query();
-    expect(project[0].slug).toBe('orig-slug');
+    const rows = await sqlClient<{ slug: string }>`
+      SELECT slug FROM projects WHERE id = ${projectId}
+    `.query();
+    
+    expect(rows[0].slug).toBe('orig-slug');
   });
 
   it('successfully updates project name and slug', async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'old-slug', name: 'Old Name' });
+    await projectsRepo.createProject({ 
+      id: projectId, 
+      slug: 'old-slug', 
+      name: 'Old Name' 
+    });
 
-    const result = await projectsUpdateService.execute({
+    const result = await service.execute({
       id: projectId,
       name: 'Updated Name',
       slug: 'updated-slug'
@@ -92,7 +87,7 @@ describe('ProjectsUpdateService (integration)', () => {
 
     expect(result).toEqual({ kind: 'ok' });
 
-    const rows = await sql`
+    const rows = await sqlClient<{ name: string; slug: string }>`
       SELECT name, slug FROM projects FINAL WHERE id = ${projectId}
     `.query();
 
@@ -102,11 +97,13 @@ describe('ProjectsUpdateService (integration)', () => {
 
   it('handles database errors gracefully during update', async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'test', name: 'Test' });
+    await projectsRepo.createProject({ id: projectId, slug: 'test', name: 'Test' });
 
-    getAuthorizedSessionMock.mockRejectedValue(new Error('ClickHouse Timeout'));
+    const repoSpy = vi
+      .spyOn(projectsRepo, 'getProjectById')
+      .mockRejectedValue(new Error('ClickHouse Timeout'));
 
-    const result = await projectsUpdateService.execute({
+    const result = await service.execute({
       id: projectId,
       name: 'New Name',
       slug: 'new-slug'
@@ -116,26 +113,28 @@ describe('ProjectsUpdateService (integration)', () => {
       kind: 'error',
       message: 'Failed to update project name.'
     });
+    
+    expect(repoSpy).toHaveBeenCalled();
   });
 
   it('preserves the original created_at timestamp', async () => {
     const projectId = randomUUID();
     const originalDate = new Date('2025-01-01T10:00:00Z');
     
-    await createProject({ 
+    await projectsRepo.createProject({ 
       id: projectId, 
       slug: 'slug', 
       name: 'Name', 
       created_at: originalDate 
     });
 
-    await projectsUpdateService.execute({
+    await service.execute({
       id: projectId,
       name: 'New Name',
       slug: 'new-slug'
     });
 
-    const rows = await sql`
+    const rows = await sqlClient<{ ts: string }>`
       SELECT toUnixTimestamp(created_at) as ts FROM projects WHERE id = ${projectId}
     `.query();
 
