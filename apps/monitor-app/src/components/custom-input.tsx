@@ -6,16 +6,30 @@ type Props = UseFormRegisterReturn &
   React.ComponentProps<typeof Input> & {
     label?: string;
     placeholder?: string;
+    'data-1p-ignore'?: boolean | 'true' | 'false';
   };
 
-export function CustomInput({ label, placeholder, ...props }: Props) {
+export function CustomInput({
+  label,
+  placeholder,
+  autoComplete = 'off',
+  'data-1p-ignore': data1pIgnore = 'true',
+  ...props
+}: Props) {
   const { errors } = useFormState();
   const error = errors[props.name]?.message;
+  const id = props.id ?? props.name;
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="email">{label}</Label>
-      <Input id="email" type="email" placeholder={placeholder} {...props} />
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        data-1p-ignore={data1pIgnore}
+        {...props}
+      />
       {typeof error === 'string' && <p className="text-red-500">{error}</p>}
     </div>
   );

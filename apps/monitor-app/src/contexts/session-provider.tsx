@@ -1,18 +1,25 @@
 'use client';
 
-import { SessionData } from '@/lib/auth-client';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { SessionContext } from '@/contexts/session-context';
+import { auth } from '@/lib/auth';
 
-export function SessionProvider({ initialSessionData, children }: {
-  initialSessionData: SessionData | null;
+export function SessionProvider({
+  initialSessionData,
+  children
+}: {
+  initialSessionData: NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
   children: React.ReactNode;
 }) {
   const value = useMemo(() => initialSessionData, [initialSessionData]);
+  const wasAskedForChange = useRef(false);
 
-  return (
-    <SessionContext value={value}>
-      {children}
-    </SessionContext>
-  );
+  useEffect(() => {
+    if (value.user.isPasswordTemporary && wasAskedForChange.current === false) {
+      alert('TODO: change password');
+      wasAskedForChange.current = true;
+    }
+  }, [value]);
+
+  return <SessionContext value={value}>{children}</SessionContext>;
 }

@@ -24,10 +24,9 @@ export function Navbar({ projects }: NavbarProps) {
   const projectId = params.projectId;
 
   const navItems = getNavItems(projectId);
-
   return (
     <TooltipProvider>
-      <header className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
+      <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
         <div className="flex h-14 items-center justify-between px-3 sm:px-4 lg:px-6">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
             <MobileSheet navItems={navItems} />
@@ -63,10 +62,7 @@ export function Navbar({ projects }: NavbarProps) {
                   </Link>
                 );
               })}
-              {/* {user?.role === 'admin' && ( */}
-              {/* TODO: */}
-              {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-              {true && (
+              {user.role === 'admin' && (
                 <Link
                   href="/users"
                   className={cn(

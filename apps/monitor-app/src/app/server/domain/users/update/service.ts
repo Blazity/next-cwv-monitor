@@ -1,18 +1,16 @@
-import { adminAuth, auth } from '@/lib/auth';
+import { auth, AuthRole } from '@/lib/auth';
 import { headers } from 'next/headers';
 
 export type SetRole = {
-  newRole: 'admin' | 'user';
+  newRole: AuthRole;
   userId: string;
 };
 
 class UsersUpdateService {
   async setRole({ newRole, userId }: SetRole) {
-    if (!adminAuth.admin.checkRolePermission({ role: 'admin', permission: { user: ['update'] } })) {
-      throw new Error('You cannot update user');
-    }
     await auth.api.setRole({
-      body: { role: newRole, userId },
+      // FIXME: better-auth has problems with infering types, let's assert it to first available value
+      body: { role: newRole as 'user', userId },
       headers: await headers()
     });
   }

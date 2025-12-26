@@ -1,23 +1,42 @@
 import { betterAuth } from 'better-auth';
-import { admin } from 'better-auth/plugins';
+import { admin, InferAdminRolesFromOption } from 'better-auth/plugins';
+import { adminAc, userAc } from 'better-auth/plugins/admin/access';
+
 import { env } from '@/env';
 import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
 import { nextCookies } from 'better-auth/next-js';
-import { createAuthClient } from 'better-auth/client';
-import { adminClient } from 'better-auth/client/plugins';
 
-export const adminAuth = createAuthClient({
-  plugins: [adminClient()]
-});
+const adminPluginOptions = {
+  defaultRole: 'member',
+  adminRoles: ['admin'],
+  roles: {
+    admin: adminAc,
+    member: userAc
+  },
+  schema: {
+    user: { fields: { banExpires: 'ban_expires', banReason: 'ban_reason' } }
+  }
+};
+
+const adminPlugin = admin<typeof adminPluginOptions>(adminPluginOptions);
+
+export type AuthRole = InferAdminRolesFromOption<typeof adminPluginOptions>;
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
   baseURL: env.CLIENT_APP_ORIGIN,
   database: clickHouseAdapter({ debugLogs: env.CLICKHOUSE_ADAPTER_DEBUG_LOGS }),
   user: {
+    additionalFields: {
+      isPasswordTemporary: {
+        type: 'boolean',
+        defaultValue: false,
+        required: false,
+        fieldName: 'is_password_temporary'
+      }
+    },
     fields: {
       emailVerified: 'email_verified',
-      role: 'role',
       createdAt: 'created_at',
       updatedAt: 'updated_at'
     }
@@ -59,7 +78,7 @@ export const auth = betterAuth({
       updatedAt: 'updated_at'
     }
   },
-  plugins: [nextCookies(), admin()],
+  plugins: [nextCookies(), adminPlugin],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     defaultCookieAttributes: {

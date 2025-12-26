@@ -43,8 +43,6 @@ const args = [
   ...extraArgs
 ];
 
-console.log(args);
-
 let child = spawn('clickhouse-migrations', args, {
   stdio: 'inherit',
   env: process.env,

@@ -55,10 +55,7 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 </Link>
               );
             })}
-            {/* {user?.role === 'admin' && ( */}
-            {/* TODO: */}
-            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-            {true && (
+            {user.role === 'admin' && (
               <>
                 <div className="bg-border my-2 h-px" />
                 <Link

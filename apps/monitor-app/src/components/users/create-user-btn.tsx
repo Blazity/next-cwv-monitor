@@ -86,7 +86,15 @@ export function CreateUserBtn() {
               onSubmit(e);
             }}
           >
-            <CustomInput type="text" placeholder="John" label="Name" {...register('name')} />
+            {/* Disable 1 password */}
+            <CustomInput
+              data-1p-ignore
+              autoComplete="off"
+              type="text"
+              placeholder="John"
+              label="Name"
+              {...register('name')}
+            />
             <CustomInput type="email" placeholder="john@example.com" label="Email" {...register('email')} />
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
