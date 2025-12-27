@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge';
 import zxcvbn from 'zxcvbn';
 import { env } from '@/env';
 import type { DateRange, MetricName, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import { chunk } from 'remeda';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -63,4 +64,14 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
   start.setHours(0, 0, 0, 0);
 
   return { start, end };
+}
+
+export function* chunkGenerator<T>({ array }: { array: T[] }) {
+  const chunks = chunk(array, 1000);
+  let currentChunkIndex = 0;
+  for (const chunk of chunks) {
+    console.log(`processing: ${currentChunkIndex} / ${array.length}`);
+    yield chunk;
+    currentChunkIndex += chunk.length;
+  }
 }

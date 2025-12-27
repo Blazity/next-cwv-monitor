@@ -2,6 +2,8 @@
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@clickhouse/client';
+import { faker } from '@faker-js/faker';
+import { subDays } from 'date-fns';
 
 const {
   CLICKHOUSE_HOST = 'localhost',
@@ -22,37 +24,37 @@ const PROJECT_ID =
 const PROJECT_SLUG = process.env.CUSTOM_EVENTS_PROJECT_SLUG ?? process.env.SEED_PROJECT_SLUG ?? 'demo-project';
 const PROJECT_NAME = process.env.CUSTOM_EVENTS_PROJECT_NAME ?? process.env.SEED_PROJECT_NAME ?? 'Next CWV Demo';
 
-const TARGET_EVENTS = toPositiveInt(process.env.CUSTOM_EVENTS_COUNT, 100_000);
+const TARGET_EVENTS = toPositiveInt(process.env.CUSTOM_EVENTS_COUNT, 1_000_000);
 const DAYS_RANGE = toPositiveInt(process.env.CUSTOM_EVENTS_DAYS, 90);
 const BATCH_SIZE = toPositiveInt(process.env.CUSTOM_EVENTS_BATCH_SIZE, 1000);
 const SESSION_POOL_SIZE = toPositiveInt(
   process.env.CUSTOM_EVENTS_SESSIONS,
   Math.max(2000, Math.floor(TARGET_EVENTS / 5))
 );
-const RESET_BEFORE_SEED = process.env.CUSTOM_EVENTS_RESET === 'true';
+const RESET_BEFORE_SEED = process.env.CUSTOM_EVENTS_RESET !== 'true';
 const RANDOM_SEED = Number.parseInt(process.env.CUSTOM_EVENTS_RANDOM_SEED ?? '7331', 10);
 
 const ROUTES = [
-  { route: '/', paths: ['/'], events: ['landing_view', 'hero_cta_click', 'footer_nav_click'] },
+  { route: '/', paths: ['/'], events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view'] },
   {
     route: '/docs',
     paths: ['/docs', '/docs/getting-started', '/docs/faq'],
-    events: ['docs_view', 'copy_snippet', 'search', 'cta_signup']
+    events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
   },
   {
     route: '/blog/[slug]',
     paths: ['/blog/core-web-vitals', '/blog/rendering-patterns', '/blog/edge-performance'],
-    events: ['blog_view', 'share', 'newsletter_subscribe', 'cta_signup']
+    events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
   },
   {
     route: '/checkout',
     paths: ['/checkout', '/checkout/review', '/checkout/confirmation'],
-    events: ['start_checkout', 'apply_coupon', 'payment_submit', 'checkout_success']
+    events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
   },
   {
     route: '/dashboard',
     paths: ['/dashboard', '/dashboard/overview', '/dashboard/events'],
-    events: ['dashboard_view', 'filter_change', 'chart_hover', 'export_csv']
+    events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
   }
 ];
 
@@ -75,16 +77,12 @@ function randomItem(list) {
   return list[Math.floor(rng() * list.length)];
 }
 
-function startOfDayUtc(date) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+function randomTimeOnDay() {
+  return faker.date.between({
+    from: subDays(new Date(), 90),
+    to: new Date()
+  });
 }
-
-function randomTimeOnDay(dayStart) {
-  const offsetMs = Math.floor(rng() * 86_400_000);
-  const jitter = Math.floor(rng() * 120_000);
-  return new Date(dayStart.getTime() + offsetMs + jitter);
-}
-
 function formatDateTime64Utc(date) {
   const iso = date.toISOString();
   const [day, timeWithMs] = iso.split('T');
@@ -93,15 +91,11 @@ function formatDateTime64Utc(date) {
 }
 
 function buildEvents(projectId) {
-  const now = new Date();
   const events = [];
 
   for (let i = 0; i < TARGET_EVENTS; i++) {
     const routeDef = randomItem(ROUTES);
-    const dayOffset = Math.floor(rng() * DAYS_RANGE);
-    const dayStart = startOfDayUtc(new Date(now.getTime() - dayOffset * 86_400_000));
-    const recordedAt = randomTimeOnDay(dayStart);
-
+    const recordedAt = formatDateTime64Utc(randomTimeOnDay());
     events.push({
       project_id: projectId,
       session_id: randomItem(SESSION_IDS),
@@ -109,8 +103,8 @@ function buildEvents(projectId) {
       path: randomItem(routeDef.paths),
       device_type: randomItem(DEVICES),
       event_name: randomItem(routeDef.events),
-      recorded_at: formatDateTime64Utc(recordedAt),
-      ingested_at: formatDateTime64Utc(now)
+      recorded_at: recordedAt,
+      ingested_at: recordedAt
     });
   }
 

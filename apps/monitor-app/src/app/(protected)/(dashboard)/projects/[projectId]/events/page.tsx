@@ -1,23 +1,28 @@
 import {
   fetchEventsStatsData,
+  fetchEvents,
   fetchTotalStatsEvents
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
-import { Card, CardContent } from '@/components/ui/card';
-import { MousePointerClick, TrendingDown, TrendingUp } from 'lucide-react';
+import { AnalyticsTab } from '@/components/events/analytics-tab';
+import { EventsCards } from '@/components/events/events-cards';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { eventsSearchParamsSchema } from '@/lib/search-params';
+import { BarChart3, Settings2 } from 'lucide-react';
 
-async function EventsPage({ params }: PageProps<'/projects/[projectId]/events'>) {
+async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
   const { projectId } = await params;
+  const { timeRange, event } = eventsSearchParamsSchema.parse(await searchParams);
 
-  const events = await fetchEventsStatsData({ eventName: 'footer_nav_click', projectId, range: '90d' });
-  const eventsStats = await fetchTotalStatsEvents({ projectId, range: '7d' });
-  const p: number = 10;
+  const [mostActiveEvent, ...restOfEvents] = await fetchEvents({ projectId, range: timeRange });
+  const eventNames = [mostActiveEvent.event_name, ...restOfEvents.map((e) => e.event_name)];
+  const events = await fetchEventsStatsData({ eventName: event ?? eventNames[0], projectId, range: '90d' });
+
+  const eventsStats = await fetchTotalStatsEvents({ projectId, range: timeRange });
+
   return (
     <>
-      <div className="space-y-3">
-        <pre className="border-2">{JSON.stringify(events, null, 2)}</pre>
-        <pre className="border-2">{JSON.stringify(eventsStats, null, 2)}</pre>
-      </div>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
@@ -26,32 +31,22 @@ async function EventsPage({ params }: PageProps<'/projects/[projectId]/events'>)
           </div>
           <TimeRangeSelector />
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card border-border">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/15 flex h-10 w-10 items-center justify-center rounded-lg">
-                  <MousePointerClick className="text-primary h-5 w-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-muted-foreground text-sm">Total Conversions</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-foreground text-2xl font-semibold">
-                      TESt
-                      {/* {totalConversionsForEvent.toLocaleString()} */}
-                    </span>
-                    <span
-                      className={`flex items-center gap-0.5 text-xs ${p >= 0 ? 'text-status-good' : 'text-status-poor'}`}
-                    >
-                      {p >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {Math.abs(p).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <EventsCards mostActiveEvent={mostActiveEvent} totalEventData={eventsStats} />
+        <TooltipProvider>
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="bg-muted">
+              <TabsTrigger value="analytics" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger value="manage" className="gap-2">
+                <Settings2 className="h-4 w-4" />
+                Manage Events
+              </TabsTrigger>
+            </TabsList>
+            <AnalyticsTab eventStats={events} events={eventNames} />
+          </Tabs>
+        </TooltipProvider>
       </div>
     </>
   );
