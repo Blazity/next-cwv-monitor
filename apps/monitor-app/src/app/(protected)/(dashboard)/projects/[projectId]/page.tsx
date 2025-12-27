@@ -8,6 +8,7 @@ import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overv
 import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
 import { dashboardSearchParamsCache } from '@/lib/search-params';
+import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
 import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
@@ -18,11 +19,7 @@ const dashboardOverviewService = new DashboardOverviewService();
 async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
   'use cache';
 
-  cacheLife({
-    stale: 300,
-    revalidate: 600,
-    expire: 86_400
-  });
+  cacheLife(CACHE_LIFE_DEFAULT);
 
   const dateRange = timeRangeToDateRange(timeRange);
 
