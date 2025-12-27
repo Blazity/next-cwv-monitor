@@ -1,34 +1,37 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import Link from 'next/link';
-import { useForm } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useTransition } from "react";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createProjectAction } from '@/app/server/actions/project/create-project';
-import { createProjectSchema, type CreateProjectInput } from '@/app/server/domain/projects/schema';
-import { capitalizeFirstLetter } from '@/lib/utils';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { createProjectAction } from "@/app/server/actions/project/create-project";
+import { createProjectSchema, type CreateProjectInput } from "@/app/server/domain/projects/schema";
+import { capitalizeFirstLetter } from "@/lib/utils";
+import { getAuthorizedSession } from "@/lib/auth-utils";
 
 const slugify = (name: string) =>
   name
     .toLowerCase()
-    .replaceAll(/[^a-z0-9\s-]/g, '')
+    .replaceAll(/[^a-z0-9\s-]/g, "")
     .trim()
-    .replaceAll(/\s+/g, '-')
-    .replaceAll(/-+/g, '-');
+    .replaceAll(/\s+/g, "-")
+    .replaceAll(/-+/g, "-");
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  await getAuthorizedSession();
+
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<CreateProjectInput>({
     resolver: arktypeResolver(createProjectSchema),
-    mode: 'onBlur',
-    defaultValues: { name: '', slug: '' }
+    mode: "onBlur",
+    defaultValues: { name: "", slug: "" },
   });
 
   const {
@@ -37,14 +40,14 @@ export default function NewProjectPage() {
     setError,
     setValue,
     clearErrors,
-    formState: { errors, dirtyFields }
+    formState: { errors, dirtyFields },
   } = form;
 
   const applyServerErrors = (serverErrors: Record<string, string | string[]>) => {
     for (const [key, value] of Object.entries(serverErrors)) {
       setError(key as keyof CreateProjectInput, {
-        type: 'server',
-        message: Array.isArray(value) ? value[0] : value
+        type: "server",
+        message: Array.isArray(value) ? value[0] : value,
       });
     }
   };
@@ -84,13 +87,13 @@ export default function NewProjectPage() {
             <div className="space-y-2">
               <Label htmlFor="project-name">Project name</Label>
               <Input
-                {...register('name', {
+                {...register("name", {
                   onChange: (e) => {
-                    clearErrors('name');
+                    clearErrors("name");
                     if (!dirtyFields.slug) {
-                      setValue('slug', slugify(e.target.value), { shouldValidate: true });
+                      setValue("slug", slugify(e.target.value), { shouldValidate: true });
                     }
-                  }
+                  },
                 })}
                 id="project-name"
                 placeholder="My Awesome App"
@@ -105,7 +108,7 @@ export default function NewProjectPage() {
             <div className="space-y-2">
               <Label htmlFor="project-domain">Slug</Label>
               <Input
-                {...register('slug', { onChange: () => clearErrors('slug') })}
+                {...register("slug", { onChange: () => clearErrors("slug") })}
                 id="project-domain"
                 placeholder="my-awesome-app"
                 disabled={isPending}
