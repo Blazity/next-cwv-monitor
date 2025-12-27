@@ -58,6 +58,7 @@ const eslintConfig = defineConfig([
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
       'unicorn/prevent-abbreviations': 'off',
+      'unicorn/no-nested-ternary': 'off',
       'react/no-unescaped-entities': 'off',
       'unicorn/no-null': 'off'
     }
