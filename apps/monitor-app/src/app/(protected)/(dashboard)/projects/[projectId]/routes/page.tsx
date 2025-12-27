@@ -87,8 +87,8 @@ export default async function RoutesPage({
 
   const headerDescription =
     routesResult.kind === "ok"
-      ? `Analyze Core Web Vitals performance by route pattern. ${routesResult.data.totalRoutes} routes total.`
-      : "Analyze Core Web Vitals performance by route pattern.";
+      ? `Analyze Core Web Vitals performance by route. ${routesResult.data.totalRoutes} routes total.`
+      : "Analyze Core Web Vitals performance by route.";
 
   if (routesResult.kind === "unsupported-metric") {
     return (
