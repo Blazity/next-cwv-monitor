@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { RouteHelpTooltip } from "@/components/dashboard/route-help-tooltip";
 import { RoutesListService } from "@/app/server/domain/routes/list/service";
 import { buildListRoutesQuery } from "@/app/server/domain/routes/list/mappers";
+import { getAuthorizedSession } from "@/app/server/lib/auth-check";
 import { routesSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
@@ -64,6 +65,8 @@ export default async function RoutesPage({
     await searchParams,
   );
   const offset = (page - 1) * PAGE_SIZE;
+
+  await getAuthorizedSession();
 
   const routesResult = await getCachedRoutesList(
     projectId,

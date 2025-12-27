@@ -28,9 +28,12 @@ function isRating(value: string | null | undefined): value is WebVitalRatingV1 {
 }
 
 export class RoutesListService {
-  async list(query: ListRoutesQuery): Promise<ListRoutesResult> {
+  async listAuthorized(query: ListRoutesQuery): Promise<ListRoutesResult> {
     await getAuthorizedSession();
+    return this.list(query);
+  }
 
+  async list(query: ListRoutesQuery): Promise<ListRoutesResult> {
     const project = await getProjectById(query.projectId);
     if (!project) {
       return { kind: 'project-not-found', projectId: query.projectId };

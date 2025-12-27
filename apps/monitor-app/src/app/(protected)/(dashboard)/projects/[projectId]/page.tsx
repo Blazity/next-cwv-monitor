@@ -9,6 +9,7 @@ import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
 import { dashboardSearchParamsCache } from '@/lib/search-params';
 import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
+import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
 import { notFound } from 'next/navigation';
@@ -41,6 +42,8 @@ async function ProjectPageContent({
 }) {
   const { projectId } = await params;
   const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
+
+  await getAuthorizedSession();
 
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
