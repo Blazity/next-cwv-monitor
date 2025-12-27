@@ -44,12 +44,32 @@ const eslintConfig = defineConfig([
       '@eslint-react/naming-convention/context-name': 'error',
       '@eslint-react/dom/no-missing-button-type': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'env',
+          message: 'Use validated env values from @/env instead of process.env.'
+        }
+      ],
       'no-restricted-imports': [
         'error',
         {
           patterns: ['../*', './*']
         }
       ]
+    }
+  },
+  {
+    files: [
+      'src/env.ts',
+      'next.config.ts',
+      'scripts/**',
+      'vitest.*',
+      'src/test/**'
+    ],
+    rules: {
+      'no-restricted-properties': 'off'
     }
   },
   // Override default ignores of eslint-config-next.

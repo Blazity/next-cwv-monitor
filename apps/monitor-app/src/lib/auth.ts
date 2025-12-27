@@ -53,11 +53,11 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === 'production',
+    useSecureCookies: env.NODE_ENV === 'production',
     defaultCookieAttributes: {
       sameSite: 'lax',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: env.NODE_ENV === 'production'
     }
   },
   rateLimit: {
