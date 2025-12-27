@@ -1,33 +1,33 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-import type { StartedTestContainer } from 'testcontainers';
-import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vitest';
+import type { StartedTestContainer } from "testcontainers";
+import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from "vitest";
 
-import { optimizeAggregates, setupClickHouseContainer } from '@/test/clickhouse-test-utils';
+import { optimizeAggregates, setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 
 const getAuthorizedSessionMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/app/server/lib/auth-check', () => ({
-  getAuthorizedSession: getAuthorizedSessionMock
+vi.mock("@/lib/auth-utils", () => ({
+  getAuthorizedSession: getAuthorizedSessionMock,
 }));
 
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
-let insertEvents: typeof import('@/app/server/lib/clickhouse/repositories/events-repository').insertEvents;
-let insertCustomEvents: typeof import('@/app/server/lib/clickhouse/repositories/custom-events-repository').insertCustomEvents;
-let RouteDetailService: typeof import('../service').RouteDetailService;
+let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
+let createProject: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").createProject;
+let insertEvents: typeof import("@/app/server/lib/clickhouse/repositories/events-repository").insertEvents;
+let insertCustomEvents: typeof import("@/app/server/lib/clickhouse/repositories/custom-events-repository").insertCustomEvents;
+let RouteDetailService: typeof import("../service").RouteDetailService;
 
-describe('route-detail-service (integration)', () => {
+describe("route-detail-service (integration)", () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
-    ({ insertEvents } = await import('@/app/server/lib/clickhouse/repositories/events-repository'));
-    ({ insertCustomEvents } = await import('@/app/server/lib/clickhouse/repositories/custom-events-repository'));
-    ({ RouteDetailService } = await import('../service'));
+    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
+    ({ createProject } = await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
+    ({ insertEvents } = await import("@/app/server/lib/clickhouse/repositories/events-repository"));
+    ({ insertCustomEvents } = await import("@/app/server/lib/clickhouse/repositories/custom-events-repository"));
+    ({ RouteDetailService } = await import("../service"));
   }, 120_000);
 
   afterAll(async () => {
@@ -43,27 +43,27 @@ describe('route-detail-service (integration)', () => {
     getAuthorizedSessionMock.mockReset();
     getAuthorizedSessionMock.mockResolvedValue({
       session: {
-        id: 'test-session-id',
-        userId: 'test-user-id',
-        token: 'test-token',
+        id: "test-session-id",
+        userId: "test-user-id",
+        token: "test-token",
         expiresAt: new Date(Date.now() + 86_400_000),
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        name: 'Test User',
+        id: "test-user-id",
+        email: "test@example.com",
+        name: "Test User",
         emailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
   });
 
-  it('returns route-not-found when route has no views and no metrics', async () => {
+  it("returns route-not-found when route has no views and no metrics", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'route-detail-missing', name: 'Route Detail Missing' });
+    await createProject({ id: projectId, slug: "route-detail-missing", name: "Route Detail Missing" });
 
     const now = new Date();
     const rangeStart = new Date(now);
@@ -74,20 +74,20 @@ describe('route-detail-service (integration)', () => {
     const service = new RouteDetailService();
     const result = await service.getDetail({
       projectId,
-      route: '/missing',
+      route: "/missing",
       range: { start: rangeStart, end: rangeEnd },
-      deviceType: 'desktop',
-      selectedMetric: 'LCP'
+      deviceType: "desktop",
+      selectedMetric: "LCP",
     });
 
-    expect(result).toEqual({ kind: 'route-not-found', route: '/missing' });
+    expect(result).toEqual({ kind: "route-not-found", route: "/missing" });
   });
 
-  it('returns route detail with metrics, series, distribution and insights', async () => {
+  it("returns route detail with metrics, series, distribution and insights", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'route-detail-int', name: 'Route Detail Integration' });
+    await createProject({ id: projectId, slug: "route-detail-int", name: "Route Detail Integration" });
 
-    const route = '/checkout';
+    const route = "/checkout";
 
     const day2 = new Date();
     day2.setUTCHours(12, 0, 0, 0);
@@ -106,10 +106,7 @@ describe('route-detail-service (integration)', () => {
     const cwvEvents = [];
 
     // Two days, 17 page views per day.
-    for (const [dayIndex, recordedAt] of [
-      [1, day1] as const,
-      [2, day2] as const
-    ]) {
+    for (const [dayIndex, recordedAt] of [[1, day1] as const, [2, day2] as const]) {
       for (let i = 0; i < 17; i++) {
         const sessionId = `pv-${dayIndex}-${i}`;
         customEvents.push({
@@ -117,9 +114,9 @@ describe('route-detail-service (integration)', () => {
           session_id: sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
-          event_name: '$page_view',
-          recorded_at: recordedAt
+          device_type: "desktop" as const,
+          event_name: "$page_view",
+          recorded_at: recordedAt,
         });
       }
 
@@ -127,17 +124,17 @@ describe('route-detail-service (integration)', () => {
       const lcpSessions = [
         ...Array.from({ length: 10 }, (_, idx) => ({ sessionId: `lcp-good-${dayIndex}-${idx}`, value: 2000 })),
         ...Array.from({ length: 5 }, (_, idx) => ({ sessionId: `lcp-needs-${dayIndex}-${idx}`, value: 3000 })),
-        ...Array.from({ length: 2 }, (_, idx) => ({ sessionId: `lcp-poor-${dayIndex}-${idx}`, value: 5000 }))
+        ...Array.from({ length: 2 }, (_, idx) => ({ sessionId: `lcp-poor-${dayIndex}-${idx}`, value: 5000 })),
       ];
 
       for (const entry of lcpSessions) {
-        let rating: 'good' | 'needs-improvement' | 'poor';
+        let rating: "good" | "needs-improvement" | "poor";
         if (entry.value <= 2500) {
-          rating = 'good';
+          rating = "good";
         } else if (entry.value <= 4000) {
-          rating = 'needs-improvement';
+          rating = "needs-improvement";
         } else {
-          rating = 'poor';
+          rating = "poor";
         }
 
         customEvents.push({
@@ -145,9 +142,9 @@ describe('route-detail-service (integration)', () => {
           session_id: entry.sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
-          event_name: '$page_view',
-          recorded_at: recordedAt
+          device_type: "desktop" as const,
+          event_name: "$page_view",
+          recorded_at: recordedAt,
         });
 
         cwvEvents.push({
@@ -155,11 +152,11 @@ describe('route-detail-service (integration)', () => {
           session_id: entry.sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
-          metric_name: 'LCP' as const,
+          device_type: "desktop" as const,
+          metric_name: "LCP" as const,
           metric_value: entry.value,
           rating,
-          recorded_at: recordedAt
+          recorded_at: recordedAt,
         });
       }
 
@@ -171,11 +168,11 @@ describe('route-detail-service (integration)', () => {
           session_id: sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
-          metric_name: 'CLS' as const,
+          device_type: "desktop" as const,
+          metric_name: "CLS" as const,
           metric_value: 0.05,
-          rating: 'good',
-          recorded_at: recordedAt
+          rating: "good",
+          recorded_at: recordedAt,
         });
       }
     }
@@ -189,12 +186,12 @@ describe('route-detail-service (integration)', () => {
       projectId,
       route,
       range: { start: rangeStart, end: rangeEnd },
-      deviceType: 'desktop',
-      selectedMetric: 'LCP'
+      deviceType: "desktop",
+      selectedMetric: "LCP",
     });
 
-    expect(result.kind).toBe('ok');
-    if (result.kind !== 'ok') {
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") {
       throw new Error(`Expected kind=ok, got ${result.kind}`);
     }
 
@@ -207,11 +204,11 @@ describe('route-detail-service (integration)', () => {
     // Distribution counts distinct session_ids for selected metric (LCP).
     expect(result.data.distribution).toEqual({
       good: 20,
-      'needs-improvement': 10,
-      poor: 4
+      "needs-improvement": 10,
+      poor: 4,
     });
 
-    const lcp = result.data.metrics.find((m) => m.metricName === 'LCP');
+    const lcp = result.data.metrics.find((m) => m.metricName === "LCP");
     expect(lcp).toBeDefined();
     expect(lcp?.sampleSize).toBe(34);
     expect(lcp?.quantiles?.p75).toBeDefined();
@@ -220,4 +217,3 @@ describe('route-detail-service (integration)', () => {
     expect(result.data.insights.length).toBeGreaterThan(0);
   });
 });
-

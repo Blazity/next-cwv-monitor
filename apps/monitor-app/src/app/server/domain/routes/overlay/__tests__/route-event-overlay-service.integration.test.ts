@@ -1,31 +1,31 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-import type { StartedTestContainer } from 'testcontainers';
-import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from 'vitest';
+import type { StartedTestContainer } from "testcontainers";
+import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from "vitest";
 
-import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
+import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 
 const getAuthorizedSessionMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/app/server/lib/auth-check', () => ({
-  getAuthorizedSession: getAuthorizedSessionMock
+vi.mock("@/lib/auth-utils", () => ({
+  getAuthorizedSession: getAuthorizedSessionMock,
 }));
 
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
-let insertCustomEvents: typeof import('@/app/server/lib/clickhouse/repositories/custom-events-repository').insertCustomEvents;
-let RouteEventOverlayService: typeof import('../service').RouteEventOverlayService;
+let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
+let createProject: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").createProject;
+let insertCustomEvents: typeof import("@/app/server/lib/clickhouse/repositories/custom-events-repository").insertCustomEvents;
+let RouteEventOverlayService: typeof import("../service").RouteEventOverlayService;
 
-describe('route-event-overlay-service (integration)', () => {
+describe("route-event-overlay-service (integration)", () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
-    ({ insertCustomEvents } = await import('@/app/server/lib/clickhouse/repositories/custom-events-repository'));
-    ({ RouteEventOverlayService } = await import('../service'));
+    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
+    ({ createProject } = await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
+    ({ insertCustomEvents } = await import("@/app/server/lib/clickhouse/repositories/custom-events-repository"));
+    ({ RouteEventOverlayService } = await import("../service"));
   }, 120_000);
 
   afterAll(async () => {
@@ -39,30 +39,30 @@ describe('route-event-overlay-service (integration)', () => {
     getAuthorizedSessionMock.mockReset();
     getAuthorizedSessionMock.mockResolvedValue({
       session: {
-        id: 'test-session-id',
-        userId: 'test-user-id',
-        token: 'test-token',
+        id: "test-session-id",
+        userId: "test-user-id",
+        token: "test-token",
         expiresAt: new Date(Date.now() + 86_400_000),
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       user: {
-        id: 'test-user-id',
-        email: 'test@example.com',
-        name: 'Test User',
+        id: "test-user-id",
+        email: "test@example.com",
+        name: "Test User",
         emailVerified: true,
         createdAt: new Date(),
-        updatedAt: new Date()
-      }
+        updatedAt: new Date(),
+      },
     });
   });
 
-  it('returns daily conversion overlay series (distinct session_id attribution) and totals', async () => {
+  it("returns daily conversion overlay series (distinct session_id attribution) and totals", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'overlay-int', name: 'Overlay Integration' });
+    await createProject({ id: projectId, slug: "overlay-int", name: "Overlay Integration" });
 
-    const route = '/checkout';
-    const eventName = 'purchase';
+    const route = "/checkout";
+    const eventName = "purchase";
 
     const day2 = new Date();
     day2.setUTCHours(12, 0, 0, 0);
@@ -87,12 +87,12 @@ describe('route-event-overlay-service (integration)', () => {
         session_id: sessionId,
         route,
         path: route,
-        device_type: 'desktop' as const,
-        event_name: '$page_view',
-        recorded_at: day1
+        device_type: "desktop" as const,
+        event_name: "$page_view",
+        recorded_at: day1,
       });
     }
-    for (const sessionId of ['d1-view-1', 'd1-view-7']) {
+    for (const sessionId of ["d1-view-1", "d1-view-7"]) {
       // duplicate row for same session_id should not affect countDistinct
       events.push(
         {
@@ -100,19 +100,19 @@ describe('route-event-overlay-service (integration)', () => {
           session_id: sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
+          device_type: "desktop" as const,
           event_name: eventName,
-          recorded_at: day1
+          recorded_at: day1,
         },
         {
           project_id: projectId,
           session_id: sessionId,
           route,
           path: route,
-          device_type: 'desktop' as const,
+          device_type: "desktop" as const,
           event_name: eventName,
-          recorded_at: day1
-        }
+          recorded_at: day1,
+        },
       );
     }
 
@@ -124,20 +124,20 @@ describe('route-event-overlay-service (integration)', () => {
         session_id: sessionId,
         route,
         path: route,
-        device_type: 'desktop' as const,
-        event_name: '$page_view',
-        recorded_at: day2
+        device_type: "desktop" as const,
+        event_name: "$page_view",
+        recorded_at: day2,
       });
     }
-    for (const sessionId of ['d2-view-0', 'd2-view-5', 'd2-view-9']) {
+    for (const sessionId of ["d2-view-0", "d2-view-5", "d2-view-9"]) {
       events.push({
         project_id: projectId,
         session_id: sessionId,
         route,
         path: route,
-        device_type: 'desktop' as const,
+        device_type: "desktop" as const,
         event_name: eventName,
-        recorded_at: day2
+        recorded_at: day2,
       });
     }
 
@@ -145,22 +145,22 @@ describe('route-event-overlay-service (integration)', () => {
     events.push(
       {
         project_id: projectId,
-        session_id: 'mobile-view-1',
+        session_id: "mobile-view-1",
         route,
         path: route,
-        device_type: 'mobile' as const,
-        event_name: '$page_view',
-        recorded_at: day2
+        device_type: "mobile" as const,
+        event_name: "$page_view",
+        recorded_at: day2,
       },
       {
         project_id: projectId,
-        session_id: 'mobile-view-1',
+        session_id: "mobile-view-1",
         route,
         path: route,
-        device_type: 'mobile' as const,
+        device_type: "mobile" as const,
         event_name: eventName,
-        recorded_at: day2
-      }
+        recorded_at: day2,
+      },
     );
 
     await insertCustomEvents(events);
@@ -170,12 +170,12 @@ describe('route-event-overlay-service (integration)', () => {
       projectId,
       route,
       eventName,
-      deviceType: 'desktop',
-      range: { start: rangeStart, end: rangeEnd }
+      deviceType: "desktop",
+      range: { start: rangeStart, end: rangeEnd },
     });
 
-    expect(result.kind).toBe('ok');
-    if (result.kind !== 'ok') {
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") {
       throw new Error(`Expected kind=ok, got ${result.kind}`);
     }
 
@@ -185,20 +185,19 @@ describe('route-event-overlay-service (integration)', () => {
       date: day1Label,
       views: 10,
       conversions: 2,
-      conversionRatePct: 20
+      conversionRatePct: 20,
     });
     expect(result.data.series[1]).toMatchObject({
       date: day2Label,
       views: 10,
       conversions: 3,
-      conversionRatePct: 30
+      conversionRatePct: 30,
     });
 
     expect(result.data.totals).toEqual({
       views: 20,
       conversions: 5,
-      conversionRatePct: 25
+      conversionRatePct: 25,
     });
   });
 });
-

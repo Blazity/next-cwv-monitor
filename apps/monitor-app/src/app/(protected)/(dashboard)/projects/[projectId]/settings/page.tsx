@@ -1,7 +1,7 @@
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { getProjectWithViewsById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import SettingsForm from '@/components/projects/settings-form';
-import { notFound } from 'next/navigation';
+import { getAuthorizedSession } from "@/lib/auth-utils";
+import { getProjectWithViewsById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
+import SettingsForm from "@/components/projects/settings-form";
+import { notFound } from "next/navigation";
 
 type ProjectSettingsPageProps = {
   params: Promise<{
