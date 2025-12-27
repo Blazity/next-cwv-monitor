@@ -4,6 +4,7 @@ import { RoutesListService } from "@/app/server/domain/routes/list/service";
 import { buildListRoutesQuery } from "@/app/server/domain/routes/list/mappers";
 import { routesSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
+import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
 import { cacheLife } from "next/cache";
 import { notFound } from "next/navigation";
 import { RoutesList } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/routes-list";
@@ -34,11 +35,7 @@ async function getCachedRoutesList(
 ) {
   "use cache";
 
-  cacheLife({
-    stale: 300,
-    revalidate: 600,
-    expire: 86_400,
-  });
+  cacheLife(CACHE_LIFE_DEFAULT);
 
   const dateRange = timeRangeToDateRange(timeRange);
   const query = buildListRoutesQuery({
