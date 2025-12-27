@@ -63,7 +63,7 @@ services:
       context: ../../
       dockerfile: docker/monitor/dockerfiles/monitor-app.prod.Dockerfile
     environment:
-      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3001}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
       # TRUST_PROXY controls whether we honor X-Forwarded-For/X-Real-IP headers.
       # Leave false unless the app runs behind a trusted reverse proxy.
       TRUST_PROXY: ${TRUST_PROXY:-false}
