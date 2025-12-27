@@ -27,9 +27,11 @@ type RoutesListProps = {
   projectId: string;
   data: ListRoutesData;
   pageSize: number;
+  appliedMetric: MetricName;
+  appliedPercentile: Percentile;
 };
 
-export function RoutesList({ projectId, data, pageSize }: RoutesListProps) {
+export function RoutesList({ projectId, data, pageSize, appliedMetric, appliedPercentile }: RoutesListProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useQueryStates(routesListSearchParsers, QUERY_STATE_OPTIONS);
@@ -37,7 +39,9 @@ export function RoutesList({ projectId, data, pageSize }: RoutesListProps) {
   const debouncedSearch = useDebouncedValue(query.search, SEARCH_DEBOUNCE_MS);
   const previousSearchRef = useRef(debouncedSearch);
 
-  const percentileLabel = getPercentileLabel(query.percentile);
+  const isMetricUpdating = appliedMetric !== query.metric || appliedPercentile !== query.percentile;
+  const displayMetric = isMetricUpdating && isPending ? query.metric : appliedMetric;
+  const percentileLabel = getPercentileLabel(isMetricUpdating && isPending ? query.percentile : appliedPercentile);
   const totalRoutes = data.totalRoutes;
   const totalPages = Math.max(1, Math.ceil(totalRoutes / pageSize));
   const rangeStart = data.items.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -115,11 +119,12 @@ export function RoutesList({ projectId, data, pageSize }: RoutesListProps) {
       <Card className="bg-card border-border gap-0 overflow-hidden p-0">
         <RoutesListTable
           items={data.items}
-          metric={query.metric}
+          metric={displayMetric}
           percentileLabel={percentileLabel}
           sort={{ field: query.sort, direction: query.direction }}
           onSort={handleSort}
           onRowClick={handleRowClick}
+          isMetricPending={isMetricUpdating && isPending}
         />
 
         {data.items.length === 0 && <RoutesListEmpty search={query.search} />}
