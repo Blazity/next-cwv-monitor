@@ -8,7 +8,7 @@ const isBuildCommand = lifecycleEvent === "build" || lifecycleEvent.startsWith("
 
 export const env = createEnv({
   server: {
-    CLIENT_APP_ORIGIN: z.url(),
+    AUTH_BASE_URL: z.url(),
     TRUST_PROXY: z.enum(["true", "false"]).default("false"),
     CLICKHOUSE_HOST: z.string().min(1, "CLICKHOUSE_HOST is required"),
     CLICKHOUSE_PORT: z.string().min(1, "CLICKHOUSE_PORT is required"),
@@ -32,7 +32,7 @@ export const env = createEnv({
     MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
     RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
     MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
-    CLIENT_APP_ORIGIN: process.env.CLIENT_APP_ORIGIN,
+    AUTH_BASE_URL: process.env.AUTH_BASE_URL,
     TRUST_PROXY: process.env.TRUST_PROXY,
     CLICKHOUSE_HOST: process.env.CLICKHOUSE_HOST,
     CLICKHOUSE_PORT: process.env.CLICKHOUSE_PORT,

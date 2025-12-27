@@ -5,7 +5,7 @@ import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.CLIENT_APP_ORIGIN,
+  baseURL: env.AUTH_BASE_URL,
   database: clickHouseAdapter({ debugLogs: env.CLICKHOUSE_ADAPTER_DEBUG_LOGS }),
   user: {
     fields: {
