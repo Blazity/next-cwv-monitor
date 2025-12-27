@@ -106,7 +106,13 @@ export default async function RoutesPage({
       <PageHeader title="Routes" description={headerDescription}>
         <RouteHelpTooltip />
       </PageHeader>
-      <RoutesList projectId={projectId} data={routesResult.data} pageSize={PAGE_SIZE} />
+      <RoutesList
+        projectId={projectId}
+        data={routesResult.data}
+        pageSize={PAGE_SIZE}
+        appliedMetric={metric}
+        appliedPercentile={percentile}
+      />
     </div>
   );
 }
