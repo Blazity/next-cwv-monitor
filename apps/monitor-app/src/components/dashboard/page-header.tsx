@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { DeviceSelector } from '@/components/dashboard/device-selector';
-import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { DeviceSelector } from "@/components/dashboard/device-selector";
+import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
 
 type PageHeaderProps = {
   title: string;
@@ -24,7 +24,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
       ([entry]) => {
         setShowStickyBar(!entry.isIntersecting);
       },
-      { threshold: 0, rootMargin: '-56px 0px 0px 0px' }
+      // Account for the fixed navbar (`h-14`) so the sticky bar doesn't overlap it.
+      { threshold: 0, rootMargin: "-56px 0px 0px 0px" },
     );
 
     observer.observe(header);
@@ -33,6 +34,30 @@ export function PageHeader({ title, description, children, showFilters = true }:
 
   return (
     <>
+      {showFilters && (
+        <div className="pointer-events-none sticky top-14 z-40 -mx-3 h-px sm:-mx-4 lg:-mx-6">
+          <div className="absolute left-0 right-0 top-0 overflow-hidden">
+            <div
+              className={cn(
+                "bg-background/95 border-border border-b backdrop-blur will-change-transform",
+                "pointer-events-auto transition-transform duration-300 ease-out",
+                showStickyBar ? "translate-y-0 shadow-sm" : "-translate-y-[110%] ease-in",
+              )}
+            >
+              <div className="px-3 py-3 sm:px-4 lg:px-6">
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-foreground truncate text-base font-semibold">{title}</h2>
+                  <div className="flex items-center gap-2">
+                    <DeviceSelector />
+                    <TimeRangeSelector />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div ref={headerRef} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
@@ -50,27 +75,6 @@ export function PageHeader({ title, description, children, showFilters = true }:
           </div>
         )}
       </div>
-
-      {showFilters && (
-        <div className="pointer-events-none sticky top-14 z-40 -mx-3 overflow-hidden sm:-mx-4 lg:-mx-6">
-          <div
-            className={cn(
-              'bg-background/95 border-border pointer-events-auto -translate-y-full border-b backdrop-blur transition-transform duration-300',
-              { 'translate-y-0': showStickyBar }
-            )}
-          >
-            <div className="px-3 py-3 sm:px-4 lg:px-6">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-foreground truncate text-base font-semibold">{title}</h2>
-                <div className="flex items-center gap-2">
-                  <DeviceSelector />
-                  <TimeRangeSelector />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
