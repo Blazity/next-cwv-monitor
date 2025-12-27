@@ -71,16 +71,19 @@ jobs:
 
       - name: Check monitor
         if: steps.changes.outputs.monitor_changed == 'true'
-        run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-app build
+        run: |
+          cp apps/monitor-app/.env.ci apps/monitor-app/.env
+          pnpm --filter cwv-monitor-app build
 
       - name: Run monitor integration tests
         if: steps.changes.outputs.monitor_changed == 'true'
         env:
-          SKIP_VALIDATION: true
           CI: true
         run: pnpm --filter cwv-monitor-app test:integration
 
         # SDK can destroy client build, so let's verify it here too
       - name: Check demo
         if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
-        run: SKIP_VALIDATION=true pnpm --filter cwv-monitor-client build
+        run: |
+          cp apps/client-app/.env.ci apps/client-app/.env 2>/dev/null || true
+          pnpm --filter cwv-monitor-client build
