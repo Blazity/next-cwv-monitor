@@ -3,6 +3,7 @@ import { FolderKanban, Globe, Calendar, Eye, Settings } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
+import { formatDate } from '@/lib/utils';
 
 const formatViews = (count: number) => {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -47,7 +48,7 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
                 </div>
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                  <span>{formatDate(project.created_at)}</span>
                 </div>
               </div>
 

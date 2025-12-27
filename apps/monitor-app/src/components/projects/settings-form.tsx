@@ -39,7 +39,7 @@ import { deleteProjectAction } from '@/app/server/actions/project/delete-project
 import { resetProjectDataAction } from '@/app/server/actions/project/reset-project';
 import { UpdateProjectNameInput, updateProjectNameSchema } from '@/app/server/domain/projects/schema';
 import { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, formatDate } from '@/lib/utils';
 
 const getSdkCode = (id: string) => `'use client';
 
@@ -94,7 +94,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
               <Globe className="size-4" /> {project.slug || 'No domain'}
             </div>
             <div className="flex items-center gap-2">
-              <Calendar className="size-4" /> Created {new Date(project.created_at).toLocaleDateString()}
+              <Calendar className="size-4" /> Created {formatDate(project.created_at)}
             </div>
             <div className="flex items-center gap-2">
               <Eye className="size-4" /> {project.trackedViews.toLocaleString()} tracked views
