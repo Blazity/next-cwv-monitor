@@ -1,30 +1,27 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useRef, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { useQueryStates } from 'nuqs';
+import { useCallback, useEffect, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useQueryStates } from "nuqs";
 
-import { Card } from '@/components/ui/card';
+import { Card } from "@/components/ui/card";
 import type {
   ListRoutesData,
   MetricName,
   Percentile,
   RoutesSortField,
-  SortDirection
-} from '@/app/server/domain/routes/list/types';
-import {
-  QUERY_STATE_OPTIONS,
-  SEARCH_DEBOUNCE_MS,
-  SEARCH_QUERY_OPTIONS,
-  routesListSearchParsers
-} from '@/lib/search-params';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { RoutesListToolbar } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-toolbar';
-import { RoutesListTable } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-table';
-import { RoutesListEmpty } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-empty';
-import { RoutesListPagination } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-pagination';
-import { RoutesStatusSummary } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-status-summary';
-import { getPercentileLabel } from '@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-constants';
+  SortDirection,
+} from "@/app/server/domain/routes/list/types";
+import { QUERY_STATE_OPTIONS, SEARCH_QUERY_OPTIONS, routesListSearchParsers } from "@/lib/search-params";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { RoutesListToolbar } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-toolbar";
+import { RoutesListTable } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-table";
+import { RoutesListEmpty } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-empty";
+import { RoutesListPagination } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-pagination";
+import { RoutesStatusSummary } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-status-summary";
+import { getPercentileLabel } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-list-constants";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 type RoutesListProps = {
   projectId: string;
@@ -59,11 +56,11 @@ export function RoutesList({ projectId, data, pageSize }: RoutesListProps) {
   const handleSort = (field: RoutesSortField) => {
     let nextDirection: SortDirection;
     if (query.sort === field) {
-      nextDirection = query.direction === 'asc' ? 'desc' : 'asc';
-    } else if (field === 'route') {
-      nextDirection = 'asc';
+      nextDirection = query.direction === "asc" ? "desc" : "asc";
+    } else if (field === "route") {
+      nextDirection = "asc";
     } else {
-      nextDirection = 'desc';
+      nextDirection = "desc";
     }
 
     startTransition(() => {
@@ -95,7 +92,7 @@ export function RoutesList({ projectId, data, pageSize }: RoutesListProps) {
         void setQuery({ search: value, page: 1 }, SEARCH_QUERY_OPTIONS);
       });
     },
-    [setQuery, startTransition]
+    [setQuery, startTransition],
   );
 
   const handleRowClick = (route: string) => {
