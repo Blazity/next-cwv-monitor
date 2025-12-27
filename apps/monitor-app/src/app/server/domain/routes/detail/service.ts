@@ -95,6 +95,7 @@ export class RouteDetailService {
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!selectedThresholds) {
       return { kind: 'unsupported-metric', metricName: query.selectedMetric };
     }

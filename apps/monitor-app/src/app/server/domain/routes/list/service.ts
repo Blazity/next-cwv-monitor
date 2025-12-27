@@ -37,6 +37,7 @@ export class RoutesListService {
     }
 
     const thresholds = getMetricThresholds(query.metricName);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!thresholds) {
       return { kind: 'unsupported-metric', metricName: query.metricName };
     }
