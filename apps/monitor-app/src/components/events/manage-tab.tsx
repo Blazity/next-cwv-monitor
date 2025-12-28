@@ -1,4 +1,5 @@
 'use client';
+import { updateProjectEventsSettings } from '@/app/server/actions/project/update-project';
 import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +9,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { assertNever, cn } from '@/lib/utils';
 import { BarChart3, Check, Eye, EyeOff, Info, Pencil, Search, X } from 'lucide-react';
 import { useQueryState } from 'nuqs';
-import { useOptimistic, useReducer } from 'react';
+import { useOptimistic, useReducer, useTransition } from 'react';
 
 type Props = {
   eventsDisplaySettings: EventDisplaySettingsSchema;
   eventNames: string[];
+  projectId: string;
 };
 
 type Actions =
@@ -40,7 +42,8 @@ const reducer = (_: string | null | undefined, action: Actions) => {
   }
 };
 
-export function ManageTab({ eventsDisplaySettings: settings, eventNames }: Props) {
+export function ManageTab({ eventsDisplaySettings: settings, eventNames, projectId }: Props) {
+  const [isPending, startTransition] = useTransition();
   const [eventsDisplaySettings, setEventDisplaySettings] = useOptimistic(settings);
   const [searchQuery, setSearchQuery] = useQueryState('event_name');
   const [editedEvent, dispatchEditEvent] = useReducer(reducer, null);
@@ -60,17 +63,20 @@ export function ManageTab({ eventsDisplaySettings: settings, eventNames }: Props
   };
 
   const handleSaveEdit = (eventName: string) => {
-    const eventSettings = eventsDisplaySettings?.[eventName];
-    const newSettings = {
-      ...eventsDisplaySettings,
-      [eventName]: {
-        isHidden: eventSettings?.isHidden ?? false,
-        customName: editedEvent || undefined
-      }
-    } satisfies typeof eventsDisplaySettings;
-    dispatchEditEvent({ type: 'save-edit' });
-    setEventDisplaySettings(newSettings);
-    // Do async
+    startTransition(async () => {
+      const eventSettings = eventsDisplaySettings?.[eventName];
+      const newSettings = {
+        ...eventsDisplaySettings,
+        [eventName]: {
+          isHidden: eventSettings?.isHidden ?? false,
+          customName: editedEvent || undefined
+        }
+      } satisfies typeof eventsDisplaySettings;
+      dispatchEditEvent({ type: 'save-edit' });
+      setEventDisplaySettings(newSettings);
+      // Do async
+      await updateProjectEventsSettings({ projectId, eventSettings: newSettings });
+    });
   };
 
   return (
@@ -132,28 +138,35 @@ export function ManageTab({ eventsDisplaySettings: settings, eventNames }: Props
 
                       <div className="min-w-0 flex-1">
                         {editedEvent === event ? (
-                          <div className="flex items-center gap-2">
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleSaveEdit(event);
+                            }}
+                            className="flex items-center gap-2"
+                          >
                             <Input
                               onChange={(e) => dispatchEditEvent({ type: 'set-edit-name', eventName: e.target.value })}
                               className="bg-background border-border h-8"
                               onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveEdit(event.id);
-                                if (e.key === 'Escape') handleCancelEdit();
+                                if (e.key === 'Enter') handleSaveEdit(event);
+                                if (e.key === 'Escape') dispatchEditEvent({ type: 'cancel-edit' });
                               }}
                               autoFocus
                             />
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleSaveEdit(event.id)}
-                              className="h-8 w-8 p-0"
-                            >
+                            <Button size="sm" variant="ghost" type="submit" className="h-8 w-8 p-0">
                               <Check className="text-status-good h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={handleCancelEdit} className="h-8 w-8 p-0">
+                            <Button
+                              disabled={isPending}
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => dispatchEditEvent({ type: 'cancel-edit' })}
+                              className="h-8 w-8 p-0"
+                            >
                               <X className="text-muted-foreground h-4 w-4" />
                             </Button>
-                          </div>
+                          </form>
                         ) : (
                           <div>
                             <div className="flex items-center gap-2">
@@ -169,11 +182,11 @@ export function ManageTab({ eventsDisplaySettings: settings, eventNames }: Props
                       </div>
                     </div>
 
-                    {editingId !== event.id && (
+                    {editedEvent !== event && (
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleStartEdit(event)}
+                        onClick={() => dispatchEditEvent({ eventName: event, type: 'set-edit-name' })}
                         className="text-muted-foreground hover:text-foreground"
                       >
                         <Pencil className="mr-1.5 h-4 w-4" />

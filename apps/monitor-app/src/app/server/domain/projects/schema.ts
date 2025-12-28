@@ -7,11 +7,11 @@ export const slugSchema = type('string > 0').narrow((s: string, ctx) =>
 
 export const createProjectSchema = type({
   name: nameSchema,
-  slug: slugSchema,
+  slug: slugSchema
 });
 
 export const updateProjectNameSchema = type({
-  name: nameSchema,
+  name: nameSchema
 });
 
 export type CreateProjectInput = typeof createProjectSchema.infer;

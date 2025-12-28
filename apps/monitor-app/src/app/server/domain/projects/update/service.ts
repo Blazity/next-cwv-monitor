@@ -1,10 +1,10 @@
 import { getProjectById, updateProject } from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import { UpdateProjectNameInput } from '@/app/server/domain/projects/schema';
+import { UpdatableProjectRow } from '@/app/server/lib/clickhouse/schema';
 
 export type UpdateProjectResult = { kind: 'ok' } | { kind: 'error'; message: string };
 
 export class ProjectsUpdateService {
-  async execute(input: UpdateProjectNameInput & { slug: string; id: string }): Promise<UpdateProjectResult> {
+  async execute(input: Omit<UpdatableProjectRow, 'created_at'>): Promise<UpdateProjectResult> {
     try {
       const current = await getProjectById(input.id);
 
@@ -15,11 +15,8 @@ export class ProjectsUpdateService {
       if (current.name === input.name) {
         return { kind: 'ok' };
       }
-
       await updateProject({
-        id: input.id,
-        name: input.name,
-        slug: input.slug,
+        ...input,
         created_at: current.created_at
       });
 

@@ -5,7 +5,6 @@ import {
   fetchConversionTrend,
   fetchProjectEventNames
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
-import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import { eventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
 import { AnalyticsTab } from '@/components/events/analytics-tab';
@@ -14,6 +13,7 @@ import { ManageTab } from '@/components/events/manage-tab';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { getAuthorizedSession } from '@/lib/auth-utils';
+import { getCachedProject } from '@/lib/cache';
 import { eventsSearchParamsSchema } from '@/lib/search-params';
 import { BarChart3, Settings2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
@@ -26,7 +26,7 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
   const [[mostActiveEvent], names, project] = await Promise.all([
     fetchEvents({ projectId, range: timeRange, limit: 1 }),
     fetchProjectEventNames({ projectId }),
-    getProjectById(projectId)
+    getCachedProject(projectId)
   ]);
 
   if (!project) {
@@ -66,6 +66,7 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
               </TabsTrigger>
             </TabsList>
             <AnalyticsTab selectedEvent={selectedEvent} chartData={chartData} eventStats={events} events={eventNames} />
+            <ManageTab eventNames={eventNames} eventsDisplaySettings={eventDisplaySettings} projectId={projectId} />
           </Tabs>
         </TooltipProvider>
       </div>

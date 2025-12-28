@@ -29,6 +29,8 @@ export async function createProject(project: InsertableProjectRow): Promise<void
 }
 
 export async function getProjectById(id: string): Promise<ProjectRow | null> {
+  // TODO: We should consider don't we need top-level method that will use `use cache` with specific tag
+  // Now we are not caching projects that doesn't change very often
   const rows = await sql<ProjectRow>`
     SELECT id, slug, name, events_display_settings, created_at, updated_at
     FROM projects FINAL
@@ -89,7 +91,7 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
   const { id, name, slug, created_at } = project;
-  const createdAt = created_at instanceof Date ? created_at : new Date(created_at);
+  const createdAt = created_at && created_at instanceof Date ? created_at : new Date(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
 
