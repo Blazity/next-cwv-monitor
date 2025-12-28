@@ -1,11 +1,9 @@
 import type { ReactNode } from 'react';
 import { Navbar } from '@/components/dashboard/navbar';
-import { ProjectsListService } from '@/app/server/domain/projects/list/service';
-
-const projectsService = new ProjectsListService();
+import { projectsListService } from '@/app/server/domain/projects/list/service';
 
 async function DashboardLayout({ children }: { children: ReactNode }) {
-  const projectsData = await projectsService.list();
+  const projectsData = await projectsListService.list();
   return (
     <>
       <Navbar projects={projectsData} />

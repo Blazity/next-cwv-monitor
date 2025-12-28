@@ -13,11 +13,13 @@ import { EventsCards } from '@/components/events/events-cards';
 import { ManageTab } from '@/components/events/manage-tab';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 import { eventsSearchParamsSchema } from '@/lib/search-params';
 import { BarChart3, Settings2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
+  await getAuthorizedSession();
   const { projectId } = await params;
   const { timeRange, event } = eventsSearchParamsSchema.parse(await searchParams);
 
@@ -32,7 +34,7 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
   }
   const eventDisplaySettings = eventDisplaySettingsSchema.parse(project.events_display_settings);
   const eventNames = names.map((v) => v.event_name);
-  const selectedEvent = event ?? eventNames[0];
+  const selectedEvent = event || eventNames[0];
 
   const [events, eventsStats, chartData] = await Promise.all([
     fetchEventsStatsData({ eventName: selectedEvent, projectId, range: '90d' }),

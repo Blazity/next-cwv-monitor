@@ -1,4 +1,7 @@
-function UsersPage() {
+import { getAuthorizedSession } from "@/lib/auth-utils";
+
+async function UsersPage() {
+  await getAuthorizedSession();
   return <div>UsersPage</div>;
 }
 

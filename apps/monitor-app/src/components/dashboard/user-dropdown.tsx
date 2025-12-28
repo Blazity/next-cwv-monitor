@@ -10,7 +10,7 @@ import {
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
 import { User } from 'better-auth';
-import { signOut } from '@/actions/sign-out';
+import { signOut } from '@/app/server/actions/sign-out';
 
 export function UserDropdown({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();

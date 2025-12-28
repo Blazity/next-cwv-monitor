@@ -5,7 +5,7 @@ import { nextCookies } from 'better-auth/next-js';
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.CLIENT_APP_ORIGIN,
+  baseURL: env.AUTH_BASE_URL,
   database: clickHouseAdapter({ debugLogs: env.CLICKHOUSE_ADAPTER_DEBUG_LOGS }),
   user: {
     fields: {
@@ -53,11 +53,11 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === 'production',
+    useSecureCookies: env.NODE_ENV === 'production',
     defaultCookieAttributes: {
       sameSite: 'lax',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: env.NODE_ENV === 'production'
     }
   },
   rateLimit: {
@@ -82,3 +82,5 @@ export const auth = betterAuth({
     }
   }
 });
+
+export type SessionData = typeof auth.$Infer.Session;

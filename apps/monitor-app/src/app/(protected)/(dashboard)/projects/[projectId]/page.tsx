@@ -1,35 +1,33 @@
-import { Suspense } from 'react';
-import { PageHeader } from '@/components/dashboard/page-header';
-import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
-import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metric';
-import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
-import { QuickStats } from '@/components/dashboard/quick-stats';
-import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
-import { cacheLife } from 'next/cache';
-import { timeRangeToDateRange } from '@/lib/utils';
-import { dashboardSearchParamsSchema } from '@/lib/search-params';
-import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
-import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
-import { notFound } from 'next/navigation';
-import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
+import { Suspense } from "react";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { DashboardOverviewService } from "@/app/server/domain/dashboard/overview/service";
+import { WorstRoutesByMetric } from "@/components/dashboard/worst-routes-by-metric";
+import { TrendChartByMetric } from "@/components/dashboard/trend-chart-by-metric";
+import { QuickStats } from "@/components/dashboard/quick-stats";
+import { buildDashboardOverviewQuery } from "@/app/server/domain/dashboard/overview/mappers";
+import { cacheLife } from "next/cache";
+import { timeRangeToDateRange } from "@/lib/utils";
+import { dashboardSearchParamsCache } from "@/lib/search-params";
+import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
+import { getAuthorizedSession } from "@/lib/auth-utils";
+import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { OverviewDeviceType as DeviceType } from "@/app/server/domain/dashboard/overview/types";
+import { notFound } from "next/navigation";
+import { CoreWebVitals } from "@/components/dashboard/core-web-vitals";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
 async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
-  'use cache';
+  "use cache";
 
-  cacheLife({
-    stale: 300,
-    revalidate: 600,
-    expire: 86_400
-  });
+  cacheLife(CACHE_LIFE_DEFAULT);
 
   const dateRange = timeRangeToDateRange(timeRange);
 
   const query = buildDashboardOverviewQuery({
     projectId,
     deviceType,
-    range: dateRange
+    range: dateRange,
   });
 
   return await dashboardOverviewService.getOverview(query);
@@ -37,21 +35,23 @@ async function getCachedOverview(projectId: string, deviceType: DeviceType, time
 
 async function ProjectPageContent({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { projectId } = await params;
-  const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
+  const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
+
+  await getAuthorizedSession();
 
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
-  if (overview.kind === 'project-not-found') {
+  if (overview.kind === "project-not-found") {
     notFound();
   }
 
-  if (overview.kind !== 'ok') {
+  if (overview.kind !== "ok") {
     throw new Error(`Failed to load dashboard: ${overview.kind}`);
   }
 
@@ -66,7 +66,7 @@ async function ProjectPageContent({
         data={quickStats}
         statusDistribution={statusDistribution}
       />
-      <CoreWebVitals metricOverview={metricOverview}/>
+      <CoreWebVitals metricOverview={metricOverview} />
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>

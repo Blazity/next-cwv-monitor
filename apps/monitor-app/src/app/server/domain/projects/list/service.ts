@@ -1,10 +1,15 @@
-import { listProjects } from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { ListProjectsResult } from '@/app/server/domain/projects/list/types';
+import { listProjects, listProjectsWithViews } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import { getServerSessionDataOrRedirect } from '@/lib/auth-utils';
+import { cache } from 'react';
 
-export class ProjectsListService {
-  async list(): Promise<ListProjectsResult> {
-    await getAuthorizedSession();
+export const projectsListService = {
+  list: cache(async () => {
+    await getServerSessionDataOrRedirect();
     return listProjects();
-  }
-}
+  }),
+  
+  listWithViews: cache(async () => {
+    await getServerSessionDataOrRedirect();
+    return listProjectsWithViews();
+  })
+} as const;

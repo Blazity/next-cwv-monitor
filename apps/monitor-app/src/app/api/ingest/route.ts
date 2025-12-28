@@ -9,6 +9,7 @@ import { buildIngestCommand } from '@/app/server/domain/ingest/mappers';
 import { IngestService } from '@/app/server/domain/ingest/service';
 
 const corsHeaders = {
+  // FIXME: set Access-Control-Allow-Origin to the project's allowed domain once available on the project schema.
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST,OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type'

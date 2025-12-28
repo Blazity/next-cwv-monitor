@@ -1,5 +1,6 @@
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { DeviceType } from '@/app/server/lib/device-types';
+import { toQuantileSummary } from '@/app/server/lib/quantiles';
 
 type DateRange = {
   start: Date | string;
@@ -29,19 +30,6 @@ type DailySeriesPoint = {
   quantiles: QuantileSummary | null;
   sampleSize: number;
 };
-
-function toQuantileSummary(values: number[] | undefined): QuantileSummary | null {
-  if (!values || values.length < 5) {
-    return null;
-  }
-  return {
-    p50: values[0],
-    p75: values[1],
-    p90: values[2],
-    p95: values[3],
-    p99: values[4]
-  };
-}
 
 function resolveDateInput(input: Date | string): string {
   return input instanceof Date ? input.toISOString().slice(0, 10) : input;
