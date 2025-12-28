@@ -131,8 +131,11 @@ export class DashboardOverviewService {
       statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
-    const currentTotalViews = metricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
-    const previousTotalViews = previousMetricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
+    const lcpRow = metricsRows.find(r => r.metric_name === 'LCP');
+    const prevLcpRow = previousMetricsRows.find(r => r.metric_name === 'LCP');
+    
+    const currentTotalViews = Number(lcpRow?.sample_size || 0);
+    const previousTotalViews = Number(prevLcpRow?.sample_size || 0);
 
     let viewTrend = 0;
     if (previousTotalViews > 0) {

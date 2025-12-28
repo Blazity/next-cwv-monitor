@@ -43,15 +43,14 @@ export async function getProjectById(id: string): Promise<ProjectRow | null> {
 export async function getProjectWithViewsById(id: string): Promise<ProjectWithViews | null> {
   const rows = await sql<ProjectWithViews>`
     SELECT 
-      p.id, p.slug, p.name, p.created_at, p.updated_at,
-      toUInt64(countMerge(stats.sample_size)) as trackedViews
+      *,
+      (SELECT toUInt64(countMerge(sample_size)) 
+       FROM cwv_daily_aggregates 
+       WHERE project_id = ${id} AND metric_name = 'LCP') as trackedViews
     FROM projects AS p FINAL
-    LEFT JOIN cwv_daily_aggregates AS stats ON p.id = stats.project_id
-    WHERE p.id = ${id}
-    GROUP BY p.id, p.slug, p.name, p.created_at, p.updated_at
+    WHERE id = ${id}
     LIMIT 1
   `;
-
   return rows[0] ?? null;
 }
 
@@ -78,11 +77,17 @@ export async function listProjects(): Promise<ProjectRow[]> {
 export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   return sql<ProjectWithViews>`
     SELECT 
-      p.id, p.slug, p.name, p.created_at, p.updated_at,
-      toUInt64(countMerge(stats.sample_size)) as trackedViews
+      p.*,
+      s.trackedViews
     FROM projects AS p FINAL
-    LEFT JOIN cwv_daily_aggregates AS stats ON p.id = stats.project_id
-    GROUP BY p.id, p.slug, p.name, p.created_at, p.updated_at
+    LEFT JOIN (
+        SELECT 
+            project_id, 
+            toUInt64(countMerge(sample_size)) as trackedViews
+        FROM cwv_daily_aggregates
+        WHERE metric_name = 'LCP' 
+        GROUP BY project_id
+    ) AS s ON p.id = s.project_id
     ORDER BY p.created_at DESC
   `;
 }
