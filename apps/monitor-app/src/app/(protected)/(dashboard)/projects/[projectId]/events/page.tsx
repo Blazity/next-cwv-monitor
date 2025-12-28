@@ -1,25 +1,44 @@
 import {
   fetchEventsStatsData,
   fetchEvents,
-  fetchTotalStatsEvents
+  fetchTotalStatsEvents,
+  fetchConversionTrend,
+  fetchProjectEventNames
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
+import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import { eventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
 import { AnalyticsTab } from '@/components/events/analytics-tab';
 import { EventsCards } from '@/components/events/events-cards';
+import { ManageTab } from '@/components/events/manage-tab';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { eventsSearchParamsSchema } from '@/lib/search-params';
 import { BarChart3, Settings2 } from 'lucide-react';
+import { notFound } from 'next/navigation';
 
 async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
   const { projectId } = await params;
   const { timeRange, event } = eventsSearchParamsSchema.parse(await searchParams);
 
-  const [mostActiveEvent, ...restOfEvents] = await fetchEvents({ projectId, range: timeRange });
-  const eventNames = [mostActiveEvent.event_name, ...restOfEvents.map((e) => e.event_name)];
-  const events = await fetchEventsStatsData({ eventName: event ?? eventNames[0], projectId, range: '90d' });
+  const [[mostActiveEvent], names, project] = await Promise.all([
+    fetchEvents({ projectId, range: timeRange, limit: 1 }),
+    fetchProjectEventNames({ projectId }),
+    getProjectById(projectId)
+  ]);
 
-  const eventsStats = await fetchTotalStatsEvents({ projectId, range: timeRange });
+  if (!project) {
+    notFound();
+  }
+  const eventDisplaySettings = eventDisplaySettingsSchema.parse(project.events_display_settings);
+  const eventNames = names.map((v) => v.event_name);
+  const selectedEvent = event ?? eventNames[0];
+
+  const [events, eventsStats, chartData] = await Promise.all([
+    fetchEventsStatsData({ eventName: selectedEvent, projectId, range: '90d' }),
+    fetchTotalStatsEvents({ projectId, range: timeRange }),
+    fetchConversionTrend({ projectId, range: timeRange })
+  ]);
 
   return (
     <>
@@ -44,7 +63,7 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
                 Manage Events
               </TabsTrigger>
             </TabsList>
-            <AnalyticsTab eventStats={events} events={eventNames} />
+            <AnalyticsTab selectedEvent={selectedEvent} chartData={chartData} eventStats={events} events={eventNames} />
           </Tabs>
         </TooltipProvider>
       </div>

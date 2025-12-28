@@ -1,12 +1,33 @@
 import type { DeviceType } from '@/app/server/lib/device-types';
+import z from 'zod';
 
 export type ProjectRow = {
   id: string;
   slug: string;
   name: string;
+  events_display_settings: string;
   created_at: Date | string;
   updated_at: Date | string;
 };
+
+export const eventDisplaySettingsSchema = z.preprocess(
+  (v) => {
+    if (typeof v !== 'string') return null;
+    try {
+      return JSON.parse(v);
+    } catch {
+      return null;
+    }
+  },
+  z
+    .record(
+      z.string(),
+      z.object({ isHidden: z.boolean().optional().default(false), customName: z.string().optional() })
+    )
+    .nullable()
+);
+
+export type EventDisplaySettingsSchema = z.infer<typeof eventDisplaySettingsSchema>;
 
 export type CwvEventRow = {
   project_id: string;

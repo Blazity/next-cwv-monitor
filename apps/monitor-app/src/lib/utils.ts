@@ -75,3 +75,7 @@ export function* chunkGenerator<T>({ array }: { array: T[] }) {
     currentChunkIndex += chunk.length;
   }
 }
+
+export function assertNever(v: never) {
+  console.log(`Unexpected ${v} value, should be never`);
+}

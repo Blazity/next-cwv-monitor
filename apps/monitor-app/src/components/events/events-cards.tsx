@@ -17,7 +17,6 @@ function displayBigNumber(value: string | number) {
 
 export function EventsCards({ totalEventData, mostActiveEvent }: Props) {
   const isTrendingUp = totalEventData.total_conversions_prev <= totalEventData.total_conversions_cur;
-  console.log(totalEventData);
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card className="bg-card border-border">

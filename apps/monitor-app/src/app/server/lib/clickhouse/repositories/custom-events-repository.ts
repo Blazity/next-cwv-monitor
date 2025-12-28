@@ -13,15 +13,8 @@ type CustomEventFilters = {
   limit?: number;
 };
 
-type FetchEventsPageFilters = {
-  range: TimeRangeKey;
-  projectId: string;
-  eventName: string;
-};
-
 export async function insertCustomEvents(events: InsertableCustomEventRow[]): Promise<void> {
   if (events.length === 0) return;
-
   const rows = events.map((event) => {
     const recordedAt = event.recorded_at ?? new Date();
     const ingestedAt = event.ingested_at ?? new Date();
@@ -106,17 +99,26 @@ export async function fetchCustomEvents(filters: CustomEventFilters): Promise<Cu
   return query;
 }
 
+type FetchEventsStatsData = {
+  range: TimeRangeKey;
+  projectId: string;
+  eventName: string;
+};
+
 type FetchEventsStatsDataResult = {
   route: string;
   conversions_cur: string;
   views_cur: string;
   conversions_prev: string;
+  events_prev: string;
+  events_cur: string;
   views_prev: string;
   conversion_change_pct: string;
   views_change_pct: string;
+  conversion_rate: string;
 };
 
-export async function fetchEventsStatsData({ range, eventName, projectId }: FetchEventsPageFilters) {
+export async function fetchEventsStatsData({ range, eventName, projectId }: FetchEventsStatsData) {
   const negativeRange = daysToNumber[range] * -1;
   const query = sql<FetchEventsStatsDataResult>`
     SELECT
@@ -127,14 +129,27 @@ export async function fetchEventsStatsData({ range, eventName, projectId }: Fetc
     	uniqExactIf(tuple(ce.session_id),
                 ce.recorded_at >= addDays(now(), ${negativeRange}) AND ce.recorded_at < now()
                 AND ce.event_name LIKE '$page_view') AS views_cur,
+      uniqExactIf(tuple(ce.session_id, ce.event_name),
+          ce.recorded_at >= addDays(now(), ${negativeRange})
+          AND ce.recorded_at < now() AND ce.event_name NOT LIKE '$page_view'
+        ) AS events_cur,
+
     	uniqExactIf(tuple(ce.session_id, ce.event_name),
                 ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at < addDays(now(), ${negativeRange})
                 AND ce.event_name NOT LIKE '$page_view') AS conversions_prev,
     	uniqExactIf(tuple(ce.session_id),
                 ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at < addDays(now(), ${negativeRange})
                 AND ce.event_name LIKE '$page_view') AS views_prev,
+      uniqExactIf(tuple(ce.session_id, ce.event_name),
+                    ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange})
+                    AND ce.recorded_at < addDays(now(), ${negativeRange})
+                    AND ce.event_name NOT LIKE '$page_view'
+                ) AS events_prev,
+
     	if(conversions_prev = 0, NULL, ((conversions_cur - conversions_prev) / ((conversions_cur + conversions_prev)/ 2)) * 100) AS conversion_change_pct,
-    	if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev)/ 2)) * 100) AS views_change_pct
+    	if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev)/ 2)) * 100) AS views_change_pct,
+      if(events_cur = 0, NULL, (events_cur / views_cur) * 100) as conversion_rate
+
         FROM
         custom_events AS ce
         WHERE
@@ -156,6 +171,11 @@ export async function fetchEventsStatsData({ range, eventName, projectId }: Fetc
   );
 }
 
+type FetchTotalStatsEvents = {
+  range: TimeRangeKey;
+  projectId: string;
+};
+
 type FetchTotalStatsEventsResult = {
   total_conversions_cur: string;
   total_views_cur: string;
@@ -169,7 +189,7 @@ type FetchTotalStatsEventsResult = {
   total_views_change_pct: string;
 };
 
-export async function fetchTotalStatsEvents({ projectId, range }: Omit<FetchEventsPageFilters, 'eventName'>) {
+export async function fetchTotalStatsEvents({ projectId, range }: FetchTotalStatsEvents) {
   const negativeRange = daysToNumber[range] * -1;
   const query = await sql<FetchTotalStatsEventsResult>`
     SELECT
@@ -215,14 +235,21 @@ export async function fetchTotalStatsEvents({ projectId, range }: Omit<FetchEven
   });
 }
 
+type FetchEvents = {
+  range: TimeRangeKey;
+  projectId: string;
+  limit?: number;
+};
+
 type FetchMostActiveEventResult = {
   event_name: string;
   records_count: number;
 };
-export async function fetchEvents({ projectId, range }: Omit<FetchEventsPageFilters, 'eventName'>) {
+
+export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
   const negativeRange = daysToNumber[range] * -1;
 
-  return sql<FetchMostActiveEventResult>`
+  const query = sql<FetchMostActiveEventResult>`
     SELECT
       ce.event_name,
       count() AS records_count
@@ -234,4 +261,74 @@ export async function fetchEvents({ projectId, range }: Omit<FetchEventsPageFilt
     GROUP BY ce.event_name
     ORDER BY records_count DESC
   `;
+  if (limit) {
+    query.append(sql`LIMIT ${limit}`);
+  }
+  return query;
+}
+
+type FetchConversionTrend = {
+  range: TimeRangeKey;
+  projectId: string;
+};
+
+type FetchConversionTrendResult = {
+  day: string;
+  views: string;
+  events: string;
+  conversion_rate: number;
+};
+
+export async function fetchConversionTrend({ projectId, range }: FetchConversionTrend) {
+  const negativeRange = daysToNumber[range] * -1;
+
+  const query = sql<FetchConversionTrendResult>`
+    SELECT
+    	day,
+    	views,
+    	events,
+    	if(views = 0, NULL, events / views * 100) AS conversion_rate
+    FROM
+    	(
+    	SELECT
+    		toDate(ce.recorded_at) AS day,
+    		uniqExactIf(ce.session_id, ce.event_name = '$page_view') AS views,
+    		uniqExactIf(tuple(ce.session_id, ce.event_name), ce.event_name != '$page_view') AS events
+    	FROM
+    		custom_events AS ce
+    	WHERE
+    		ce.recorded_at >= toDate(addDays(now(), ${negativeRange}))
+    		AND ce.recorded_at < addDays(toDate(now()), 1)
+    		AND ce.project_id = ${projectId}
+    	GROUP BY
+    		day
+    )
+    ORDER BY
+    	day
+    WITH FILL
+    FROM
+    	toDate(addDays(now(), ${negativeRange}))
+      TO toDate(now())
+      STEP 1;
+  `;
+  return query;
+}
+
+type FetchProjectEventNames = {
+  projectId: string;
+};
+
+type FetchProjectEventNamesResult = {
+  event_name: string;
+};
+
+export async function fetchProjectEventNames({ projectId }: FetchProjectEventNames) {
+  const query = sql<FetchProjectEventNamesResult>`
+    SELECT event_name
+    FROM custom_events
+    WHERE project_id = ${projectId} AND event_name NOT LIKE '$page_view'
+    GROUP BY event_name
+    ORDER BY event_name ASC
+  `;
+  return query;
 }

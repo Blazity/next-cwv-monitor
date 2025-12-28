@@ -25,7 +25,7 @@ export async function createProject(project: InsertableProjectRow): Promise<void
 
 export async function getProjectById(id: string): Promise<ProjectRow | null> {
   const rows = await sql<ProjectRow>`
-    SELECT id, slug, name, created_at, updated_at
+    SELECT id, slug, name, events_display_settings, created_at, updated_at
     FROM projects FINAL
     WHERE id = ${id}
     ORDER BY updated_at DESC
