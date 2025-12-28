@@ -5,23 +5,22 @@ import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metr
 import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
 import { QuickStats } from '@/components/dashboard/quick-stats';
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
-import { timeRangeToDateRange } from '@/lib/utils';
-import { dashboardSearchParamsSchema } from '@/lib/search-params';
-import { notFound } from 'next/navigation';
-import { OverviewDeviceType, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import { cacheLife } from 'next/cache';
+import { timeRangeToDateRange } from '@/lib/utils';
+import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
+import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
+import { notFound } from 'next/navigation';
 import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
+import { dashboardSearchParamsCache } from '@/lib/search-params';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: OverviewDeviceType, timeRange: TimeRangeKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
   'use cache';
 
-  cacheLife({
-    stale: 300,
-    revalidate: 600,
-    expire: 86_400
-  });
+  cacheLife(CACHE_LIFE_DEFAULT);
 
   const dateRange = timeRangeToDateRange(timeRange);
 
@@ -41,8 +40,10 @@ async function ProjectPageContent({
   params: Promise<{ projectId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  await getAuthorizedSession();
+
   const { projectId } = await params;
-  const { timeRange, deviceType } = dashboardSearchParamsSchema.parse(await searchParams);
+  const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
   let overview;
   try {
     overview = await getCachedOverview(projectId, deviceType, timeRange);

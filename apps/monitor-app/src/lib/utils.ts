@@ -67,3 +67,24 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
 
   return { start, end };
 }
+
+export function capitalizeFirstLetter(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+}
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+});
+
+/**
+ * Formats a date consistently for display.
+ * Uses Intl.DateTimeFormat with a fixed locale to ensure consistent
+ * formatting between server and client (avoiding hydration errors).
+ */
+export function formatDate(date: Date | string | number): string {
+  const d = date instanceof Date ? date : new Date(date);
+  return dateFormatter.format(d);
+}

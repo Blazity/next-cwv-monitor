@@ -6,6 +6,46 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import eslintReact from '@eslint-react/eslint-plugin';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
+const requireProtectedPageAuthRule = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Require getAuthorizedSession() in protected page components.'
+    },
+    schema: [],
+    messages: {
+      missing: 'Protected pages must call getAuthorizedSession() before accessing data.'
+    }
+  },
+  create(context) {
+    const authorizedNames = new Set(['getAuthorizedSession']);
+    let hasAuthCall = false;
+
+    return {
+      ImportDeclaration(node) {
+        if (typeof node.source.value !== 'string') return;
+        if (!node.source.value.endsWith('/auth-utils')) return;
+
+        for (const specifier of node.specifiers) {
+          if (specifier.type !== 'ImportSpecifier') continue;
+          if (specifier.imported.type !== 'Identifier') continue;
+          if (specifier.imported.name !== 'getAuthorizedSession') continue;
+          authorizedNames.add(specifier.local.name);
+        }
+      },
+      CallExpression(node) {
+        if (node.callee.type !== 'Identifier') return;
+        if (!authorizedNames.has(node.callee.name)) return;
+        hasAuthCall = true;
+      },
+      'Program:exit'(node) {
+        if (hasAuthCall) return;
+        context.report({ node, messageId: 'missing' });
+      }
+    };
+  }
+};
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -18,6 +58,7 @@ const eslintConfig = defineConfig([
     rules: {
       ...eslintPluginUnicorn.configs.recommended.rules,
       'unicorn/prevent-abbreviations': 'off',
+      'unicorn/no-nested-ternary': 'off',
       'react/no-unescaped-entities': 'off',
       'unicorn/no-null': 'off'
     }
@@ -45,12 +86,39 @@ const eslintConfig = defineConfig([
       '@eslint-react/naming-convention/context-name': 'error',
       '@eslint-react/dom/no-missing-button-type': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      'no-restricted-properties': [
+        'error',
+        {
+          object: 'process',
+          property: 'env',
+          message: 'Use validated env values from @/env instead of process.env.'
+        }
+      ],
       'no-restricted-imports': [
         'error',
         {
           patterns: ['../*', './*']
         }
       ]
+    }
+  },
+  {
+    files: ['src/app/(protected)/**/page.tsx'],
+    plugins: {
+      local: {
+        rules: {
+          'require-protected-page-auth': requireProtectedPageAuthRule
+        }
+      }
+    },
+    rules: {
+      'local/require-protected-page-auth': 'error'
+    }
+  },
+  {
+    files: ['src/env.ts', 'next.config.ts', 'scripts/**', 'vitest.*', 'src/test/**'],
+    rules: {
+      'no-restricted-properties': 'off'
     }
   },
   // Override default ignores of eslint-config-next.

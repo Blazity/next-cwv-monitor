@@ -83,7 +83,7 @@ services:
       NODE_ENV: development
       <<: *clickhouse-env
       TRUST_PROXY: ${TRUST_PROXY:-false}
-      CLIENT_APP_ORIGIN: ${CLIENT_APP_ORIGIN:-http://localhost:3001}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
     volumes:
