@@ -1,30 +1,26 @@
-import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import {
   fetchRoutesListPage,
   fetchRoutesListTotalCount,
-  fetchRoutesStatusDistribution
-} from '@/app/server/lib/clickhouse/repositories/dashboard-routes-repository';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { getMetricThresholds, getRatingForValue } from '@/app/server/lib/cwv-thresholds';
-import { toQuantileSummary } from '@/app/server/lib/quantiles';
+  fetchRoutesStatusDistribution,
+} from "@/app/server/lib/clickhouse/repositories/dashboard-routes-repository";
+import { getAuthorizedSession } from "@/lib/auth-utils";
+import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
+import { toQuantileSummary } from "@/app/server/lib/quantiles";
 
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import type {
-  ListRoutesQuery,
-  ListRoutesResult,
-  StatusDistribution
-} from '@/app/server/domain/routes/list/types';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import type { ListRoutesQuery, ListRoutesResult, StatusDistribution } from "@/app/server/domain/routes/list/types";
 
 function emptyStatusDistribution(): StatusDistribution {
   return {
     good: 0,
-    'needs-improvement': 0,
-    poor: 0
+    "needs-improvement": 0,
+    poor: 0,
   };
 }
 
 function isRating(value: string | null | undefined): value is WebVitalRatingV1 {
-  return value === 'good' || value === 'needs-improvement' || value === 'poor';
+  return value === "good" || value === "needs-improvement" || value === "poor";
 }
 
 export class RoutesListService {
@@ -36,19 +32,19 @@ export class RoutesListService {
   async list(query: ListRoutesQuery): Promise<ListRoutesResult> {
     const project = await getProjectById(query.projectId);
     if (!project) {
-      return { kind: 'project-not-found', projectId: query.projectId };
+      return { kind: "project-not-found", projectId: query.projectId };
     }
 
     const thresholds = getMetricThresholds(query.metricName);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!thresholds) {
-      return { kind: 'unsupported-metric', metricName: query.metricName };
+      return { kind: "unsupported-metric", metricName: query.metricName };
     }
 
     const baseFilters = {
       projectId: query.projectId,
       range: query.range,
-      deviceType: query.deviceType
+      deviceType: query.deviceType,
     } as const;
 
     const [rows, totalRoutes, distributionRows] = await Promise.all([
@@ -59,7 +55,7 @@ export class RoutesListService {
         percentile: query.percentile,
         sort: query.sort,
         limit: query.page.limit,
-        offset: query.page.offset
+        offset: query.page.offset,
       }),
       fetchRoutesListTotalCount({ ...baseFilters, search: query.search }),
       fetchRoutesStatusDistribution({
@@ -67,14 +63,14 @@ export class RoutesListService {
         search: query.search,
         metricName: query.metricName,
         percentile: query.percentile,
-        thresholds
-      })
+        thresholds,
+      }),
     ]);
 
     const items = rows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
-      const metricValue = typeof row.metric_value === 'number' ? row.metric_value : null;
-      const status = typeof metricValue === 'number' ? getRatingForValue(query.metricName, metricValue) : null;
+      const metricValue = typeof row.metric_value === "number" ? row.metric_value : null;
+      const status = typeof metricValue === "number" ? getRatingForValue(query.metricName, metricValue) : null;
 
       return {
         route: row.route,
@@ -82,7 +78,7 @@ export class RoutesListService {
         metricSampleSize: Number(row.metric_sample_size || 0),
         quantiles,
         metricValue,
-        status
+        status,
       };
     });
 
@@ -93,12 +89,12 @@ export class RoutesListService {
     }
 
     return {
-      kind: 'ok',
+      kind: "ok",
       data: {
         totalRoutes,
         statusDistribution,
-        items
-      }
+        items,
+      },
     };
   }
 }

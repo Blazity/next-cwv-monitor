@@ -3,7 +3,7 @@
 import { useTransition } from 'react';
 import { LogOut } from 'lucide-react';
 import { User } from 'better-auth';
-import { signOut } from '@/actions/sign-out';
+import { signOut } from '@/app/server/actions/sign-out';
 
 export function UserActionsMobile({
   setMobileMenuOpen,

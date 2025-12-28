@@ -1,12 +1,12 @@
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
-import { getProjectById } from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import { fetchRouteEventOverlaySeries } from '@/app/server/lib/clickhouse/repositories/dashboard-routes-repository';
+import { getAuthorizedSession } from "@/lib/auth-utils";
+import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
+import { fetchRouteEventOverlaySeries } from "@/app/server/lib/clickhouse/repositories/dashboard-routes-repository";
 
 import type {
   GetRouteEventOverlayQuery,
   GetRouteEventOverlayResult,
-  RouteEventOverlayPoint
-} from '@/app/server/domain/routes/overlay/types';
+  RouteEventOverlayPoint,
+} from "@/app/server/domain/routes/overlay/types";
 
 function toRatePct(conversions: number, views: number): number | null {
   if (views <= 0) return null;
@@ -19,19 +19,19 @@ export class RouteEventOverlayService {
 
     const project = await getProjectById(query.projectId);
     if (!project) {
-      return { kind: 'project-not-found', projectId: query.projectId };
+      return { kind: "project-not-found", projectId: query.projectId };
     }
 
     const baseFilters = {
       projectId: query.projectId,
       range: query.range,
-      deviceType: query.deviceType
+      deviceType: query.deviceType,
     } as const;
 
     const rows = await fetchRouteEventOverlaySeries({
       ...baseFilters,
       route: query.route,
-      eventName: query.eventName
+      eventName: query.eventName,
     });
 
     const series: RouteEventOverlayPoint[] = rows.map((row) => {
@@ -41,7 +41,7 @@ export class RouteEventOverlayService {
         date: row.event_date,
         views,
         conversions,
-        conversionRatePct: toRatePct(conversions, views)
+        conversionRatePct: toRatePct(conversions, views),
       };
     });
 
@@ -52,16 +52,15 @@ export class RouteEventOverlayService {
     }
 
     return {
-      kind: 'ok',
+      kind: "ok",
       data: {
         eventName: query.eventName,
         series,
         totals: {
           ...totals,
-          conversionRatePct: toRatePct(totals.conversions, totals.views)
-        }
-      }
+          conversionRatePct: toRatePct(totals.conversions, totals.views),
+        },
+      },
     };
   }
 }
-

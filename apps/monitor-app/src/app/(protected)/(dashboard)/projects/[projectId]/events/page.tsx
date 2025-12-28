@@ -1,4 +1,4 @@
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
+import { getAuthorizedSession } from "@/lib/auth-utils";
 
 async function EventsPage() {
   await getAuthorizedSession();
