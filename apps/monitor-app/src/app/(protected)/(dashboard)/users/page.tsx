@@ -3,14 +3,21 @@ import UsersList from '@/components/users/users-list';
 import UsersStats from '@/components/users/users-stats';
 import { auth } from '@/lib/auth';
 import { getAuthorizedSession } from '@/lib/auth-utils';
+import { cacheTag } from 'next/cache';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+
+const fetchCachedUsers = async (headers: HeadersInit) => {
+  'use cache';
+  cacheTag('users');
+  return auth.api.listUsers({ query: {}, headers });
+};
 
 export default async function UsersPage() {
   await getAuthorizedSession();
   let data;
   try {
-    data = await auth.api.listUsers({ query: {}, headers: await headers() });
+    data = await fetchCachedUsers(await headers());
   } catch {
     notFound();
   }
