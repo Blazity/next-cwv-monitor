@@ -1,8 +1,8 @@
 'use server';
 
 import { usersStatusService } from '@/app/server/domain/users/status/service';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { checkBanReason } from '@/app/server/lib/ban-reasons';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 import { APIError } from 'better-auth';
 import { updateTag } from 'next/cache';
 

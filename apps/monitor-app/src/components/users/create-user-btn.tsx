@@ -83,7 +83,7 @@ export function CreateUserBtn() {
             className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
-              onSubmit(e);
+              void onSubmit(e);
             }}
           >
             {/* Disable 1 password */}

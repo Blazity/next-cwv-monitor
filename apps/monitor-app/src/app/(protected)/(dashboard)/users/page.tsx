@@ -2,10 +2,12 @@ import { CreateUserBtn } from '@/components/users/create-user-btn';
 import UsersList from '@/components/users/users-list';
 import UsersStats from '@/components/users/users-stats';
 import { auth } from '@/lib/auth';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
 export default async function UsersPage() {
+  await getAuthorizedSession();
   let data;
   try {
     data = await auth.api.listUsers({ query: {}, headers: await headers() });

@@ -1,8 +1,8 @@
 'use server';
 
 import { SetRole, usersUpdateService } from '@/app/server/domain/users/update/service';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
 import { auth, AuthRole } from '@/lib/auth';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 import { assertNever } from '@/lib/utils';
 import { updateTag } from 'next/cache';
 import { headers } from 'next/headers';

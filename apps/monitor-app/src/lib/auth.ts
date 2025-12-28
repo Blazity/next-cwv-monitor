@@ -24,7 +24,7 @@ export type AuthRole = InferAdminRolesFromOption<typeof adminPluginOptions>;
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
-  baseURL: env.CLIENT_APP_ORIGIN,
+  baseURL: env.AUTH_BASE_URL,
   database: clickHouseAdapter({ debugLogs: env.CLICKHOUSE_ADAPTER_DEBUG_LOGS }),
   user: {
     additionalFields: {
@@ -80,11 +80,11 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies(), adminPlugin],
   advanced: {
-    useSecureCookies: process.env.NODE_ENV === 'production',
+    useSecureCookies: env.NODE_ENV === 'production',
     defaultCookieAttributes: {
       sameSite: 'lax',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
+      secure: env.NODE_ENV === 'production'
     }
   },
   rateLimit: {
@@ -113,3 +113,4 @@ export const auth = betterAuth({
 });
 
 export type AdminApiResult<T extends keyof typeof auth.api> = Awaited<ReturnType<(typeof auth.api)[T]>>;
+export type SessionData = typeof auth.$Infer.Session;

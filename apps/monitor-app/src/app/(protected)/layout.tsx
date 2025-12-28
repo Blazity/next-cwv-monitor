@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from 'react';
 import { SessionProvider } from '@/contexts/session-provider';
-import { getServerSessionDataOrRedirect } from '@/lib/get-server-session-data-or-redirect';
+import { getServerSessionDataOrRedirect } from '@/lib/auth-utils';
 
 async function ProtectedLayoutContent({ children }: { children: ReactNode }) {
   const sessionData = await getServerSessionDataOrRedirect();

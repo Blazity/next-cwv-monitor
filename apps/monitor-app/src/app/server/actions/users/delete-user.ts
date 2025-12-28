@@ -1,6 +1,6 @@
 'use server';
 import { usersDeleteService } from '@/app/server/domain/users/delete/service';
-import { getAuthorizedSession } from '@/app/server/lib/auth-check';
+import { getAuthorizedSession } from '@/lib/auth-utils';
 import { APIError } from 'better-auth';
 import { updateTag } from 'next/cache';
 

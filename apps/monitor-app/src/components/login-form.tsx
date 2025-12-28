@@ -58,7 +58,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   };
 
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
+    <div className="bg-background flex min-h-screen w-full items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex items-center justify-center gap-3">
           <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-md">
