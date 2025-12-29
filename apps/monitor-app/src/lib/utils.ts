@@ -84,6 +84,17 @@ export function capitalizeFirstLetter(text: string): string {
   return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
 
+export function capitalize(text: string, removeUnderscore?: boolean) {
+  let textToProcess = text;
+  if (removeUnderscore) {
+    textToProcess = textToProcess.replaceAll('_', ' ');
+  }
+  return textToProcess
+    .split(' ')
+    .map((v) => capitalizeFirstLetter(v))
+    .join(' ');
+}
+
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',

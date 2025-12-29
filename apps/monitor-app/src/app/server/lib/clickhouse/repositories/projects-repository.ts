@@ -89,18 +89,34 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   `;
 }
 
-export async function updateProject(project: UpdatableProjectRow): Promise<void> {
-  const { id, name, slug, created_at } = project;
+export async function updateProjectEventSettings(project: UpdatableProjectRow): Promise<void> {
+  const { id, created_at, events_display_settings } = project;
   const createdAt = created_at && created_at instanceof Date ? created_at : new Date(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
-
   await sql`
-    INSERT INTO projects (id, name, slug, created_at, updated_at)
+    INSERT INTO projects (id, events_display_settings, created_at, updated_at)
+    VALUES (
+      ${id}, 
+      ${events_display_settings},
+      toDateTime(${createdAtSeconds}), 
+      toDateTime(${updatedAtSeconds})
+    )
+  `.command();
+}
+
+export async function updateProject(project: UpdatableProjectRow): Promise<void> {
+  const { id, name, slug, created_at, events_display_settings } = project;
+  const createdAt = created_at && created_at instanceof Date ? created_at : new Date(created_at);
+  const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
+  const updatedAtSeconds = Math.floor(Date.now() / 1000);
+  await sql`
+    INSERT INTO projects (id, name, slug, events_display_settings, created_at, updated_at)
     VALUES (
       ${id}, 
       ${name}, 
       ${slug}, 
+      ${events_display_settings},
       toDateTime(${createdAtSeconds}), 
       toDateTime(${updatedAtSeconds})
     )

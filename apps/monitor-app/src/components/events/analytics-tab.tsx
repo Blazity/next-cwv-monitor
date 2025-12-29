@@ -2,11 +2,12 @@ import {
   fetchConversionTrend,
   fetchEventsStatsData
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
+import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { AnalyticsChart } from '@/components/events/analytics-chart';
 import { AnalyticsSelectEvent } from '@/components/events/analytics-select-event';
 import { AnalyticsTable } from '@/components/events/analytics-table';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
+import { capitalize } from '@/lib/utils';
 
 import { hasAtLeast, sumBy } from 'remeda';
 
@@ -15,15 +16,17 @@ type Props = {
   eventStats: Awaited<ReturnType<typeof fetchEventsStatsData>>;
   chartData: Awaited<ReturnType<typeof fetchConversionTrend>>;
   selectedEvent: string;
+  eventDisplaySettings: EventDisplaySettingsSchema;
 };
 
-export function AnalyticsTab({ events, eventStats, chartData, selectedEvent }: Props) {
+export function AnalyticsTab({ events, eventStats, chartData, selectedEvent, eventDisplaySettings }: Props) {
   const totalConversionsForEvent = sumBy(eventStats, (v) => Number(v.conversions_cur));
   const overallRateForEvent = sumBy(eventStats, (v) => Number(v.conversion_rate)) / eventStats.length;
+  const selectedEventName = capitalize(eventDisplaySettings?.[selectedEvent].customName || selectedEvent, true);
 
   return (
-    <TabsContent value="analytics" className="space-y-6">
-      {hasAtLeast(events, 1) && <AnalyticsSelectEvent events={events} />}
+    <>
+      {hasAtLeast(events, 1) && <AnalyticsSelectEvent eventDisplaySettings={eventDisplaySettings} events={events} />}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Conversion Trend</CardTitle>
@@ -40,9 +43,9 @@ export function AnalyticsTab({ events, eventStats, chartData, selectedEvent }: P
         <CardHeader>
           <CardTitle>
             Conversion by Route
-            <span className="text-muted-foreground ml-2 font-normal">{selectedEvent}</span>
+            <span className="text-muted-foreground ml-2 font-normal">{selectedEventName}</span>
           </CardTitle>
-          <CardDescription>How "{selectedEvent}" converts across routes where it's tracked</CardDescription>
+          <CardDescription>How "{selectedEventName}" converts across routes where it's tracked</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -66,6 +69,6 @@ export function AnalyticsTab({ events, eventStats, chartData, selectedEvent }: P
           </div>
         </CardFooter>
       </Card>
-    </TabsContent>
+    </>
   );
 }

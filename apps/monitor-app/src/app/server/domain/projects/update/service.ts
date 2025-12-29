@@ -1,4 +1,8 @@
-import { getProjectById, updateProject } from '@/app/server/lib/clickhouse/repositories/projects-repository';
+import {
+  getProjectById,
+  updateProject,
+  updateProjectEventSettings
+} from '@/app/server/lib/clickhouse/repositories/projects-repository';
 import { UpdatableProjectRow } from '@/app/server/lib/clickhouse/schema';
 
 export type UpdateProjectResult = { kind: 'ok' } | { kind: 'error'; message: string };
@@ -15,10 +19,12 @@ export class ProjectsUpdateService {
       if (current.name === input.name) {
         return { kind: 'ok' };
       }
-      await updateProject({
-        ...input,
-        created_at: current.created_at
-      });
+      await ('slug' in input
+        ? updateProject({
+            ...input,
+            created_at: current.created_at
+          })
+        : updateProjectEventSettings({ ...input, created_at: current.created_at }));
 
       return { kind: 'ok' };
     } catch (error) {

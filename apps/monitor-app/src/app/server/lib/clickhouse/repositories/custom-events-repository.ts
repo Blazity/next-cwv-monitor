@@ -2,7 +2,7 @@ import { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { CustomEventRow, InsertableCustomEventRow } from '@/app/server/lib/clickhouse/schema';
 import { chunkGenerator, daysToNumber } from '@/lib/utils';
-import { map, mapValues } from 'remeda';
+import { hasAtLeast, map, mapValues } from 'remeda';
 
 type CustomEventFilters = {
   projectId: string;
@@ -270,6 +270,7 @@ export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
 type FetchConversionTrend = {
   range: TimeRangeKey;
   projectId: string;
+  excludedEventNames?: string[];
 };
 
 type FetchConversionTrendResult = {
@@ -279,7 +280,7 @@ type FetchConversionTrendResult = {
   conversion_rate: number;
 };
 
-export async function fetchConversionTrend({ projectId, range }: FetchConversionTrend) {
+export async function fetchConversionTrend({ projectId, excludedEventNames = [], range }: FetchConversionTrend) {
   const negativeRange = daysToNumber[range] * -1;
 
   const query = sql<FetchConversionTrendResult>`
@@ -300,6 +301,13 @@ export async function fetchConversionTrend({ projectId, range }: FetchConversion
     		ce.recorded_at >= toDate(addDays(now(), ${negativeRange}))
     		AND ce.recorded_at < addDays(toDate(now()), 1)
     		AND ce.project_id = ${projectId}
+  `;
+
+  if (hasAtLeast(excludedEventNames, 1)) {
+    query.append(sql`AND ce.event_name NOT IN (${sql.raw(`${excludedEventNames.map((v) => `'${v}'`).join(', ')}`)})`);
+  }
+
+  query.append(sql`
     	GROUP BY
     		day
     )
@@ -310,7 +318,7 @@ export async function fetchConversionTrend({ projectId, range }: FetchConversion
     	toDate(addDays(now(), ${negativeRange}))
       TO toDate(now())
       STEP 1;
-  `;
+  `);
   return query;
 }
 

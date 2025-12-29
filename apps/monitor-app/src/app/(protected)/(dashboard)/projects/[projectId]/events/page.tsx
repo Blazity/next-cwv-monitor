@@ -7,16 +7,13 @@ import {
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
 import { eventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { TimeRangeSelector } from '@/components/dashboard/time-range-selector';
-import { AnalyticsTab } from '@/components/events/analytics-tab';
 import { EventsCards } from '@/components/events/events-cards';
-import { ManageTab } from '@/components/events/manage-tab';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { EventsTabs } from '@/components/events/events-tabs';
 import { getAuthorizedSession } from '@/lib/auth-utils';
 import { getCachedProject } from '@/lib/cache';
 import { eventsSearchParamsSchema } from '@/lib/search-params';
-import { BarChart3, Settings2 } from 'lucide-react';
 import { notFound } from 'next/navigation';
+import { entries, filter } from 'remeda';
 
 async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
   await getAuthorizedSession();
@@ -36,10 +33,17 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
   const eventNames = names.map((v) => v.event_name);
   const selectedEvent = event || eventNames[0];
 
+  const excludedEventNames = filter(entries(eventDisplaySettings ?? {}), ([, value]) => value.isHidden === true).map(
+    ([key]) => key
+  );
   const [events, eventsStats, chartData] = await Promise.all([
-    fetchEventsStatsData({ eventName: selectedEvent, projectId, range: '90d' }),
+    fetchEventsStatsData({
+      eventName: selectedEvent,
+      projectId,
+      range: '90d'
+    }),
     fetchTotalStatsEvents({ projectId, range: timeRange }),
-    fetchConversionTrend({ projectId, range: timeRange })
+    fetchConversionTrend({ projectId, range: timeRange, excludedEventNames })
   ]);
 
   return (
@@ -52,23 +56,19 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
           </div>
           <TimeRangeSelector />
         </div>
-        <EventsCards mostActiveEvent={mostActiveEvent} totalEventData={eventsStats} />
-        <TooltipProvider>
-          <Tabs defaultValue="analytics" className="space-y-6">
-            <TabsList className="bg-muted">
-              <TabsTrigger value="analytics" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-              <TabsTrigger value="manage" className="gap-2">
-                <Settings2 className="h-4 w-4" />
-                Manage Events
-              </TabsTrigger>
-            </TabsList>
-            <AnalyticsTab selectedEvent={selectedEvent} chartData={chartData} eventStats={events} events={eventNames} />
-            <ManageTab eventNames={eventNames} eventsDisplaySettings={eventDisplaySettings} projectId={projectId} />
-          </Tabs>
-        </TooltipProvider>
+        <EventsCards
+          eventDisplaySettings={eventDisplaySettings}
+          mostActiveEvent={mostActiveEvent}
+          totalEventData={eventsStats}
+        />
+        <EventsTabs
+          chartData={chartData}
+          eventDisplaySettings={eventDisplaySettings}
+          eventStats={events}
+          events={eventNames}
+          projectId={projectId}
+          selectedEvent={selectedEvent}
+        />
       </div>
     </>
   );

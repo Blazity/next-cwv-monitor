@@ -1,4 +1,5 @@
 import { fetchEvents, fetchTotalStatsEvents } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
+import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Eye, MousePointerClick, Tag, TrendingDown, TrendingUp, Zap } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Eye, MousePointerClick, Tag, TrendingDown, TrendingUp, Zap } from 'luci
 type Props = {
   totalEventData: Awaited<ReturnType<typeof fetchTotalStatsEvents>>;
   mostActiveEvent: Awaited<ReturnType<typeof fetchEvents>>[number];
+  eventDisplaySettings: EventDisplaySettingsSchema;
 };
 
 function displayBigNumber(value: string | number) {
@@ -15,8 +17,9 @@ function displayBigNumber(value: string | number) {
   return `${(parsedNumber / 1000).toFixed(1).replace('.0', '')}K`;
 }
 
-export function EventsCards({ totalEventData, mostActiveEvent }: Props) {
+export function EventsCards({ totalEventData, mostActiveEvent, eventDisplaySettings }: Props) {
   const isTrendingUp = totalEventData.total_conversions_prev <= totalEventData.total_conversions_cur;
+  const eventName = eventDisplaySettings?.[mostActiveEvent.event_name].customName || mostActiveEvent.event_name || '';
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card className="bg-card border-border">
@@ -54,8 +57,8 @@ export function EventsCards({ totalEventData, mostActiveEvent }: Props) {
             <div className="min-w-0 flex-1">
               <div className="text-muted-foreground text-sm">Most Active Event</div>
               <div className="flex items-baseline gap-2">
-                <span className="text-foreground truncate text-lg font-semibold">
-                  {mostActiveEvent.event_name || '—'}
+                <span className="text-foreground truncate text-lg font-semibold capitalize">
+                  {eventName.replaceAll('_', ' ')}
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs">
                   {displayBigNumber(mostActiveEvent.records_count)}
