@@ -20,7 +20,7 @@ export function AnalyticsChart({ chartData }: Props) {
     () =>
       chartData.map((point) => ({
         date: new Date(point.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        rate: point.conversion_rate,
+        rate: point.conversion_rate ?? 0,
         events: point.events,
         views: point.views
       })),

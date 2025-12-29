@@ -4,29 +4,25 @@ import {
 } from '@/app/server/lib/clickhouse/repositories/custom-events-repository';
 import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { AnalyticsChart } from '@/components/events/analytics-chart';
-import { AnalyticsSelectEvent } from '@/components/events/analytics-select-event';
 import { AnalyticsTable } from '@/components/events/analytics-table';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { capitalize } from '@/lib/utils';
 
-import { hasAtLeast, sumBy } from 'remeda';
+import { sumBy } from 'remeda';
 
 type Props = {
-  events: string[];
   eventStats: Awaited<ReturnType<typeof fetchEventsStatsData>>;
   chartData: Awaited<ReturnType<typeof fetchConversionTrend>>;
   selectedEvent: string;
   eventDisplaySettings: EventDisplaySettingsSchema;
 };
 
-export function AnalyticsTab({ events, eventStats, chartData, selectedEvent, eventDisplaySettings }: Props) {
+export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDisplaySettings }: Props) {
   const totalConversionsForEvent = sumBy(eventStats, (v) => Number(v.conversions_cur));
   const overallRateForEvent = sumBy(eventStats, (v) => Number(v.conversion_rate)) / eventStats.length;
-  const selectedEventName = capitalize(eventDisplaySettings?.[selectedEvent].customName || selectedEvent, true);
-
+  const selectedEventName = capitalize(eventDisplaySettings?.[selectedEvent]?.customName || selectedEvent, true);
   return (
     <>
-      {hasAtLeast(events, 1) && <AnalyticsSelectEvent eventDisplaySettings={eventDisplaySettings} events={events} />}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>Conversion Trend</CardTitle>

@@ -2,7 +2,7 @@ import { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { CustomEventRow, InsertableCustomEventRow } from '@/app/server/lib/clickhouse/schema';
 import { chunkGenerator, daysToNumber } from '@/lib/utils';
-import { hasAtLeast, map, mapValues } from 'remeda';
+import { map, mapValues } from 'remeda';
 
 type CustomEventFilters = {
   projectId: string;
@@ -120,6 +120,7 @@ type FetchEventsStatsDataResult = {
 
 export async function fetchEventsStatsData({ range, eventName, projectId }: FetchEventsStatsData) {
   const negativeRange = daysToNumber[range] * -1;
+  if (!eventName) return [];
   const query = sql<FetchEventsStatsDataResult>`
     SELECT
     	ce.route,
@@ -248,8 +249,7 @@ type FetchMostActiveEventResult = {
 
 export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
   const negativeRange = daysToNumber[range] * -1;
-
-  const query = sql<FetchMostActiveEventResult>`
+  const query = sql<FetchMostActiveEventResult | undefined>`
     SELECT
       ce.event_name,
       count() AS records_count
@@ -258,7 +258,7 @@ export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
       AND ce.recorded_at >= addDays(now(), ${negativeRange})
       AND ce.recorded_at < now()
       AND ce.event_name NOT LIKE '$page_view'
-    GROUP BY ce.event_name
+      GROUP BY ce.event_name
     ORDER BY records_count DESC
   `;
   if (limit) {
@@ -270,19 +270,19 @@ export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
 type FetchConversionTrend = {
   range: TimeRangeKey;
   projectId: string;
-  excludedEventNames?: string[];
+  eventName: string;
 };
 
 type FetchConversionTrendResult = {
   day: string;
   views: string;
   events: string;
-  conversion_rate: number;
+  conversion_rate: number | null;
 };
 
-export async function fetchConversionTrend({ projectId, excludedEventNames = [], range }: FetchConversionTrend) {
+export async function fetchConversionTrend({ projectId, eventName, range }: FetchConversionTrend) {
   const negativeRange = daysToNumber[range] * -1;
-
+  if (!eventName) return [];
   const query = sql<FetchConversionTrendResult>`
     SELECT
     	day,
@@ -301,14 +301,8 @@ export async function fetchConversionTrend({ projectId, excludedEventNames = [],
     		ce.recorded_at >= toDate(addDays(now(), ${negativeRange}))
     		AND ce.recorded_at < addDays(toDate(now()), 1)
     		AND ce.project_id = ${projectId}
-  `;
-
-  if (hasAtLeast(excludedEventNames, 1)) {
-    query.append(sql`AND ce.event_name NOT IN (${sql.raw(`${excludedEventNames.map((v) => `'${v}'`).join(', ')}`)})`);
-  }
-
-  query.append(sql`
-    	GROUP BY
+        AND (ce.event_name = ${eventName} OR ce.event_name = '$page_view')
+      GROUP BY
     		day
     )
     ORDER BY
@@ -318,7 +312,8 @@ export async function fetchConversionTrend({ projectId, excludedEventNames = [],
     	toDate(addDays(now(), ${negativeRange}))
       TO toDate(now())
       STEP 1;
-  `);
+  `;
+
   return query;
 }
 

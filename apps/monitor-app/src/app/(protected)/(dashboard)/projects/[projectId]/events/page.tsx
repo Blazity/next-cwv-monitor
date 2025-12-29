@@ -13,16 +13,15 @@ import { getAuthorizedSession } from '@/lib/auth-utils';
 import { getCachedProject } from '@/lib/cache';
 import { eventsSearchParamsSchema } from '@/lib/search-params';
 import { notFound } from 'next/navigation';
-import { entries, filter } from 'remeda';
 
 async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
   await getAuthorizedSession();
   const { projectId } = await params;
   // TODO: time range should handle 24h here
-  const { timeRange, event } = eventsSearchParamsSchema.parse(await searchParams);
+  const { timeRange, event = '' } = eventsSearchParamsSchema.parse(await searchParams);
 
-  const [[mostActiveEvent], names, project] = await Promise.all([
-    fetchEvents({ projectId, range: timeRange, limit: 1 }),
+  const [allEvents, names, project] = await Promise.all([
+    fetchEvents({ projectId, range: timeRange }),
     fetchProjectEventNames({ projectId }),
     getCachedProject(projectId)
   ]);
@@ -34,9 +33,12 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
   const eventNames = names.map((v) => v.event_name);
   const selectedEvent = event || eventNames[0];
 
-  const excludedEventNames = filter(entries(eventDisplaySettings ?? {}), ([, value]) => value.isHidden === true).map(
-    ([key]) => key
-  );
+  const mostActiveEvent = allEvents.find((event) => {
+    if (!event?.event_name) return false;
+    const eventSettings = eventDisplaySettings?.[event.event_name];
+    return eventSettings ? !eventSettings.isHidden : true;
+  });
+
   const [events, eventsStats, chartData] = await Promise.all([
     fetchEventsStatsData({
       eventName: selectedEvent,
@@ -44,7 +46,7 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
       range: '90d'
     }),
     fetchTotalStatsEvents({ projectId, range: timeRange }),
-    fetchConversionTrend({ projectId, range: timeRange, excludedEventNames })
+    fetchConversionTrend({ projectId, range: timeRange, eventName: selectedEvent })
   ]);
 
   return (

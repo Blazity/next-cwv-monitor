@@ -84,7 +84,8 @@ export function capitalizeFirstLetter(text: string): string {
   return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
 
-export function capitalize(text: string, removeUnderscore?: boolean) {
+export function capitalize(text?: string, removeUnderscore?: boolean) {
+  if (!text) return text;
   let textToProcess = text;
   if (removeUnderscore) {
     textToProcess = textToProcess.replaceAll('_', ' ');

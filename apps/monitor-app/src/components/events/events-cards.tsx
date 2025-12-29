@@ -19,7 +19,8 @@ function displayBigNumber(value: string | number) {
 
 export function EventsCards({ totalEventData, mostActiveEvent, eventDisplaySettings }: Props) {
   const isTrendingUp = totalEventData.total_conversions_prev <= totalEventData.total_conversions_cur;
-  const eventName = eventDisplaySettings?.[mostActiveEvent.event_name].customName || mostActiveEvent.event_name || '';
+  const mostActiveName = mostActiveEvent?.event_name;
+  const eventName = mostActiveName ? eventDisplaySettings?.[mostActiveName]?.customName || mostActiveName : '-';
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card className="bg-card border-border">
@@ -61,7 +62,7 @@ export function EventsCards({ totalEventData, mostActiveEvent, eventDisplaySetti
                   {eventName.replaceAll('_', ' ')}
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs">
-                  {displayBigNumber(mostActiveEvent.records_count)}
+                  {displayBigNumber(mostActiveEvent?.records_count || '0')}
                 </span>
               </div>
             </div>

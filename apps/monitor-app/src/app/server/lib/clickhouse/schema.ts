@@ -23,7 +23,7 @@ export const eventDisplaySettingsSchema = z.preprocess(
   z
     .record(
       z.string(),
-      z.object({ isHidden: z.boolean().optional().default(false), customName: z.string().optional() })
+      z.object({ isHidden: z.boolean().optional().default(false), customName: z.string().optional() }).optional()
     )
     .nullable()
 );

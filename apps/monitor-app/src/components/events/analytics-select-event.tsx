@@ -3,17 +3,30 @@
 import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
+import { useEffect } from 'react';
 
 type Props = {
-  events: [string, ...string[]];
+  events: string[];
   eventDisplaySettings: EventDisplaySettingsSchema;
 };
 
 export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
+  const filteredEvents = events.filter((e) => {
+    const eventSetting = eventDisplaySettings?.[e];
+    if (!eventSetting) return true;
+    return !eventSetting.isHidden;
+  });
   const [selectedEvent, setSelectedEvent] = useQueryState(
     'event',
-    parseAsStringEnum(events).withDefault(events[0]).withOptions({ shallow: false })
+    parseAsStringEnum(events)
+      .withDefault(filteredEvents[0] || '')
+      .withOptions({ shallow: false })
   );
+  useEffect(() => {
+    if (!filteredEvents.includes(selectedEvent)) {
+      setSelectedEvent(filteredEvents[0]);
+    }
+  }, [filteredEvents, setSelectedEvent, selectedEvent]);
 
   return (
     <div className="flex items-center gap-3">
@@ -23,8 +36,8 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {events.map((event) => {
-            const eventName = eventDisplaySettings?.[event].customName || event.replaceAll('_', ' ');
+          {filteredEvents.map((event) => {
+            const eventName = eventDisplaySettings?.[event]?.customName || event.replaceAll('_', ' ');
             return (
               <SelectItem className="capitalize" key={event} value={event}>
                 {eventName}
