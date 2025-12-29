@@ -9,7 +9,7 @@ export const CACHE_LIFE_DEFAULT = {
 } as const;
 
 export const updateTags = {
-  projectDetails: (projectId: string) => `project-${projectId}`
+  projectDetails: (projectId: string) => `project-${projectId}` as const
 };
 
 export async function getCachedProject(projectId: string) {

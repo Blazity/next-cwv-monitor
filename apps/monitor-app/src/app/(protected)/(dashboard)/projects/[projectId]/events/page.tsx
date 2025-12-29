@@ -18,6 +18,7 @@ import { entries, filter } from 'remeda';
 async function EventsPage({ params, searchParams }: PageProps<'/projects/[projectId]/events'>) {
   await getAuthorizedSession();
   const { projectId } = await params;
+  // TODO: time range should handle 24h here
   const { timeRange, event } = eventsSearchParamsSchema.parse(await searchParams);
 
   const [[mostActiveEvent], names, project] = await Promise.all([
@@ -47,30 +48,28 @@ async function EventsPage({ params, searchParams }: PageProps<'/projects/[projec
   ]);
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-foreground text-2xl font-semibold">Events</h1>
-            <p className="text-muted-foreground text-sm">Track conversions and manage custom events</p>
-          </div>
-          <TimeRangeSelector />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-foreground text-2xl font-semibold">Events</h1>
+          <p className="text-muted-foreground text-sm">Track conversions and manage custom events</p>
         </div>
-        <EventsCards
-          eventDisplaySettings={eventDisplaySettings}
-          mostActiveEvent={mostActiveEvent}
-          totalEventData={eventsStats}
-        />
-        <EventsTabs
-          chartData={chartData}
-          eventDisplaySettings={eventDisplaySettings}
-          eventStats={events}
-          events={eventNames}
-          projectId={projectId}
-          selectedEvent={selectedEvent}
-        />
+        <TimeRangeSelector />
       </div>
-    </>
+      <EventsCards
+        eventDisplaySettings={eventDisplaySettings}
+        mostActiveEvent={mostActiveEvent}
+        totalEventData={eventsStats}
+      />
+      <EventsTabs
+        chartData={chartData}
+        eventDisplaySettings={eventDisplaySettings}
+        eventStats={events}
+        events={eventNames}
+        projectId={projectId}
+        selectedEvent={selectedEvent}
+      />
+    </div>
   );
 }
 

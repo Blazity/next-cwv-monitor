@@ -158,7 +158,7 @@ export function ManageTab({ eventsDisplaySettings: settings, eventNames, project
                           className="flex items-center gap-2"
                         >
                           <Input
-                            defaultValue={eventsDisplaySettings?.[event].customName || capitalize(event, true)}
+                            defaultValue={eventSettings?.customName || capitalize(event, true)}
                             ref={editInputRef}
                             className="bg-background border-border h-8"
                             onKeyDown={(e) => {

@@ -10,6 +10,7 @@ export type ProjectRow = {
   updated_at: Date | string;
 };
 
+// TODO: move to arktype if possible
 export const eventDisplaySettingsSchema = z.preprocess(
   (v) => {
     if (typeof v !== 'string') return null;
