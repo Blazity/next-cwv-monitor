@@ -12,23 +12,24 @@ export type TrackCustomEvent = (name: string, options?: TrackCustomEventOptions)
 
 export function useTrackCustomEvent(): TrackCustomEvent {
   const { runtime } = useCWV();
-  const { ingestQueue, getSessionId, getView } = runtime;
+
+  const { _ingestQueue, _getSessionId, _getView } = runtime;
 
   return useCallback<TrackCustomEvent>(
     (name, options) => {
       if (typeof window === 'undefined') return;
-      const view = getView();
+
+      const view = _getView();
 
       const payload: CustomEventV1In = {
         name,
-        sessionId: getSessionId(),
+        sessionId: _getSessionId(),
         route: options?.route ?? view.route,
         path: options?.path ?? view.path,
         recordedAt: options?.recordedAt ?? new Date().toISOString()
       };
-
-      ingestQueue.enqueueCustomEvent(payload);
+      _ingestQueue._enqueueCustomEvent(payload);
     },
-    [getSessionId, getView, ingestQueue]
+    [_getSessionId, _getView, _ingestQueue]
   );
 }

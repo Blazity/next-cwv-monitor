@@ -7,14 +7,14 @@ type Payload = WebVitalEventV1In;
 
 export const useMetrics = () => {
   const { runtime } = useCWV();
-  const { ingestQueue, getSessionId, getView } = runtime;
-  const metrics = useRef(ingestQueue.getCwvEventQueue());
+  const { _ingestQueue, _getSessionId, _getView } = runtime;
+  const metrics = useRef(_ingestQueue._getCwvEventQueue());
 
   const addToMetric = useCallback(
     (metric: Metric) => {
-      const { route, path } = getView();
+      const { route, path } = _getView();
       const recordedAt = new Date().toISOString();
-      const sessionId = getSessionId();
+      const sessionId = _getSessionId();
       const payload: Payload = {
         sessionId,
         route,
@@ -25,9 +25,9 @@ export const useMetrics = () => {
         recordedAt
       };
 
-      ingestQueue.enqueueCwvEvent(payload);
+      _ingestQueue._enqueueCwvEvent(payload);
     },
-    [getSessionId, getView, ingestQueue]
+    [_getSessionId, _getView, _ingestQueue]
   );
 
   const addToMetricRef = useRef(addToMetric);

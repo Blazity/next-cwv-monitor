@@ -5,7 +5,7 @@ import { useIsomorphicLayoutEffect } from '../utils/use-isomorphic-layout-effect
 
 export function PagesRouterRouteTracker(): null {
   const { runtime } = useCWV();
-  const { onViewChange } = runtime;
+  const { _onViewChange } = runtime;
 
   const router = useRouter();
 
@@ -14,14 +14,14 @@ export function PagesRouterRouteTracker(): null {
   useIsomorphicLayoutEffect(() => {
     if (typeof window === 'undefined') return;
     if (!router.isReady) return;
-    onViewChange({ route, path: window.location.pathname || '/' });
-  }, [onViewChange, router.isReady, route]);
+    _onViewChange({ route, path: window.location.pathname || '/' });
+  }, [_onViewChange, router.isReady, route]);
 
   useEffect(() => {
     if (!router.events) return;
 
     const track = () => {
-      onViewChange({ route: router.pathname || '/', path: window.location.pathname || '/' });
+      _onViewChange({ route: router.pathname || '/', path: window.location.pathname || '/' });
     };
 
     // Initial page view (Next Pages Router doesn't emit routeChangeComplete on first load)
@@ -34,7 +34,7 @@ export function PagesRouterRouteTracker(): null {
     return () => {
       router.events.off('routeChangeComplete', track);
     };
-  }, [onViewChange, router]);
+  }, [_onViewChange, router]);
 
   return null;
 }

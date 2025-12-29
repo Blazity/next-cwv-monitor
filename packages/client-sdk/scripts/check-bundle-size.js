@@ -1,6 +1,7 @@
 import fs from 'fs';
 import zlib from 'zlib';
 import path from 'path';
+import process from 'node:process';
 
 const BUDGET_BYTE_LIMIT = 5120; // 5KB
 const FILES_TO_CHECK = ['dist/app-router.js', 'dist/app-router.cjs', 'dist/pages-router.js', 'dist/pages-router.cjs'];

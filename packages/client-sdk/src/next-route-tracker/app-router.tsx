@@ -6,7 +6,7 @@ import { useIsomorphicLayoutEffect } from '../utils/use-isomorphic-layout-effect
 
 export function AppRouterRouteTracker(): null {
   const { runtime } = useCWV();
-  const { onViewChange } = runtime;
+  const { _onViewChange } = runtime;
 
   const pathname = usePathname();
   const params = useParams() as unknown as NextParams;
@@ -15,8 +15,8 @@ export function AppRouterRouteTracker(): null {
 
   useIsomorphicLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    onViewChange({ route, path: window.location.pathname || pathname || '/' });
-  }, [onViewChange, pathname, route]);
+    _onViewChange({ route, path: window.location.pathname || pathname || '/' });
+  }, [_onViewChange, pathname, route]);
 
   return null;
 }

@@ -5,17 +5,17 @@ export function useIngestQueueLifecycle(): void {
   const { config, runtime } = useCWV();
   const { endpoint, abortTime, projectId } = config;
   const sampleRate = config.sampleRate ?? 1;
-  const { ingestQueue } = runtime;
+  const { _ingestQueue } = runtime;
 
   useEffect(() => {
-    ingestQueue.configure({ endpoint, abortTime, projectId, sampleRate });
-    ingestQueue.start();
+    _ingestQueue._configure({ endpoint, abortTime, projectId, sampleRate });
+    _ingestQueue._start();
 
     return () => {
-      ingestQueue.stop();
-      if (!ingestQueue.isIngestQueueFlushing()) {
-        ingestQueue.flush();
+      _ingestQueue._stop();
+      if (!_ingestQueue._isIngestQueueFlushing()) {
+        _ingestQueue._flush();
       }
     };
-  }, [abortTime, endpoint, ingestQueue, projectId, sampleRate]);
+  }, [abortTime, endpoint, _ingestQueue, projectId, sampleRate]);
 }
