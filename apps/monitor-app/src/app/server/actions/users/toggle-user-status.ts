@@ -1,33 +1,30 @@
-'use server';
+"use server";
 
-import { usersStatusService } from '@/app/server/domain/users/status/service';
-import { checkBanReason } from '@/app/server/lib/ban-reasons';
-import { getAuthorizedSession } from '@/lib/auth-utils';
-import { APIError } from 'better-auth';
-import { updateTag } from 'next/cache';
+import { usersStatusService } from "@/app/server/domain/users/status/service";
+import { toggleStatusSchema } from "@/app/server/domain/users/status/types";
+import { checkBanReason } from "@/app/server/lib/ban-reasons";
+import { updateTag } from "next/cache";
+import { permissionActionClient } from "@/app/server/lib/safe-action";
 
-export async function toggleAccountStatusAction(userId: string, currentStatus?: string | null) {
-  await getAuthorizedSession();
-  try {
-    if (!userId) {
-      throw new Error('Userid is required');
-    }
+export const toggleAccountStatusAction = permissionActionClient({ user: ["update"] })
+  .inputSchema(toggleStatusSchema)
+  .action(async ({ parsedInput }) => {
+    const { userId, currentStatus } = parsedInput;
 
-    const isDisabledForToggleReason = checkBanReason(currentStatus, 'disableAccount');
+    const isDisabledForToggleReason = checkBanReason(currentStatus, "disableAccount");
 
     if (currentStatus && !isDisabledForToggleReason) {
-      return { success: false, message: 'User is disabled for a different reason' };
+      return { success: false, message: "User is disabled for a different reason" };
     }
-    await (isDisabledForToggleReason
-      ? usersStatusService.enableAccount(userId)
-      : usersStatusService.disableAccount(userId));
 
-    updateTag('users');
-    return { success: true };
-  } catch (error) {
-    if (error instanceof APIError || error instanceof Error) {
-      return { success: false, message: error.message };
+    try {
+      await (isDisabledForToggleReason
+        ? usersStatusService.enableAccount(userId)
+        : usersStatusService.disableAccount(userId));
+
+      updateTag("users");
+      return { success: true };
+    } catch (error) {
+      throw error;
     }
-    return { success: false };
-  }
-}
+  });

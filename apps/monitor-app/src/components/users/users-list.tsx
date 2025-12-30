@@ -26,13 +26,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Ban, Key, MoreHorizontal, Search, Shield, ShieldCheck, ShieldOff, Trash2, Users } from 'lucide-react';
 import { useQueryState } from 'nuqs';
-import { useMemo, useTransition } from 'react';
-import { setRoleAction } from '@/app/server/actions/users/update-user';
+import { useMemo } from 'react';
+import { setRoleAction } from '@/app/server/actions/users/set-role-user';
 import { toggleAccountStatusAction } from '@/app/server/actions/users/toggle-user-status';
 import { UserWithRole } from 'better-auth/plugins';
 import { checkBanReason } from '@/app/server/lib/ban-reasons';
 import { toast } from 'sonner';
-import { cn, hasRoles } from '@/lib/utils';
+import { cn, formatDate, hasRoles } from '@/lib/utils';
+import { useAction } from 'next-safe-action/hooks';
 
 type Props = {
   users: UserWithRole[];
@@ -44,46 +45,55 @@ const handleResetPassword = (_user: unknown) => {
 };
 
 export default function UsersList({ users }: Props) {
-  const [isPending, startTransition] = useTransition();
   const currentUser = useUser();
+
+  const deleteAction = useAction(deleteUserAction, {
+    onSuccess: () => toast.success("User has been deleted"),
+    onError: ({ error }) => toast.error(error.serverError || "Failed to remove user")
+  });
+
+  const roleAction = useAction(setRoleAction, {
+    onSuccess: () => toast.success("User's role has been changed"),
+    onError: ({ error }) => toast.error(error.serverError || "Failed to change role")
+  });
+
+  const statusAction = useAction(toggleAccountStatusAction, {
+    onSuccess: ({ data }) => {
+        if (data.success === false) {
+            toast.error(data.message);
+        } else {
+            toast.success("User status has been updated");
+        }
+    },
+    onError: ({ error }) => toast.error(error.serverError || "Failed to set user status")
+  });
+
+  const isAnyPending = deleteAction.isPending || roleAction.isPending || statusAction.isPending;
+
   const [searchQuery, setSearchQuery] = useQueryState('q');
+  
   const filteredUsers = useMemo(() => {
     if (!searchQuery) return users;
-    // TODO: consider should be it case sensitive or not. Now it is case sensitive
-    return users.filter((user) => user.name.includes(searchQuery) || user.email.includes(searchQuery));
+    const lowSearch = searchQuery.toLowerCase();
+    return users.filter((user) => 
+        user.name.toLowerCase().includes(lowSearch) || 
+        user.email.toLowerCase().includes(lowSearch)
+    );
   }, [searchQuery, users]);
 
   const handleDeleteUser = (user: UserWithRole) => {
-    startTransition(async () => {
-      const { success, message } = await deleteUserAction(user.id);
-      if (success) {
-        toast.success(`User's have been deleted`);
-      } else {
-        toast.error(message || 'Failed to remove user');
-      }
-    });
+    deleteAction.execute({ userId: user.id });
   };
 
   const handleToggleRole = (user: UserWithRole) => {
-    startTransition(async () => {
-      const newRole = user.role === 'admin' ? 'member' : 'admin';
-      const { success, message } = await setRoleAction({ newRole, userId: user.id });
-      if (success) {
-        toast.success(`User's role has been changed`);
-      } else {
-        toast.error(message || 'Failed to change role');
-      }
-    });
+    const newRole = user.role === 'admin' ? 'member' : 'admin';
+    roleAction.execute({ newRole, userId: user.id });
   };
 
   const handleToggleUserStatus = (user: UserWithRole) => {
-    startTransition(async () => {
-      const { success, message } = await toggleAccountStatusAction(user.id, user.banReason);
-      if (success) {
-        toast.success('User status has been disabled');
-      } else {
-        toast.error(message || 'Failed to set user status');
-      }
+    statusAction.execute({ 
+        userId: user.id, 
+        currentStatus: user.banReason 
     });
   };
 
@@ -144,7 +154,7 @@ export default function UsersList({ users }: Props) {
 
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground hidden text-xs sm:inline">
-                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                    Joined {formatDate(user.createdAt)}
                   </span>
 
                   <DropdownMenu>
@@ -163,7 +173,7 @@ export default function UsersList({ users }: Props) {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleToggleUserStatus(user)}
-                        disabled={user.role === 'admin' || currentUser.id === currentUser.email || isPending}
+                        disabled={user.role === 'admin' || currentUser.id === currentUser.email || isAnyPending}
                       >
                         {isDisabled ? (
                           <>
@@ -216,7 +226,7 @@ export default function UsersList({ users }: Props) {
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              disabled={isPending}
+                              disabled={isAnyPending}
                               onClick={() => handleDeleteUser(user)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >

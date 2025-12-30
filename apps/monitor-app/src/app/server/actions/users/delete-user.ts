@@ -1,23 +1,18 @@
-'use server';
-import { usersDeleteService } from '@/app/server/domain/users/delete/service';
-import { getAuthorizedSession } from '@/lib/auth-utils';
-import { APIError } from 'better-auth';
-import { updateTag } from 'next/cache';
+"use server";
 
-export async function deleteUserAction(userId: string) {
-  await getAuthorizedSession();
-  try {
-    if (!userId) {
-      throw new Error('Userid is required');
-    }
+import { usersDeleteService } from "@/app/server/domain/users/delete/service";
+import { deleteUserSchema } from "@/app/server/domain/users/delete/types";
+import { updateTag } from "next/cache";
+import { permissionActionClient } from "@/app/server/lib/safe-action";
 
-    await usersDeleteService.execute(userId);
-    updateTag('users');
-    return { success: true };
-  } catch (error) {
-    if (error instanceof APIError || error instanceof Error) {
-      return { success: false, message: error.message };
+export const deleteUserAction = permissionActionClient({ user: ["delete"] })
+  .inputSchema(deleteUserSchema)
+  .action(async ({ parsedInput }) => {
+    try {
+      await usersDeleteService.execute(parsedInput.userId);
+      updateTag("users");
+      return { success: true };
+    } catch (error) {
+      throw error;
     }
-    return { success: false };
-  }
-}
+  });

@@ -1,15 +1,21 @@
-import { auth } from '@/lib/auth';
-import { generateTempPassword } from '@/lib/utils';
-import { User } from 'better-auth';
+import { auth } from "@/lib/auth";
+import { generateTempPassword } from "@/lib/utils";
+import { BetterAuthCreateUserBody, CreateUserBody } from "@/app/server/domain/users/create/types";
 
 class UsersCreateService {
-  async execute(user: Pick<User, 'email' | 'name'>) {
+  async execute(user: Pick<CreateUserBody, "email" | "name" | "role">) {
     const tempPassword = generateTempPassword(16);
     await auth.api.createUser({
-      body: { email: user.email, name: user.name, password: tempPassword, data: { isPasswordTemporary: true } }
+      body: {
+        email: user.email,
+        name: user.name,
+        password: tempPassword,
+        role: user.role as BetterAuthCreateUserBody["role"],
+        data: { isPasswordTemporary: true },
+      },
     });
     //TODO: implement sending email
-    console.log(tempPassword, 'Temporary password for user');
+    return { tempPassword };
   }
 }
 

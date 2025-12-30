@@ -1,16 +1,22 @@
-import { auth, AuthRole } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-
-export type SetRole = {
-  newRole: AuthRole;
-  userId: string;
-};
+import { SetRole, BetterAuthSetRoleBody } from '@/app/server/domain/users/update/types';
 
 class UsersUpdateService {
   async setRole({ newRole, userId }: SetRole) {
-    await auth.api.setRole({
-      // FIXME: better-auth has problems with infering types, let's assert it to first available value
-      body: { role: newRole as 'user', userId },
+    const user = await auth.api.listUsers({
+      query: { filterOperator: 'eq', filterField: 'id', filterValue: userId },
+      headers: await headers()
+    });
+
+    if (!user.users[0]) throw new Error('User does not exist');
+    if (user.users[0].banned) throw new Error('You cannot change this user role');
+
+    return await auth.api.setRole({
+      body: { 
+        role: newRole as BetterAuthSetRoleBody["role"], 
+        userId 
+      },
       headers: await headers()
     });
   }
