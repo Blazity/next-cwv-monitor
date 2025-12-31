@@ -6,7 +6,13 @@ const __dirname = import.meta.dirname;
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src')
+      '@': path.resolve(__dirname, 'src'),
+      'better-auth/next-js': path.resolve(__dirname, 'src/test/stubs/better-auth-next-js.ts'),
+      // Node ESM can't import extensionless Next subpath modules (e.g. `next/headers`).
+      // Next itself/bundlers handle this, but Vitest runs in Node.
+      'next/headers': 'next/headers.js',
+      'next/cache': 'next/cache.js',
+      'next/navigation': 'next/navigation.js'
     }
   },
   test: {

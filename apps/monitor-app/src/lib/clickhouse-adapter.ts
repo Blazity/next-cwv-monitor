@@ -87,7 +87,7 @@ const buildColumnValuePairs = (
   model: string,
   fieldNameGetter: FieldNameGetter
 ): { columns: SqlFragment; values: SqlFragment } => {
-  const entries = Object.entries(formatDataForInsert(data));
+  const entries = Object.entries(formatDataForInsert(data)).filter(([, value]) => value !== undefined);
   if (isEmpty(entries)) throw new Error('No fields to insert');
 
   const columns = joinSql(
@@ -95,7 +95,10 @@ const buildColumnValuePairs = (
     sql`, `
   );
   const values = joinSql(
-    entries.map(([, value]) => sql`${sql.param(value, 'String')}`),
+    entries.map(([, value]) => {
+      if (value === null) return sql`NULL`;
+      return sql`${sql.param(value, 'String')}`;
+    }),
     sql`, `
   );
 
@@ -209,6 +212,9 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
           entries
             .map(([key, value]) => {
               if (key === 'updated_at') return null;
+              if (value === null) {
+                return sql`${sql.identifier(getFieldName({ model, field: key }))} = NULL`;
+              }
               return sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`;
             })
             .filter((v) => v !== null),
