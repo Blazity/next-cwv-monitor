@@ -135,6 +135,27 @@ async function setupAdminSession(): Promise<void> {
   await signInAndSetRequestCookies({ email, password });
 }
 
+async function setupMemberSession(): Promise<{ userId: string; email: string; password: string }> {
+  const email = `member+${randomUUID()}@example.com`;
+  const password = 'Password1234!';
+
+  const { userId } = await signUpUser({ email, password, name: 'Member User' });
+  await signInAndSetRequestCookies({ email, password });
+
+  return { userId, email, password };
+}
+
+async function getUserIdByEmail(email: string): Promise<string | null> {
+  const rows = await sql<{ id: string }>`
+    SELECT id
+    FROM user FINAL
+    WHERE email = ${email}
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `;
+  return rows[0]?.id ?? null;
+}
+
 async function listUserById(userId: string) {
   const { auth } = await import('@/lib/auth');
   const res = await auth.api.listUsers({
@@ -162,6 +183,28 @@ describe('users server actions (integration)', () => {
   });
 
   describe('createUserAction', () => {
+    it('requires authentication', async () => {
+      currentHeaders = new Headers();
+
+      const { UnauthorizedError } = await import('@/lib/auth-utils');
+      const { createUserAction } = await import('../create-user');
+
+      await expect(
+        createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' })
+      ).rejects.toBeInstanceOf(UnauthorizedError);
+    });
+
+    it('fails for authenticated non-admin users', async () => {
+      await setupMemberSession();
+      const { createUserAction } = await import('../create-user');
+
+      const email = `member2+${randomUUID()}@example.com`;
+      const result = await createUserAction({ email, name: 'Created By Member', role: 'member' });
+
+      expect(result).toMatchObject({ success: false });
+      expect(await getUserIdByEmail(email)).toBeNull();
+    });
+
     it('creates a new user (admin session) and returns a temp password', async () => {
       await setupAdminSession();
 
@@ -194,6 +237,26 @@ describe('users server actions (integration)', () => {
   });
 
   describe('setRoleAction', () => {
+    it('requires authentication', async () => {
+      currentHeaders = new Headers();
+
+      const { UnauthorizedError } = await import('@/lib/auth-utils');
+      const { setRoleAction } = await import('../update-user');
+
+      await expect(setRoleAction({ userId: randomUUID(), newRole: 'admin' })).rejects.toBeInstanceOf(UnauthorizedError);
+    });
+
+    it('fails for authenticated non-admin users', async () => {
+      await setupMemberSession();
+      const { setRoleAction } = await import('../update-user');
+
+      const email = `user+${randomUUID()}@example.com`;
+      const password = 'Password1234!';
+      const { userId } = await signUpUser({ email, password, name: 'Test User' });
+
+      await expect(setRoleAction({ userId, newRole: 'admin' })).rejects.toBeDefined();
+    });
+
     it('sets user role for an unbanned user', async () => {
       await setupAdminSession();
       const { setRoleAction } = await import('../update-user');
@@ -227,6 +290,28 @@ describe('users server actions (integration)', () => {
   });
 
   describe('deleteUserAction', () => {
+    it('requires authentication', async () => {
+      currentHeaders = new Headers();
+
+      const { UnauthorizedError } = await import('@/lib/auth-utils');
+      const { deleteUserAction } = await import('../delete-user');
+
+      await expect(deleteUserAction(randomUUID())).rejects.toBeInstanceOf(UnauthorizedError);
+    });
+
+    it('fails for authenticated non-admin users', async () => {
+      await setupMemberSession();
+      const { deleteUserAction } = await import('../delete-user');
+
+      const email = `user+${randomUUID()}@example.com`;
+      const password = 'Password1234!';
+      const { userId } = await signUpUser({ email, password, name: 'Deletable User' });
+
+      const result = await deleteUserAction(userId);
+      expect(result).toMatchObject({ success: false });
+      expect(await getUserIdByEmail(email)).toBe(userId);
+    });
+
     it('deletes a non-admin user', async () => {
       await setupAdminSession();
       const { deleteUserAction } = await import('../delete-user');
@@ -257,6 +342,27 @@ describe('users server actions (integration)', () => {
   });
 
   describe('toggleAccountStatusAction', () => {
+    it('requires authentication', async () => {
+      currentHeaders = new Headers();
+
+      const { UnauthorizedError } = await import('@/lib/auth-utils');
+      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+
+      await expect(toggleAccountStatusAction(randomUUID(), null)).rejects.toBeInstanceOf(UnauthorizedError);
+    });
+
+    it('fails for authenticated non-admin users', async () => {
+      await setupMemberSession();
+      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+
+      const email = `user+${randomUUID()}@example.com`;
+      const password = 'Password1234!';
+      const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
+
+      const result = await toggleAccountStatusAction(userId, null);
+      expect(result).toMatchObject({ success: false });
+    });
+
     it('disables and enables a user for the DISABLED reason', async () => {
       await setupAdminSession();
       const { toggleAccountStatusAction } = await import('../toggle-user-status');
