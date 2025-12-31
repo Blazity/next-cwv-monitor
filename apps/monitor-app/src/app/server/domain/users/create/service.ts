@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
-import { generateTempPassword } from "@/lib/utils";
+import { generateTempPassword } from "@/app/server/lib/password";
 import { BetterAuthCreateUserBody, CreateUserBody } from "@/app/server/domain/users/create/types";
+import { headers } from "next/headers";
 
 class UsersCreateService {
   async execute(user: Pick<CreateUserBody, "email" | "name" | "role">) {
@@ -13,6 +14,7 @@ class UsersCreateService {
         role: user.role as BetterAuthCreateUserBody["role"],
         data: { isPasswordTemporary: true },
       },
+      headers: await headers(),
     });
     //TODO: implement sending email
     return { tempPassword };

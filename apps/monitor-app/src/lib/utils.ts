@@ -2,7 +2,6 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import zxcvbn from "zxcvbn";
 import { env } from "@/env";
-import { randomInt } from "node:crypto";
 import type { DateRange, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import { AuthRole } from "@/lib/auth-shared";
 
@@ -65,36 +64,6 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
 
   return { start, end };
 }
-
-function pick(str: string) {
-  return str[randomInt(0, str.length)];
-}
-function shuffle(arr: string[]) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = randomInt(0, i + 1);
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-export function generateTempPassword(length = 16) {
-  if (length < 12) throw new Error("Use length >= 12 for decent security.");
-
-  const lower = "abcdefghijklmnopqrstuvwxyz";
-  const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const digits = "0123456789";
-  const symbols = "!@#$%^&*()-_=+[]{};:,.?";
-
-  const all = lower + upper + digits + symbols;
-
-  // Ensure complexity requirements
-  const chars = [pick(lower), pick(upper), pick(digits), pick(symbols)];
-
-  while (chars.length < length) chars.push(pick(all));
-
-  return shuffle(chars).join("");
-}
-
 // User have to have ALL roles
 export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
   if (!value) return false;
