@@ -10,6 +10,12 @@ let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
 
 let currentHeaders = new Headers();
 
+type SafeActionResult<TData> = {
+  data?: TData;
+  serverError?: string;
+  validationErrors?: unknown;
+};
+
 vi.mock('next/cache', () => ({
   updateTag: vi.fn()
 }));
@@ -17,6 +23,16 @@ vi.mock('next/cache', () => ({
 vi.mock('next/headers', () => ({
   headers: async () => currentHeaders
 }));
+
+function expectServerError(result: unknown, pattern: RegExp | string) {
+  const res = result as SafeActionResult<unknown>;
+  const message = res.serverError ?? '';
+  if (pattern instanceof RegExp) {
+    expect(message).toMatch(pattern);
+  } else {
+    expect(message).toContain(pattern);
+  }
+}
 
 function getSetCookies(headers: Headers): string[] {
   const maybe = headers as unknown as { getSetCookie?: () => string[] };
@@ -186,12 +202,10 @@ describe('users server actions (integration)', () => {
     it('requires authentication', async () => {
       currentHeaders = new Headers();
 
-      const { UnauthorizedError } = await import('@/lib/auth-utils');
       const { createUserAction } = await import('../create-user');
 
-      await expect(
-        createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' })
-      ).rejects.toBeInstanceOf(UnauthorizedError);
+      const result = await createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' });
+      expectServerError(result, /authorized/i);
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -201,7 +215,7 @@ describe('users server actions (integration)', () => {
       const email = `member2+${randomUUID()}@example.com`;
       const result = await createUserAction({ email, name: 'Created By Member', role: 'member' });
 
-      expect(result).toMatchObject({ success: false });
+      expectServerError(result, /required permissions/i);
       expect(await getUserIdByEmail(email)).toBeNull();
     });
 
@@ -213,9 +227,11 @@ describe('users server actions (integration)', () => {
       const email = `member+${randomUUID()}@example.com`;
       const result = await createUserAction({ email, name: 'Member User', role: 'member' });
 
-      expect(result.success).toBe(true);
-      expect(typeof result.tempPassword).toBe('string');
-      expect((result.tempPassword ?? '').length).toBeGreaterThanOrEqual(12);
+      expect(result.serverError).toBeUndefined();
+      expect(result.validationErrors).toBeUndefined();
+      expect(result.data).toBeDefined();
+      expect(typeof result.data?.password).toBe('string');
+      expect((result.data?.password ?? '').length).toBeGreaterThanOrEqual(12);
 
       const { auth } = await import('@/lib/auth');
       const users = await auth.api.listUsers({
@@ -232,7 +248,8 @@ describe('users server actions (integration)', () => {
 
       const { createUserAction } = await import('../create-user');
       const result = await createUserAction({ email: 'not-an-email', name: '', role: 'member' });
-      expect(result).toMatchObject({ success: false, message: 'Invalid user schema' });
+      expect(result.data).toBeUndefined();
+      expect(result.validationErrors).toBeDefined();
     });
   });
 
@@ -240,33 +257,35 @@ describe('users server actions (integration)', () => {
     it('requires authentication', async () => {
       currentHeaders = new Headers();
 
-      const { UnauthorizedError } = await import('@/lib/auth-utils');
-      const { setRoleAction } = await import('../update-user');
+      const { setRoleAction } = await import('../set-role-user');
 
-      await expect(setRoleAction({ userId: randomUUID(), newRole: 'admin' })).rejects.toBeInstanceOf(UnauthorizedError);
+      const result = await setRoleAction({ userId: randomUUID(), newRole: 'admin' });
+      expectServerError(result, /authorized/i);
     });
 
     it('fails for authenticated non-admin users', async () => {
       await setupMemberSession();
-      const { setRoleAction } = await import('../update-user');
-
-      const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Test User' });
-
-      await expect(setRoleAction({ userId, newRole: 'admin' })).rejects.toBeDefined();
-    });
-
-    it('sets user role for an unbanned user', async () => {
-      await setupAdminSession();
-      const { setRoleAction } = await import('../update-user');
+      const { setRoleAction } = await import('../set-role-user');
 
       const email = `user+${randomUUID()}@example.com`;
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Test User' });
 
       const result = await setRoleAction({ userId, newRole: 'admin' });
-      expect(result).toMatchObject({ success: true });
+      expectServerError(result, /required permissions/i);
+    });
+
+    it('sets user role for an unbanned user', async () => {
+      await setupAdminSession();
+      const { setRoleAction } = await import('../set-role-user');
+
+      const email = `user+${randomUUID()}@example.com`;
+      const password = 'Password1234!';
+      const { userId } = await signUpUser({ email, password, name: 'Test User' });
+
+      const result = await setRoleAction({ userId, newRole: 'admin' });
+      expect(result.serverError).toBeUndefined();
+      expect(result.data).toMatchObject({ success: true });
 
       const user = await listUserById(userId);
       expect(user?.role).toBe('admin');
@@ -274,7 +293,7 @@ describe('users server actions (integration)', () => {
 
     it('rejects role changes for banned users', async () => {
       await setupAdminSession();
-      const { setRoleAction } = await import('../update-user');
+      const { setRoleAction } = await import('../set-role-user');
 
       const { auth } = await import('@/lib/auth');
 
@@ -285,7 +304,7 @@ describe('users server actions (integration)', () => {
       await auth.api.banUser({ body: { userId, banReason: 'DISABLED' }, headers: currentHeaders });
 
       const result = await setRoleAction({ userId, newRole: 'admin' });
-      expect(result).toMatchObject({ success: false, message: 'You cannot change this user role' });
+      expectServerError(result, 'You cannot change this user role');
     });
   });
 
@@ -293,10 +312,10 @@ describe('users server actions (integration)', () => {
     it('requires authentication', async () => {
       currentHeaders = new Headers();
 
-      const { UnauthorizedError } = await import('@/lib/auth-utils');
       const { deleteUserAction } = await import('../delete-user');
 
-      await expect(deleteUserAction(randomUUID())).rejects.toBeInstanceOf(UnauthorizedError);
+      const result = await deleteUserAction({ userId: randomUUID() });
+      expectServerError(result, /authorized/i);
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -307,8 +326,8 @@ describe('users server actions (integration)', () => {
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Deletable User' });
 
-      const result = await deleteUserAction(userId);
-      expect(result).toMatchObject({ success: false });
+      const result = await deleteUserAction({ userId });
+      expectServerError(result, /required permissions/i);
       expect(await getUserIdByEmail(email)).toBe(userId);
     });
 
@@ -320,8 +339,9 @@ describe('users server actions (integration)', () => {
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Deletable User' });
 
-      const result = await deleteUserAction(userId);
-      expect(result).toMatchObject({ success: true });
+      const result = await deleteUserAction({ userId });
+      expect(result.serverError).toBeUndefined();
+      expect(result.data).toMatchObject({ success: true });
 
       const user = await listUserById(userId);
       expect(user).toBeNull();
@@ -336,8 +356,8 @@ describe('users server actions (integration)', () => {
       const { userId } = await signUpUser({ email, password, name: 'Another Admin' });
       await promoteUserToAdmin(userId);
 
-      const result = await deleteUserAction(userId);
-      expect(result).toMatchObject({ success: false, message: "You can't remove admin" });
+      const result = await deleteUserAction({ userId });
+      expectServerError(result, "You can't remove admin");
     });
   });
 
@@ -345,10 +365,10 @@ describe('users server actions (integration)', () => {
     it('requires authentication', async () => {
       currentHeaders = new Headers();
 
-      const { UnauthorizedError } = await import('@/lib/auth-utils');
       const { toggleAccountStatusAction } = await import('../toggle-user-status');
 
-      await expect(toggleAccountStatusAction(randomUUID(), null)).rejects.toBeInstanceOf(UnauthorizedError);
+      const result = await toggleAccountStatusAction({ userId: randomUUID(), currentStatus: null });
+      expectServerError(result, /authorized/i);
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -359,8 +379,8 @@ describe('users server actions (integration)', () => {
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
 
-      const result = await toggleAccountStatusAction(userId, null);
-      expect(result).toMatchObject({ success: false });
+      const result = await toggleAccountStatusAction({ userId, currentStatus: null });
+      expectServerError(result, /required permissions/i);
     });
 
     it('disables and enables a user for the DISABLED reason', async () => {
@@ -371,15 +391,17 @@ describe('users server actions (integration)', () => {
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
 
-      const disabled = await toggleAccountStatusAction(userId, null);
-      expect(disabled).toMatchObject({ success: true });
+      const disabled = await toggleAccountStatusAction({ userId, currentStatus: null });
+      expect(disabled.serverError).toBeUndefined();
+      expect(disabled.data).toMatchObject({ success: true });
 
       const afterDisable = await listUserById(userId);
       expect(afterDisable?.banned).toBe(true);
       expect(afterDisable?.banReason).toBe('DISABLED');
 
-      const enabled = await toggleAccountStatusAction(userId, 'DISABLED');
-      expect(enabled).toMatchObject({ success: true });
+      const enabled = await toggleAccountStatusAction({ userId, currentStatus: 'DISABLED' });
+      expect(enabled.serverError).toBeUndefined();
+      expect(enabled.data).toMatchObject({ success: true });
 
       const afterEnable = await listUserById(userId);
       expect(afterEnable?.banned).toBe(false);
@@ -394,8 +416,9 @@ describe('users server actions (integration)', () => {
       const password = 'Password1234!';
       const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
 
-      const result = await toggleAccountStatusAction(userId, 'SOME_OTHER_REASON');
-      expect(result).toMatchObject({ success: false, message: 'User is disabled for a different reason' });
+      const result = await toggleAccountStatusAction({ userId, currentStatus: 'SOME_OTHER_REASON' });
+      expect(result.serverError).toBeUndefined();
+      expect(result.data).toMatchObject({ success: false, message: 'User is disabled for a different reason' });
     });
   });
 });
