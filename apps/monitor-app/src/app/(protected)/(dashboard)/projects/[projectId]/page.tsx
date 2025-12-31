@@ -44,12 +44,7 @@ async function ProjectPageContent({
 
   const { projectId } = await params;
   const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
-  let overview;
-  try {
-    overview = await getCachedOverview(projectId, deviceType, timeRange);
-  } catch {
-    notFound();
-  }
+  const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
   if (overview.kind === 'project-not-found') {
     notFound();
