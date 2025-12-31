@@ -1,8 +1,11 @@
 import { CreateUserBtn } from '@/components/users/create-user-btn';
+import { NoPermission } from '@/components/no-permission';
 import UsersList from '@/components/users/users-list';
 import UsersStats from '@/components/users/users-stats';
+import type { AuthRole } from '@/lib/auth';
 import { auth } from '@/lib/auth';
 import { getAuthorizedSession } from '@/lib/auth-utils';
+import { hasRoles } from '@/lib/utils';
 import { cacheTag } from 'next/cache';
 import { headers } from 'next/headers';
 
@@ -12,8 +15,13 @@ const fetchCachedUsers = async (headers: HeadersInit) => {
   return auth.api.listUsers({ query: {}, headers });
 };
 
+const ADMIN_ROLES = ['admin'] as const satisfies AuthRole[];
+
 export default async function UsersPage() {
-  await getAuthorizedSession();
+  const session = await getAuthorizedSession();
+  if (!hasRoles(session.user.role, ADMIN_ROLES)) {
+    return <NoPermission title="No permission" description="You don't have permission to manage users." />;
+  }
   const data = await fetchCachedUsers(await headers());
   const { total, users } = data;
 
