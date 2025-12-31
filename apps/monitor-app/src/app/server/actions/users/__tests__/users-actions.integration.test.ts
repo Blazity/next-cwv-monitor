@@ -10,6 +10,13 @@ let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
 
 let currentHeaders = new Headers();
 
+type ListedUser = {
+  id: string;
+  role: string;
+  banned: boolean;
+  banReason: string | null;
+};
+
 type SafeActionResult<TData> = {
   data?: TData;
   serverError?: string;
@@ -95,7 +102,7 @@ async function promoteUserToAdmin(userId: string): Promise<void> {
     LIMIT 1
   `;
 
-  const user = rows[0];
+  const user = rows.at(0);
   if (!user) {
     throw new Error(`User ${userId} not found`);
   }
@@ -178,7 +185,7 @@ async function listUserById(userId: string) {
     query: { filterOperator: 'eq', filterField: 'id', filterValue: userId },
     headers: currentHeaders
   });
-  return res.users[0] ?? null;
+  return (res.users.at(0) as ListedUser | undefined) ?? null;
 }
 
 describe('users server actions (integration)', () => {
@@ -288,7 +295,8 @@ describe('users server actions (integration)', () => {
       expect(result.data).toMatchObject({ success: true });
 
       const user = await listUserById(userId);
-      expect(user?.role).toBe('admin');
+      expect(user).not.toBeNull();
+      expect(user!.role).toBe('admin');
     });
 
     it('rejects role changes for banned users', async () => {
@@ -396,16 +404,18 @@ describe('users server actions (integration)', () => {
       expect(disabled.data).toMatchObject({ success: true });
 
       const afterDisable = await listUserById(userId);
-      expect(afterDisable?.banned).toBe(true);
-      expect(afterDisable?.banReason).toBe('DISABLED');
+      expect(afterDisable).not.toBeNull();
+      expect(afterDisable!.banned).toBe(true);
+      expect(afterDisable!.banReason).toBe('DISABLED');
 
       const enabled = await toggleAccountStatusAction({ userId, currentStatus: 'DISABLED' });
       expect(enabled.serverError).toBeUndefined();
       expect(enabled.data).toMatchObject({ success: true });
 
       const afterEnable = await listUserById(userId);
-      expect(afterEnable?.banned).toBe(false);
-      expect(afterEnable?.banReason).toBeNull();
+      expect(afterEnable).not.toBeNull();
+      expect(afterEnable!.banned).toBe(false);
+      expect(afterEnable!.banReason).toBeNull();
     });
 
     it('refuses to toggle when user is disabled for a different reason', async () => {
