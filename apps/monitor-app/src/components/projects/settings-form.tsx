@@ -181,7 +181,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             confirmText={project.name}
             onConfirm={async () => {
               const res = await deleteProjectAction(project.id);
-              if (res.success) router.push('/dashboard');
+              if (res.success) router.push('/projects');
               else toast.error(res.message);
             }}
           />
@@ -396,11 +396,11 @@ function DangerAction({
             >
               {isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (isTimerRunning ? (
+              ) : isTimerRunning ? (
                 `Wait ${countdown}s`
               ) : (
                 `Confirm ${buttonLabel}`
-              ))}
+              )}
             </Button>
           </AlertDialogFooter>
         </form>

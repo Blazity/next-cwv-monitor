@@ -1,7 +1,10 @@
-import { auth, SessionData } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { cache } from "react";
+import { auth, SessionData } from '@/lib/auth';
+import type { Route } from 'next';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { cache } from 'react';
+
+const DEFAULT_CALLBACK_URL: Route = '/projects';
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -30,6 +33,15 @@ export const getAuthorizedSession = cache(async (): Promise<SessionData> => {
 
   return session;
 });
+
+export function getSafeCallbackUrl(value: string | string[] | undefined, fallback: Route = DEFAULT_CALLBACK_URL): Route {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return fallback;
+  if (!raw.startsWith('/')) return fallback;
+  if (raw.startsWith('//')) return fallback;
+  if (raw.includes('\\')) return fallback;
+  return raw as Route;
+}
 
 export async function getServerSessionDataOrRedirect(): Promise<SessionData> {
   try {
@@ -66,5 +78,5 @@ export async function redirectToLogin(): Promise<never> {
   }
 
   const queryString = searchParams.toString();
-  redirect(queryString ? `/login?${queryString}` : "/login");
+  redirect(queryString ? `/login?${queryString}` : '/login');
 }

@@ -9,6 +9,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const isObject = (value: unknown): value is object => {
+  return typeof value === 'object' && value !== null;
+};
+
 const daysToNumber = {
   "7d": 7,
   "30d": 30,
