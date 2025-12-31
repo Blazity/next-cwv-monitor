@@ -2,8 +2,8 @@ import { CreateUserBtn } from '@/components/users/create-user-btn';
 import { NoPermission } from '@/components/no-permission';
 import UsersList from '@/components/users/users-list';
 import UsersStats from '@/components/users/users-stats';
-import type { AuthRole } from '@/lib/auth';
 import { auth } from '@/lib/auth';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 import { getAuthorizedSession } from '@/lib/auth-utils';
 import { hasRoles } from '@/lib/utils';
 import { cacheTag } from 'next/cache';
@@ -14,8 +14,6 @@ const fetchCachedUsers = async (headers: HeadersInit) => {
   cacheTag('users');
   return auth.api.listUsers({ query: {}, headers });
 };
-
-const ADMIN_ROLES = ['admin'] as const satisfies AuthRole[];
 
 export default async function UsersPage() {
   const session = await getAuthorizedSession();

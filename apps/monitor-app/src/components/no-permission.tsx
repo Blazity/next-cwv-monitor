@@ -1,13 +1,16 @@
+import type { ComponentProps } from 'react';
 import Link from 'next/link';
 import { Home, LayoutDashboard, ShieldOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+type LinkHref = ComponentProps<typeof Link>['href'];
+
 type Props = {
   title?: string;
   description?: string;
-  primaryActionHref?: string;
+  primaryActionHref?: LinkHref;
   primaryActionLabel?: string;
-  secondaryActionHref?: string;
+  secondaryActionHref?: LinkHref;
   secondaryActionLabel?: string;
 };
 

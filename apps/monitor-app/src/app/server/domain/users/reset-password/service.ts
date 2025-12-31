@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { generateTempPassword } from "@/lib/utils";
+import { generateTempPassword } from "@/app/server/lib/password";
 import { headers } from "next/headers";
 
 class ResetPasswordService {
