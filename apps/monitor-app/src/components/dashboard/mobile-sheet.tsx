@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Menu, Users, Activity } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn, hasRoles } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import { useUser } from '@/app/hooks/use-session';
 import { NavItem } from '@/components/dashboard/nav-items';
 import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
   const user = useUser();
@@ -55,10 +56,7 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 </Link>
               );
             })}
-            {/* {user?.role === 'admin' && ( */}
-            {/* TODO: */}
-            {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-            {true && (
+            {hasRoles(user.role, ADMIN_ROLES) && (
               <>
                 <div className="bg-border my-2 h-px" />
                 <Link

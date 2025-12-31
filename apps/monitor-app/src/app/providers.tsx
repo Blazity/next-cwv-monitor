@@ -13,7 +13,7 @@ export function Providers({ children }: ProvidersProps) {
     <NuqsAdapter>
       <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
         {children}
-        <Toaster position="bottom-right" theme="system" />
+        <Toaster position="bottom-right" theme="system" richColors />
       </NextThemesProvider>
     </NuqsAdapter>
   );

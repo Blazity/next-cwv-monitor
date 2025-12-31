@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -9,10 +9,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem
 } from '@/components/ui/dropdown-menu';
-import { User } from 'better-auth';
+import type { SessionData } from '@/lib/auth';
 import { signOut } from '@/app/server/actions/sign-out';
+import Link from 'next/link';
+import { hasRoles } from '@/lib/utils';
 
-export function UserDropdown({ user }: { user: User }) {
+type SessionUser = SessionData['user'];
+
+export function UserDropdown({ user }: { user: SessionUser }) {
   const [isPending, startTransition] = useTransition();
 
   const handleSignOut = () => {
@@ -32,6 +36,17 @@ export function UserDropdown({ user }: { user: User }) {
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
+        {hasRoles(user.role, ['admin']) && (
+          <>
+            <DropdownMenuItem asChild className="text-muted-foreground">
+              <Link href="/users">
+                <Users className="mr-2 h-4 w-4" />
+                Manage Users
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem className="text-muted-foreground" onClick={handleSignOut} disabled={isPending}>
           <LogOut className="mr-2 h-4 w-4" />
           {isPending ? 'Signing out...' : 'Sign out'}
