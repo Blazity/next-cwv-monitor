@@ -5,7 +5,6 @@ import { auth } from '@/lib/auth';
 import { getAuthorizedSession } from '@/lib/auth-utils';
 import { cacheTag } from 'next/cache';
 import { headers } from 'next/headers';
-import { notFound } from 'next/navigation';
 
 const fetchCachedUsers = async (headers: HeadersInit) => {
   'use cache';
@@ -15,12 +14,7 @@ const fetchCachedUsers = async (headers: HeadersInit) => {
 
 export default async function UsersPage() {
   await getAuthorizedSession();
-  let data;
-  try {
-    data = await fetchCachedUsers(await headers());
-  } catch {
-    notFound();
-  }
+  const data = await fetchCachedUsers(await headers());
   const { total, users } = data;
 
   return (
