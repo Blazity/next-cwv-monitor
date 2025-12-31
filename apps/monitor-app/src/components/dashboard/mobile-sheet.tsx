@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { useUser } from '@/app/hooks/use-session';
 import { NavItem } from '@/components/dashboard/nav-items';
 import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
   const user = useUser();
@@ -55,7 +56,7 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 </Link>
               );
             })}
-            {hasRoles(user.role, ['admin']) && (
+            {hasRoles(user.role, ADMIN_ROLES) && (
               <>
                 <div className="bg-border my-2 h-px" />
                 <Link

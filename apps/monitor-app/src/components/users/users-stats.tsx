@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { AdminApiResult } from '@/lib/auth';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 import { hasRoles } from '@/lib/utils';
 import { Shield, Users } from 'lucide-react';
 
@@ -9,7 +10,7 @@ type Props = {
 };
 
 export default function UsersStats({ users, total }: Props) {
-  const admins = users.filter((u) => hasRoles(u.role, ['admin']));
+  const admins = users.filter((u) => hasRoles(u.role, ADMIN_ROLES));
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useUser } from '@/app/hooks/use-session';
-import { deleteUserAction } from '@/app/server/actions/users/delete-user';
-import { Badge } from '@/components/ui/badge';
+import { useUser } from "@/app/hooks/use-session";
+import { deleteUserAction } from "@/app/server/actions/users/delete-user";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,72 +12,90 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
-import { Ban, Key, MoreHorizontal, Search, Shield, ShieldCheck, ShieldOff, Trash2, Users } from 'lucide-react';
-import { useQueryState } from 'nuqs';
-import { useMemo } from 'react';
-import { setRoleAction } from '@/app/server/actions/users/set-role-user';
-import { toggleAccountStatusAction } from '@/app/server/actions/users/toggle-user-status';
-import { UserWithRole } from 'better-auth/plugins';
-import { checkBanReason } from '@/app/server/lib/ban-reasons';
-import { toast } from 'sonner';
-import { cn, formatDate, hasRoles } from '@/lib/utils';
-import { useAction } from 'next-safe-action/hooks';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Ban, Key, MoreHorizontal, Search, Shield, ShieldCheck, ShieldOff, Trash2, Users } from "lucide-react";
+import { useQueryState } from "nuqs";
+import { useMemo, useState } from "react";
+import { setRoleAction } from "@/app/server/actions/users/set-role-user";
+import { toggleAccountStatusAction } from "@/app/server/actions/users/toggle-user-status";
+import { UserWithRole } from "better-auth/plugins";
+import { checkBanReason } from "@/app/server/lib/ban-reasons";
+import { toast } from "sonner";
+import { cn, formatDate, hasRoles } from "@/lib/utils";
+import { useAction } from "next-safe-action/hooks";
+import { resetPasswordAction } from "@/app/server/actions/users/reset-password";
+import { CredentialsDialog } from "@/components/users/credentials-dialog";
+import { ADMIN_ROLES } from "@/lib/auth-shared";
 
 type Props = {
   users: UserWithRole[];
 };
 
-const handleResetPassword = (_user: unknown) => {
-  //
-  // TODO: we have to send this password anyway
-};
-
 export default function UsersList({ users }: Props) {
   const currentUser = useUser();
+  const [resetData, setResetData] = useState<{ email: string; password: string } | null>(null);
+  const [userToReset, setUserToReset] = useState<UserWithRole | null>(null);
 
   const deleteAction = useAction(deleteUserAction, {
-    onSuccess: () => toast.success("User has been deleted"),
-    onError: ({ error }) => toast.error(error.serverError || "Failed to remove user")
+    onSuccess: () => toast.success("User deleted"),
+    onError: ({ error }) => toast.error(error.serverError || "Failed to delete user"),
   });
 
   const roleAction = useAction(setRoleAction, {
-    onSuccess: () => toast.success("User's role has been changed"),
-    onError: ({ error }) => toast.error(error.serverError || "Failed to change role")
+    onSuccess: () => toast.success("Role updated"),
+    onError: ({ error }) => toast.error(error.serverError || "Failed to change role"),
   });
 
   const statusAction = useAction(toggleAccountStatusAction, {
     onSuccess: ({ data }) => {
-        if (data.success === false) {
-            toast.error(data.message);
-        } else {
-            toast.success("User status has been updated");
-        }
+      if (data.success === false) {
+        toast.error(data.message);
+      } else {
+        toast.success("Status updated");
+      }
     },
-    onError: ({ error }) => toast.error(error.serverError || "Failed to set user status")
+    onError: ({ error }) => toast.error(error.serverError || "Failed to set user status"),
   });
 
-  const isAnyPending = deleteAction.isPending || roleAction.isPending || statusAction.isPending;
+  const resetAction = useAction(resetPasswordAction, {
+    onSuccess: ({ data }) => {
+      if (userToReset) {
+        toast.success("Password reset");
+        setResetData({
+          email: userToReset.email,
+          password: data.tempPassword,
+        });
+      }
+    },
+    onError: ({ error }) => toast.error(error.serverError || "Failed to reset password"),
+  });
 
-  const [searchQuery, setSearchQuery] = useQueryState('q');
-  
+  const handleCloseReset = () => {
+    setResetData(null);
+    setUserToReset(null);
+  };
+
+  const isAnyPending =
+    deleteAction.isPending || roleAction.isPending || statusAction.isPending || resetAction.isPending;
+
+  const [searchQuery, setSearchQuery] = useQueryState("q");
+
   const filteredUsers = useMemo(() => {
     if (!searchQuery) return users;
     const lowSearch = searchQuery.toLowerCase();
-    return users.filter((user) => 
-        user.name.toLowerCase().includes(lowSearch) || 
-        user.email.toLowerCase().includes(lowSearch)
+    return users.filter(
+      (user) => user.name.toLowerCase().includes(lowSearch) || user.email.toLowerCase().includes(lowSearch),
     );
   }, [searchQuery, users]);
 
@@ -86,14 +104,14 @@ export default function UsersList({ users }: Props) {
   };
 
   const handleToggleRole = (user: UserWithRole) => {
-    const newRole = user.role === 'admin' ? 'member' : 'admin';
+    const newRole = user.role === "admin" ? "member" : "admin";
     roleAction.execute({ newRole, userId: user.id });
   };
 
   const handleToggleUserStatus = (user: UserWithRole) => {
-    statusAction.execute({ 
-        userId: user.id, 
-        currentStatus: user.banReason 
+    statusAction.execute({
+      userId: user.id,
+      currentStatus: user.banReason,
     });
   };
 
@@ -108,7 +126,7 @@ export default function UsersList({ users }: Props) {
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search users..."
-            value={searchQuery ?? ''}
+            value={searchQuery ?? ""}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="bg-background border-border pl-9"
           />
@@ -117,22 +135,22 @@ export default function UsersList({ users }: Props) {
       <CardContent>
         <div className="space-y-2">
           {filteredUsers.map((user) => {
-            const isDisabled = checkBanReason(user.banReason, 'disableAccount');
+            const isDisabled = checkBanReason(user.banReason, "disableAccount");
             return (
               <div
                 key={user.id}
-                className={cn('border-border bg-background flex items-center justify-between rounded-lg border p-4', {
-                  'opacity-50': isDisabled
+                className={cn("border-border bg-background flex items-center justify-between rounded-lg border p-4", {
+                  "opacity-50": isDisabled,
                 })}
               >
                 <div className="flex min-w-0 items-center gap-4">
-                  <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full font-medium">
+                  <div className="bg-muted text-muted-foreground flex h-10 w-10 items-center justify-center rounded-full font-medium select-none">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-foreground truncate text-sm font-medium">{user.name}</span>
-                      {hasRoles(user.role, ['admin']) && (
+                      {hasRoles(user.role, ADMIN_ROLES) && (
                         <Badge variant="secondary" className="text-xs">
                           Admin
                         </Badge>
@@ -165,15 +183,15 @@ export default function UsersList({ users }: Props) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => handleResetPassword(user)}
-                        disabled={!!user.banned || hasRoles(user.role, ['admin'])}
+                        onClick={() => setUserToReset(user)}
+                        disabled={!!user.banned || hasRoles(user.role, ["admin"])}
                       >
                         <Key className="mr-2 h-4 w-4" />
                         Reset Password
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleToggleUserStatus(user)}
-                        disabled={user.role === 'admin' || currentUser.id === currentUser.email || isAnyPending}
+                        disabled={user.role === "admin" || currentUser.id === currentUser.email || isAnyPending}
                       >
                         {isDisabled ? (
                           <>
@@ -192,7 +210,7 @@ export default function UsersList({ users }: Props) {
                         onClick={() => handleToggleRole(user)}
                         disabled={currentUser.email === user.email || !!user.banned}
                       >
-                        {hasRoles(user.role, ['admin']) ? (
+                        {hasRoles(user.role, ADMIN_ROLES) ? (
                           <>
                             <ShieldOff className="mr-2 h-4 w-4" />
                             Remove Admin
@@ -209,7 +227,7 @@ export default function UsersList({ users }: Props) {
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            disabled={currentUser.email === user.email || isDisabled || hasRoles(user.role, ['admin'])}
+                            disabled={currentUser.email === user.email || isDisabled || hasRoles(user.role, ADMIN_ROLES)}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -246,12 +264,35 @@ export default function UsersList({ users }: Props) {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Users className="text-muted-foreground mb-3 h-8 w-8" />
               <p className="text-muted-foreground text-sm">
-                {searchQuery ? `No users matching "${searchQuery}"` : 'No users found'}
+                {searchQuery ? `No users matching "${searchQuery}"` : "No users found"}
               </p>
             </div>
           )}
         </div>
       </CardContent>
+      <CredentialsDialog
+        open={!!userToReset}
+        onOpenChange={(open) => {
+          if (!open) handleCloseReset();
+        }}
+        title="Reset Password"
+        description={`Are you sure you want to reset the password for ${userToReset?.name}? This will generate a new temporary password.`}
+        successTitle="Password Reset Successful"
+        result={resetData}
+      >
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="ghost" onClick={handleCloseReset}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={resetAction.isPending}
+            onClick={() => userToReset && resetAction.execute({ userId: userToReset.id })}
+          >
+            {resetAction.isPending ? "Resetting..." : "Confirm Reset"}
+          </Button>
+        </div>
+      </CredentialsDialog>
     </Card>
   );
 }

@@ -5,6 +5,7 @@ import { toggleStatusSchema } from "@/app/server/domain/users/status/types";
 import { checkBanReason } from "@/app/server/lib/ban-reasons";
 import { updateTag } from "next/cache";
 import { permissionActionClient } from "@/app/server/lib/safe-action";
+import { usersSessionService } from "@/app/server/domain/users/session/service";
 
 export const toggleAccountStatusAction = permissionActionClient({ user: ["update"] })
   .inputSchema(toggleStatusSchema)
@@ -21,7 +22,7 @@ export const toggleAccountStatusAction = permissionActionClient({ user: ["update
       await (isDisabledForToggleReason
         ? usersStatusService.enableAccount(userId)
         : usersStatusService.disableAccount(userId));
-
+      await usersSessionService.revokeAll(parsedInput.userId);
       updateTag("users");
       return { success: true };
     } catch (error) {

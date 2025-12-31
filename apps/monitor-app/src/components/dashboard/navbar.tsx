@@ -12,6 +12,7 @@ import { MobileSheet } from '@/components/dashboard/mobile-sheet';
 import { getNavItems } from '@/components/dashboard/nav-items';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { UserDropdown } from '@/components/dashboard/user-dropdown';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 
 type NavbarProps = {
   projects: ListProjectsResult;
@@ -62,7 +63,7 @@ export function Navbar({ projects }: NavbarProps) {
                   </Link>
                 );
               })}
-              {hasRoles(user.role, ['admin']) && (
+              {hasRoles(user.role, ADMIN_ROLES) && (
                 <Link
                   href="/users"
                   className={cn(

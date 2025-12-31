@@ -1,6 +1,6 @@
-import { BAN_REASONS } from '@/app/server/lib/ban-reasons';
-import { auth } from '@/lib/auth';
-import { headers } from 'next/headers';
+import { BAN_REASONS } from "@/app/server/lib/ban-reasons";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 class UsersStatusService {
   async disableAccount(userId: string) {
