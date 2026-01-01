@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProjectAction } from "@/app/server/actions/project/create-project";
-import { createProjectSchema, type CreateProjectInput } from "@/app/server/domain/projects/schema";
+import { createProjectSchema, type CreateProjectInput } from "@/app/server/domain/projects/create/types";
 import { capitalizeFirstLetter } from "@/lib/utils";
 
 const slugify = (name: string) =>

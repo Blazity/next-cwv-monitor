@@ -1,5 +1,5 @@
-import type { DeviceType } from '@/app/server/lib/device-types';
-import z from 'zod';
+import type { DeviceType } from "@/app/server/lib/device-types";
+import { type } from "arktype";
 
 export type ProjectRow = {
   id: string;
@@ -10,25 +10,25 @@ export type ProjectRow = {
   updated_at: Date | string;
 };
 
-// TODO: move to arktype if possible
-export const eventDisplaySettingsSchema = z.preprocess(
-  (v) => {
-    if (typeof v !== 'string') return null;
-    try {
-      return JSON.parse(v);
-    } catch {
-      return null;
-    }
-  },
-  z
-    .record(
-      z.string(),
-      z.object({ isHidden: z.boolean().optional().default(false), customName: z.string().optional() }).optional()
-    )
-    .nullable()
-);
+const eventSettings = type({
+  isHidden: "boolean = false",
+  "customName?": "string",
+});
 
-export type EventDisplaySettingsSchema = z.infer<typeof eventDisplaySettingsSchema>;
+export const eventDisplaySettingsSchema = type("string")
+  .pipe((v) => {
+    try {
+      return JSON.parse(v as string) || {};
+    } catch {
+      return {};
+    }
+  })
+  .to({
+    "[string]": eventSettings.or("undefined"),
+  })
+  .or("null");
+
+export type EventDisplaySettings = typeof eventDisplaySettingsSchema.infer;
 
 export type CwvEventRow = {
   project_id: string;
@@ -75,17 +75,17 @@ export type TableName = keyof ClickHouseSchema;
 
 export type TableRow<TName extends TableName> = ClickHouseSchema[TName];
 
-export type UpdatableProjectRow = Omit<Partial<ProjectRow>, 'id' | 'created_at'> &
-  Pick<ProjectRow, 'id' | 'created_at'>;
+export type UpdatableProjectRow = Omit<Partial<ProjectRow>, "id" | "created_at"> &
+  Pick<ProjectRow, "id" | "created_at">;
 
-export type InsertableProjectRow = Omit<ProjectRow, 'created_at' | 'updated_at'> &
-  Partial<Pick<ProjectRow, 'created_at' | 'updated_at'>>;
+export type InsertableProjectRow = Omit<ProjectRow, "created_at" | "updated_at"> &
+  Partial<Pick<ProjectRow, "created_at" | "updated_at">>;
 
-export type InsertableCwvEventRow = Omit<CwvEventRow, 'recorded_at' | 'ingested_at'> &
-  Partial<Pick<CwvEventRow, 'recorded_at' | 'ingested_at'>>;
+export type InsertableCwvEventRow = Omit<CwvEventRow, "recorded_at" | "ingested_at"> &
+  Partial<Pick<CwvEventRow, "recorded_at" | "ingested_at">>;
 
-export type InsertableCustomEventRow = Omit<CustomEventRow, 'recorded_at' | 'ingested_at'> &
-  Partial<Pick<CustomEventRow, 'recorded_at' | 'ingested_at'>>;
+export type InsertableCustomEventRow = Omit<CustomEventRow, "recorded_at" | "ingested_at"> &
+  Partial<Pick<CustomEventRow, "recorded_at" | "ingested_at">>;
 
 export type ProjectWithViews = ProjectRow & {
   trackedViews: number;

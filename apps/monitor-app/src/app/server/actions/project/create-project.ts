@@ -1,7 +1,7 @@
 'use server';
 
 import { projectsCreateService } from '@/app/server/domain/projects/create/service';
-import { createProjectSchema } from '@/app/server/domain/projects/schema';
+import { createProjectSchema } from '@/app/server/domain/projects/create/types';
 import { redirect } from 'next/navigation';
 import { ArkErrors } from 'arktype';
 import { redirectToLogin, getAuthorizedSession, UnauthorizedError } from '@/lib/auth-utils';

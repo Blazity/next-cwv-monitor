@@ -64,7 +64,8 @@ export async function runClickHouseMigrations(): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
       cwd: path.resolve(process.cwd()),
-      stdio: 'inherit'
+      stdio: 'inherit',
+      env: {...process.env}
     });
 
     child.on('error', reject);

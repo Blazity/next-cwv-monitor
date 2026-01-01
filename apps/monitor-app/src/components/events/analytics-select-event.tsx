@@ -1,32 +1,38 @@
-'use client';
+"use client";
 
-import { EventDisplaySettingsSchema } from '@/app/server/lib/clickhouse/schema';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { parseAsStringEnum, useQueryState } from 'nuqs';
-import { useEffect } from 'react';
+import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { parseAsStringEnum, useQueryState } from "nuqs";
+import { useEffect } from "react";
 
 type Props = {
   events: string[];
-  eventDisplaySettings: EventDisplaySettingsSchema;
+  eventDisplaySettings: EventDisplaySettings;
 };
 
 export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
-  const filteredEvents = events.filter((e) => {
-    const eventSetting = eventDisplaySettings?.[e];
-    if (!eventSetting) return true;
-    return !eventSetting.isHidden;
-  });
+  const filteredEvents = events.filter((e) => !eventDisplaySettings?.[e]?.isHidden);
+  const hasEvents = filteredEvents.length > 0;
+
   const [selectedEvent, setSelectedEvent] = useQueryState(
-    'event',
+    "event",
     parseAsStringEnum(events)
-      .withDefault(filteredEvents[0] || '')
-      .withOptions({ shallow: false })
+      .withDefault(filteredEvents[0] || "")
+      .withOptions({ shallow: false }),
   );
+
   useEffect(() => {
-    if (!filteredEvents.includes(selectedEvent)) {
+    if (hasEvents && !filteredEvents.includes(selectedEvent)) {
       void setSelectedEvent(filteredEvents[0]);
     }
-  }, [filteredEvents, setSelectedEvent, selectedEvent]);
+  }, [filteredEvents, setSelectedEvent, selectedEvent, hasEvents]);
+
+  if (!hasEvents) {
+    return (
+      <div className="flex items-center gap-3 opacity-50">
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3">
@@ -37,7 +43,7 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
         </SelectTrigger>
         <SelectContent>
           {filteredEvents.map((event) => {
-            const eventName = eventDisplaySettings?.[event]?.customName || event.replaceAll('_', ' ');
+            const eventName = eventDisplaySettings?.[event]?.customName || event.replaceAll("_", " ");
             return (
               <SelectItem className="capitalize" key={event} value={event}>
                 {eventName}

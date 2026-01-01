@@ -1,35 +1,44 @@
-import {
-  getProjectById,
-  updateProject,
-  updateProjectEventSettings
-} from '@/app/server/lib/clickhouse/repositories/projects-repository';
-import { UpdatableProjectRow } from '@/app/server/lib/clickhouse/schema';
-
-export type UpdateProjectResult = { kind: 'ok' } | { kind: 'error'; message: string };
+import { getProjectById, updateProject } from "@/app/server/lib/clickhouse/repositories/projects-repository";
+import { UpdatableProjectRow } from "@/app/server/lib/clickhouse/schema";
+import { UpdateProjectResult } from "@/app/server/domain/projects/update/types";
 
 export class ProjectsUpdateService {
-  async execute(input: Omit<UpdatableProjectRow, 'created_at'>): Promise<UpdateProjectResult> {
+  async execute(input: Omit<UpdatableProjectRow, "created_at">): Promise<UpdateProjectResult> {
     try {
       const current = await getProjectById(input.id);
 
       if (!current) {
-        return { kind: 'error', message: 'Project not found.' };
+        return { kind: "error", message: "Project not found." };
       }
 
-      if (current.name === input.name) {
-        return { kind: 'ok' };
-      }
-      await ('slug' in input
-        ? updateProject({
-            ...input,
-            created_at: current.created_at
-          })
-        : updateProjectEventSettings({ ...input, created_at: current.created_at }));
+      const existingSettings = current.events_display_settings ? JSON.parse(current.events_display_settings) : {};
 
-      return { kind: 'ok' };
+      const incomingSettings = input.events_display_settings ? JSON.parse(input.events_display_settings) : {};
+
+      const mergedSettings = JSON.stringify({
+        ...existingSettings,
+        ...incomingSettings,
+      });
+
+      const hasChanged =
+        input.name !== current.name ||
+        input.slug !== current.slug ||
+        JSON.stringify(mergedSettings) !== JSON.stringify(current.events_display_settings);
+
+      if (!hasChanged) {
+        return { kind: "ok" };
+      }
+
+      await updateProject({
+        ...current,
+        ...input,
+        events_display_settings: mergedSettings,
+      });
+
+      return { kind: "ok" };
     } catch (error) {
-      console.error('Update Project Service Error:', error);
-      return { kind: 'error', message: 'Failed to update project name.' };
+      console.error("Update Project Service Error:", error);
+      return { kind: "error", message: "Failed to update project." };
     }
   }
 }

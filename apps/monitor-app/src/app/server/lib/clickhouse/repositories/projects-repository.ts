@@ -1,10 +1,10 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
+import { sql } from "@/app/server/lib/clickhouse/client";
 import type {
   InsertableProjectRow,
   ProjectRow,
   ProjectWithViews,
-  UpdatableProjectRow
-} from '@/app/server/lib/clickhouse/schema';
+  UpdatableProjectRow,
+} from "@/app/server/lib/clickhouse/schema";
 
 function coerceClickHouseDateTime(value: Date | string): Date {
   if (value instanceof Date) return value;
@@ -12,7 +12,7 @@ function coerceClickHouseDateTime(value: Date | string): Date {
   // ClickHouse DateTime commonly comes back as `YYYY-MM-DD HH:mm:ss` (no timezone).
   // Treat that as UTC to avoid local-time parsing shifts.
   if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
-    return new Date(`${value.replace(' ', 'T')}Z`);
+    return new Date(`${value.replace(" ", "T")}Z`);
   }
 
   return new Date(value);
@@ -101,34 +101,25 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   `;
 }
 
-export async function updateProjectEventSettings(project: UpdatableProjectRow): Promise<void> {
-  const { id, created_at, events_display_settings } = project;
-  const createdAt = created_at && created_at instanceof Date ? created_at : new Date(created_at);
-  const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
-  const updatedAtSeconds = Math.floor(Date.now() / 1000);
-  await sql`
-    INSERT INTO projects (id, events_display_settings, created_at, updated_at)
-    VALUES (
-      ${id}, 
-      ${events_display_settings},
-      toDateTime(${createdAtSeconds}), 
-      toDateTime(${updatedAtSeconds})
-    )
-  `.command();
-}
-
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
   const { id, name, slug, created_at, events_display_settings } = project;
-  const createdAt = created_at && created_at instanceof Date ? created_at : new Date(created_at);
+  const createdAt = created_at instanceof Date ? created_at : new Date(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
   await sql`
-    INSERT INTO projects (id, name, slug, events_display_settings, created_at, updated_at)
+    INSERT INTO projects (
+      id, 
+      name, 
+      slug, 
+      events_display_settings, 
+      created_at, 
+      updated_at
+    )
     VALUES (
       ${id}, 
       ${name}, 
       ${slug}, 
-      ${events_display_settings},
+      ${events_display_settings ?? null},
       toDateTime(${createdAtSeconds}), 
       toDateTime(${updatedAtSeconds})
     )
