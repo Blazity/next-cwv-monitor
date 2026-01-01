@@ -24,7 +24,7 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
   );
   useEffect(() => {
     if (!filteredEvents.includes(selectedEvent)) {
-      setSelectedEvent(filteredEvents[0]);
+      void setSelectedEvent(filteredEvents[0]);
     }
   }, [filteredEvents, setSelectedEvent, selectedEvent]);
 

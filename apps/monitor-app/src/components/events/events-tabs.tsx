@@ -29,9 +29,9 @@ export function EventsTabs({ chartData, eventDisplaySettings, events, eventStats
   return (
     <Tabs
       defaultValue={selectedTab}
-      onValueChange={(e) => {
+      onValueChange={async (e) => {
         if (!isTab(e)) return;
-        setSelectedTab(e);
+        await setSelectedTab(e);
       }}
       className="space-y-6"
     >

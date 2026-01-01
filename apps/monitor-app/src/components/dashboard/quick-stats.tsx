@@ -3,6 +3,7 @@ import { ArrowRight, Route, TrendingDown, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { MetricName } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
 import { QuickStatsData, StatusDistribution } from '@/app/server/domain/dashboard/overview/types';
+import { type Route as NextRoute } from 'next';
 
 type QuickStatsProps = {
   projectId: string;
@@ -95,7 +96,15 @@ function StatusRow({ label, count, dotClass }: { label: string; count: number; d
   );
 }
 
-function ActionLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+function ActionLink({
+  href,
+  icon,
+  label
+}: {
+  href: NextRoute<`/projects/${string}`>;
+  icon: React.ReactNode;
+  label: string;
+}) {
   return (
     <Link
       href={href}

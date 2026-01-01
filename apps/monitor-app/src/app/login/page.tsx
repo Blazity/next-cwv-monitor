@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { LoginForm } from '@/components/login-form';
 import { auth } from '@/lib/auth';
+import { getSafeCallbackUrl } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -10,7 +11,7 @@ async function LoginPageContent({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const callbackUrl = Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : (params.callbackUrl ?? '/projects');
+  const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
 
   const session = await auth.api.getSession({
     headers: await headers()

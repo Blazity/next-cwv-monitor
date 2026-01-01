@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { spawn } from 'node:child_process';
+import 'dotenv/config';
 
 const {
   CH_MIGRATIONS_HOST,

@@ -15,7 +15,7 @@ type Props = {
 
 export default function PercentileChart({ percentiles, thresholds, title, metric, fixedPercentile, value }: Props) {
   const maxPercentileValue = Math.max(...percentiles.map((p) => p.value));
-  const activeTileValue = percentiles.filter((p) => p.value > value).toSorted((a, b) => a.value - b.value)[0].value;
+  const activeTileValue = percentiles.filter((p) => p.value > value).toSorted((a, b) => a.value - b.value)[0]?.value;
 
   return (
     <Popover>

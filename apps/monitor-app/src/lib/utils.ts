@@ -1,39 +1,43 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import zxcvbn from 'zxcvbn';
-import { env } from '@/env';
-import type { DateRange, MetricName, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
-import { chunk } from 'remeda';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import zxcvbn from "zxcvbn";
+import { env } from "@/env";
+import type { DateRange, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { chunk } from "remeda";
+import { AuthRole } from "@/lib/auth-shared";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const isObject = (value: unknown): value is object => {
+  return typeof value === "object" && value !== null;
+};
+
 export const daysToNumber = {
-  '1d': 1,
-  '7d': 7,
-  '30d': 30,
-  '90d': 90
+  "7d": 7,
+  "30d": 30,
+  "90d": 90,
 } as const;
 
 export function validatePasswordStrength(password: string): { valid: true } | { valid: false; message: string } {
   const result = zxcvbn(password);
 
   if (result.score < env.MIN_PASSWORD_SCORE) {
-    const feedback = result.feedback.warning || result.feedback.suggestions[0] || 'Please choose a stronger password';
+    const feedback = result.feedback.warning || result.feedback.suggestions[0] || "Please choose a stronger password";
     return { valid: false, message: feedback };
   }
 
   return { valid: true };
 }
 
-const secondsFormatter = new Intl.NumberFormat('en-US', {
+const secondsFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
-  minimumFractionDigits: 0
+  minimumFractionDigits: 0,
 });
 
 export function formatMetricValue(metric: MetricName, value: number): string {
-  if (metric === 'CLS') {
+  if (metric === "CLS") {
     return value.toFixed(3);
   }
   if (value >= 1000) {
@@ -43,10 +47,10 @@ export function formatMetricValue(metric: MetricName, value: number): string {
 }
 
 export function formatCompactNumber(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    compactDisplay: 'short',
-    maximumFractionDigits: 1
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1,
   }).format(value);
 }
 
@@ -65,6 +69,12 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
 
   return { start, end };
 }
+// User have to have ALL roles
+export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
+  if (!value) return false;
+  const userRoles = value.split(",");
+  return roles.every((role) => userRoles.includes(role));
+}
 
 export function* chunkGenerator<T>({ array }: { array: T[] }) {
   const chunks = chunk(array, 1000);
@@ -79,6 +89,7 @@ export function* chunkGenerator<T>({ array }: { array: T[] }) {
 export function assertNever(v: never) {
   console.log(`Unexpected ${v} value, should be never`);
 }
+
 export function capitalizeFirstLetter(text: string): string {
   if (!text) return text;
   return text.charAt(0).toLocaleUpperCase() + text.slice(1);
@@ -88,18 +99,18 @@ export function capitalize(text?: string, removeUnderscore?: boolean) {
   if (!text) return text;
   let textToProcess = text;
   if (removeUnderscore) {
-    textToProcess = textToProcess.replaceAll('_', ' ');
+    textToProcess = textToProcess.replaceAll("_", " ");
   }
   return textToProcess
-    .split(' ')
+    .split(" ")
     .map((v) => capitalizeFirstLetter(v))
-    .join(' ');
+    .join(" ");
 }
 
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric'
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
 });
 
 /**
