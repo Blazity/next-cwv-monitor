@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { createClient } from '@clickhouse/client';
 
 const {
@@ -121,6 +122,13 @@ function formatDateTime64Utc(date) {
   return `${day} ${time}`;
 }
 
+function parseArgs(argv) {
+  const args = new Set(argv);
+  const seedCustomEvents = args.has('--custom-events') || args.has('--custom-events-only');
+  const seedCwvEvents = !args.has('--custom-events-only');
+  return { seedCwvEvents, seedCustomEvents };
+}
+
 function buildEvents(projectId) {
   const now = new Date();
   const events = [];
@@ -164,10 +172,10 @@ function extractRows(jsonResult) {
   return [];
 }
 
-async function ensureProject(client) {
+async function ensureProject(client, { projectId, projectSlug, projectName }) {
   const existing = await client.query({
     query: 'SELECT id FROM projects WHERE id = {id:UUID} LIMIT 1',
-    query_params: { id: DEMO_PROJECT_ID },
+    query_params: { id: projectId },
     format: 'JSONEachRow'
   });
   const existingRows = extractRows(await existing.json());
@@ -179,9 +187,9 @@ async function ensureProject(client) {
     table: 'projects',
     values: [
       {
-        id: DEMO_PROJECT_ID,
-        slug: DEMO_PROJECT_SLUG,
-        name: DEMO_PROJECT_NAME,
+        id: projectId,
+        slug: projectSlug,
+        name: projectName,
         created_at: toDateTimeSeconds(new Date()),
         updated_at: toDateTimeSeconds(new Date())
       }
@@ -212,6 +220,135 @@ async function deleteExistingData(client) {
   });
 }
 
+async function seedCustomEventsData(client) {
+  const { faker } = await import('@faker-js/faker');
+  const { subDays } = await import('date-fns');
+
+  const PROJECT_ID = process.env.CUSTOM_EVENTS_PROJECT_ID ?? DEMO_PROJECT_ID;
+  const PROJECT_SLUG = process.env.CUSTOM_EVENTS_PROJECT_SLUG ?? DEMO_PROJECT_SLUG;
+  const PROJECT_NAME = process.env.CUSTOM_EVENTS_PROJECT_NAME ?? DEMO_PROJECT_NAME;
+
+  const TARGET_EVENTS = toPositiveInt(process.env.CUSTOM_EVENTS_COUNT, 1_000_000);
+  const DAYS_RANGE = toPositiveInt(process.env.CUSTOM_EVENTS_DAYS, 90);
+  const BATCH_SIZE = toPositiveInt(process.env.CUSTOM_EVENTS_BATCH_SIZE, 1000);
+  const SESSION_POOL_SIZE = toPositiveInt(
+    process.env.CUSTOM_EVENTS_SESSIONS,
+    Math.max(2000, Math.floor(TARGET_EVENTS / 5))
+  );
+  const RESET_BEFORE_SEED = process.env.CUSTOM_EVENTS_RESET !== 'true';
+  const RANDOM_SEED = Number.parseInt(process.env.CUSTOM_EVENTS_RANDOM_SEED ?? '7331', 10);
+
+  const ROUTES_FOR_CUSTOM_EVENTS = [
+    { route: '/', paths: ['/'], events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view'] },
+    {
+      route: '/docs',
+      paths: ['/docs', '/docs/getting-started', '/docs/faq'],
+      events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
+    },
+    {
+      route: '/blog/[slug]',
+      paths: ['/blog/core-web-vitals', '/blog/rendering-patterns', '/blog/edge-performance'],
+      events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
+    },
+    {
+      route: '/checkout',
+      paths: ['/checkout', '/checkout/review', '/checkout/confirmation'],
+      events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
+    },
+    {
+      route: '/dashboard',
+      paths: ['/dashboard', '/dashboard/overview', '/dashboard/events'],
+      events: ['docs_view', 'copy_snippet', 'search', 'cta_signup', '$page_view']
+    }
+  ];
+
+  const rngForCustomEvents = createRng(Number.isFinite(RANDOM_SEED) ? RANDOM_SEED : 42);
+  const SESSION_IDS = Array.from({ length: SESSION_POOL_SIZE }, () => randomUUID());
+
+  function randomCustomItem(list) {
+    return list[Math.floor(rngForCustomEvents() * list.length)];
+  }
+
+  function randomTimeOnDay() {
+    return faker.date.between({
+      from: subDays(new Date(), DAYS_RANGE),
+      to: new Date()
+    });
+  }
+
+  function buildCustomEvents(remaining) {
+    const events = [];
+
+    for (let i = 0; i < remaining; i++) {
+      const routeDef = randomCustomItem(ROUTES_FOR_CUSTOM_EVENTS);
+      const recordedAt = formatDateTime64Utc(randomTimeOnDay());
+      events.push({
+        project_id: PROJECT_ID,
+        session_id: randomCustomItem(SESSION_IDS),
+        route: routeDef.route,
+        path: randomCustomItem(routeDef.paths),
+        device_type: randomCustomItem(DEVICES),
+        event_name: randomCustomItem(routeDef.events),
+        recorded_at: recordedAt,
+        ingested_at: recordedAt
+      });
+    }
+
+    return events;
+  }
+
+  await ensureProject(client, {
+    projectId: PROJECT_ID,
+    projectSlug: PROJECT_SLUG,
+    projectName: PROJECT_NAME
+  });
+
+  const response = await client.query({
+    query: 'SELECT count() AS count FROM custom_events WHERE project_id = {projectId:UUID}',
+    query_params: { projectId: PROJECT_ID },
+    format: 'JSONEachRow'
+  });
+  const rows = extractRows(await response.json());
+  const rawCount = rows[0]?.count ?? 0;
+  const existingCount = typeof rawCount === 'string' ? Number.parseInt(rawCount, 10) : Number(rawCount);
+
+  if (existingCount > 0 && RESET_BEFORE_SEED) {
+    console.log(`Resetting existing custom_events for project ${PROJECT_SLUG} (${existingCount} rows) before seeding`);
+    await client.command({
+      query: 'ALTER TABLE custom_events DELETE WHERE project_id = {projectId:UUID}',
+      query_params: { projectId: PROJECT_ID }
+    });
+  }
+
+  const finalExistingCount = RESET_BEFORE_SEED ? 0 : existingCount;
+  const remaining = RESET_BEFORE_SEED ? TARGET_EVENTS : Math.max(TARGET_EVENTS - finalExistingCount, 0);
+  if (remaining === 0) {
+    console.log(
+      `custom_events already has ${existingCount} rows for project ${PROJECT_SLUG}; target ${TARGET_EVENTS}. Nothing to do.`
+    );
+    return;
+  }
+
+  const events = buildCustomEvents(remaining);
+  const batches = chunk(events, BATCH_SIZE);
+
+  for (const [index, batch] of batches.entries()) {
+    await client.insert({
+      table: 'custom_events',
+      values: batch,
+      format: 'JSONEachRow'
+    });
+
+    if ((index + 1) % 10 === 0 || index === batches.length - 1) {
+      console.log(`Inserted custom_events batch ${index + 1}/${batches.length} (${batch.length} rows)`);
+    }
+  }
+
+  console.log(
+    `Seeded ${events.length} custom_events over the last ${DAYS_RANGE} days for project ${PROJECT_SLUG} (${PROJECT_ID}).`
+  );
+}
+
 function chunk(array, size) {
   const result = [];
   for (let i = 0; i < array.length; i += size) {
@@ -227,48 +364,64 @@ const client = createClient({
   password: CLICKHOUSE_PASSWORD
 });
 
-try {
-  await client.query({ query: 'SELECT 1' });
-} catch (error) {
-  console.error('Unable to reach ClickHouse. Check CLICKHOUSE_* env vars.', error);
-  await client.close();
-  process.exit(1);
+export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = false } = {}) {
+  try {
+    await client.query({ query: 'SELECT 1' });
+  } catch (error) {
+    console.error('Unable to reach ClickHouse. Check CLICKHOUSE_* env vars.', error);
+    await client.close();
+    process.exit(1);
+  }
+
+  try {
+    if (seedCwvEvents) {
+      await ensureProject(client, {
+        projectId: DEMO_PROJECT_ID,
+        projectSlug: DEMO_PROJECT_SLUG,
+        projectName: DEMO_PROJECT_NAME
+      });
+
+      const existingEvents = await countExistingEvents(client);
+      if (existingEvents > 0 && !RESET_BEFORE_SEED) {
+        console.log(
+          `Demo data already present for project ${DEMO_PROJECT_SLUG} (${existingEvents} events). Skipping seeding.`
+        );
+      } else {
+        if (existingEvents > 0 && RESET_BEFORE_SEED) {
+          console.log(`Resetting existing demo data for project ${DEMO_PROJECT_SLUG} (${existingEvents} events)`);
+          await deleteExistingData(client);
+        }
+
+        const events = buildEvents(DEMO_PROJECT_ID);
+        const batches = chunk(events, 500);
+
+        for (const batch of batches) {
+          await client.insert({
+            table: 'cwv_events',
+            values: batch,
+            format: 'JSONEachRow'
+          });
+        }
+
+        console.log(
+          `Seeded ${events.length} events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_SLUG} (${DEMO_PROJECT_ID}).`
+        );
+      }
+    }
+
+    if (seedCustomEvents) {
+      await seedCustomEventsData(client);
+    }
+  } catch (error) {
+    console.error('Seeding failed', error);
+    process.exitCode = 1;
+  } finally {
+    await client.close();
+  }
 }
 
-try {
-  await ensureProject(client);
-
-  const existingEvents = await countExistingEvents(client);
-  if (existingEvents > 0 && !RESET_BEFORE_SEED) {
-    console.log(
-      `Demo data already present for project ${DEMO_PROJECT_SLUG} (${existingEvents} events). Skipping seeding.`
-    );
-    await client.close();
-    process.exit(0);
-  }
-
-  if (existingEvents > 0 && RESET_BEFORE_SEED) {
-    console.log(`Resetting existing demo data for project ${DEMO_PROJECT_SLUG} (${existingEvents} events)`);
-    await deleteExistingData(client);
-  }
-
-  const events = buildEvents(DEMO_PROJECT_ID);
-  const batches = chunk(events, 500);
-
-  for (const batch of batches) {
-    await client.insert({
-      table: 'cwv_events',
-      values: batch,
-      format: 'JSONEachRow'
-    });
-  }
-
-  console.log(
-    `Seeded ${events.length} events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_SLUG} (${DEMO_PROJECT_ID}).`
-  );
-} catch (error) {
-  console.error('Seeding failed', error);
-  process.exitCode = 1;
-} finally {
-  await client.close();
+const isCliInvocation = import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isCliInvocation) {
+  const { seedCwvEvents, seedCustomEvents } = parseArgs(process.argv.slice(2));
+  await seedDemoData({ seedCwvEvents, seedCustomEvents });
 }

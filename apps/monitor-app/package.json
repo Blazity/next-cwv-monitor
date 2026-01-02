@@ -11,7 +11,7 @@
     "build-storybook": "storybook build",
     "clickhouse:migrate": "node ./scripts/run-clickhouse-migrate.mjs",
     "seed:demo": "node ./scripts/seed-demo-data.mjs",
-    "seed:cwv-events": "node ./scripts/seed-custom-events.mjs",
+    "seed:cwv-events": "node ./scripts/seed-demo-data.mjs --custom-events-only",
     "test:integration": "vitest --config vitest.integration.config.ts"
   },
   "dependencies": {
