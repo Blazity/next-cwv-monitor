@@ -44,9 +44,14 @@ export async function getProjectWithViewsById(id: string): Promise<ProjectWithVi
   const rows = await sql<ProjectWithViews>`
     SELECT 
       *,
-      (SELECT toUInt64(countMerge(sample_size)) 
-       FROM cwv_daily_aggregates 
-       WHERE project_id = ${id} AND metric_name = 'LCP') as trackedViews
+      ifNull(
+        (
+          SELECT toUInt64(countMerge(sample_size))
+          FROM cwv_daily_aggregates
+          WHERE project_id = ${id} AND metric_name = 'LCP'
+        ),
+        toUInt64(0)
+      ) as trackedViews
     FROM projects AS p FINAL
     WHERE id = ${id}
     LIMIT 1
@@ -78,7 +83,7 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   return sql<ProjectWithViews>`
     SELECT 
       p.*,
-      s.trackedViews
+      ifNull(s.trackedViews, toUInt64(0)) as trackedViews
     FROM projects AS p FINAL
     LEFT JOIN (
         SELECT 
