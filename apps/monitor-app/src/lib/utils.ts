@@ -3,17 +3,19 @@ import { twMerge } from "tailwind-merge";
 import zxcvbn from "zxcvbn";
 import { env } from "@/env";
 import type { DateRange, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { chunk, mapValues } from "remeda";
 import { AuthRole } from "@/lib/auth-shared";
+import { subDays } from "date-fns/subDays";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export const isObject = (value: unknown): value is object => {
-  return typeof value === 'object' && value !== null;
+  return typeof value === "object" && value !== null;
 };
 
-const daysToNumber = {
+export const daysToNumber = {
   "7d": 7,
   "30d": 30,
   "90d": 90,
@@ -75,13 +77,30 @@ export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
   return roles.every((role) => userRoles.includes(role));
 }
 
-export function assertNever(v: never) {
-  console.error(`Failed, expected ${v} to be never`);
+export function* chunkGenerator<T>({ array }: { array: T[] }) {
+  const chunks = chunk(array, 1000);
+  for (const chunk of chunks) yield chunk;
+}
+
+export function assertNever(v: never): never {
+  throw new Error(`Unexpected ${v} value, should be never`);
 }
 
 export function capitalizeFirstLetter(text: string): string {
   if (!text) return text;
   return text.charAt(0).toLocaleUpperCase() + text.slice(1);
+}
+
+export function capitalize(text?: string, removeUnderscore?: boolean) {
+  if (!text) return text;
+  let textToProcess = text;
+  if (removeUnderscore) {
+    textToProcess = textToProcess.replaceAll("_", " ");
+  }
+  return textToProcess
+    .split(" ")
+    .map((v) => capitalizeFirstLetter(v))
+    .join(" ");
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
@@ -98,4 +117,35 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
 export function formatDate(date: Date | string | number): string {
   const d = date instanceof Date ? date : new Date(date);
   return dateFormatter.format(d);
+}
+
+export function parseClickHouseNumbers<T extends object>(row: T): T {
+  return mapValues(row, (val) => {
+    if (typeof val === "string" && val !== "" && !Number.isNaN(Number(val))) {
+      return Number(val);
+    }
+    return val;
+  }) as T;
+}
+
+export const getPeriodDates = (range: TimeRangeKey) => {
+  const days = daysToNumber[range];
+  const now = new Date();
+
+  const currentStart = subDays(now, days);
+  const prevStart = subDays(currentStart, days);
+
+  return { now, currentStart, prevStart };
+};
+
+export function coerceClickHouseDateTime(value: Date | string): Date {
+  if (value instanceof Date) return value;
+
+  // ClickHouse DateTime commonly comes back as `YYYY-MM-DD HH:mm:ss` (no timezone).
+  // Treat that as UTC to avoid local-time parsing shifts.
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value)) {
+    return new Date(`${value.replace(" ", "T")}Z`);
+  }
+
+  return new Date(value);
 }

@@ -1,49 +1,29 @@
-'use server';
+"use server";
 
-import { redirectToLogin, getAuthorizedSession, UnauthorizedError } from '@/lib/auth-utils';
-import { revalidatePath } from 'next/cache';
-import { updateProjectNameSchema } from '@/app/server/domain/projects/schema';
-import { ArkErrors } from 'arktype';
-import { projectsUpdateService } from '@/app/server/domain/projects/update/service';
-import { ActionResponse, AlterProjectErrors } from '@/app/server/actions/types';
+import { revalidatePath, updateTag } from "next/cache";
+import { permissionActionClient } from "@/app/server/lib/safe-action";
+import { projectsUpdateService } from "@/app/server/domain/projects/update/service";
+import { updateTags } from "@/lib/cache";
+import { updateProjectSchema } from "@/app/server/domain/projects/update/types";
 
-export async function updateProjectNameAction(
-  projectId: string,
-  slug: string,
-  name: string
-): Promise<ActionResponse<AlterProjectErrors>> {
-  try {
-    await getAuthorizedSession();
-
-    const projectInputValidated = updateProjectNameSchema({ name });
-    if (projectInputValidated instanceof ArkErrors) {
-      return {
-        success: false,
-        errors: projectInputValidated.flatProblemsByPath,
-        message: 'Validation failed.'
-      };
-    }
+export const updateProjectAction = permissionActionClient({ project: ["update"] })
+  .inputSchema(updateProjectSchema)
+  .action(async ({ parsedInput }) => {
+    const { projectId, slug, name, eventSettings } = parsedInput;
 
     const result = await projectsUpdateService.execute({
       id: projectId,
-      slug,
-      ...projectInputValidated
+      ...(slug && { slug }),
+      ...(name && { name }),
+      ...(eventSettings && { events_display_settings: eventSettings }),
     });
 
-    if (result.kind === 'error') {
-      return { success: false, message: result.message };
+    if (result.kind === "error") {
+      throw new Error(result.message);
     }
 
+    updateTag(updateTags.projectDetails(projectId));
     revalidatePath(`/projects/${projectId}/settings`);
-    return { success: true, message: 'Project updated successfully.' };
-  } catch (error) {
-    if (error instanceof UnauthorizedError) {
-      return redirectToLogin();
-    }
 
-    return {
-      success: false,
-      message: 'An unexpected internal error occurred.'
-    };
-  }
-}
+    return { success: true, message: "Project updated successfully." };
+  });

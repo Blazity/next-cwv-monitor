@@ -41,6 +41,14 @@ function expectServerError(result: unknown, pattern: RegExp | string) {
   }
 }
 
+async function expectRedirect(promise: Promise<unknown>) {
+  await expect(promise).rejects.toSatisfy((error: unknown) => {
+    const maybe = error as { digest?: unknown; message?: unknown };
+    const tag = typeof maybe.digest === 'string' ? maybe.digest : maybe.message;
+    return typeof tag === 'string' && tag.includes('NEXT_REDIRECT');
+  });
+}
+
 function getSetCookies(headers: Headers): string[] {
   const maybe = headers as unknown as { getSetCookie?: () => string[] };
   if (typeof maybe.getSetCookie === 'function') return maybe.getSetCookie();
@@ -211,8 +219,9 @@ describe('users server actions (integration)', () => {
 
       const { createUserAction } = await import('../create-user');
 
-      const result = await createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' });
-      expectServerError(result, /authorized/i);
+      await expectRedirect(
+        createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' }),
+      );
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -266,8 +275,7 @@ describe('users server actions (integration)', () => {
 
       const { setRoleAction } = await import('../set-role-user');
 
-      const result = await setRoleAction({ userId: randomUUID(), newRole: 'admin' });
-      expectServerError(result, /authorized/i);
+      await expectRedirect(setRoleAction({ userId: randomUUID(), newRole: 'admin' }));
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -322,8 +330,7 @@ describe('users server actions (integration)', () => {
 
       const { deleteUserAction } = await import('../delete-user');
 
-      const result = await deleteUserAction({ userId: randomUUID() });
-      expectServerError(result, /authorized/i);
+      await expectRedirect(deleteUserAction({ userId: randomUUID() }));
     });
 
     it('fails for authenticated non-admin users', async () => {
@@ -375,8 +382,7 @@ describe('users server actions (integration)', () => {
 
       const { toggleAccountStatusAction } = await import('../toggle-user-status');
 
-      const result = await toggleAccountStatusAction({ userId: randomUUID(), currentStatus: null });
-      expectServerError(result, /authorized/i);
+      await expectRedirect(toggleAccountStatusAction({ userId: randomUUID(), currentStatus: null }));
     });
 
     it('fails for authenticated non-admin users', async () => {
