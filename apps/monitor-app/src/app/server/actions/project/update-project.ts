@@ -15,7 +15,7 @@ export const updateProjectAction = permissionActionClient({ project: ["update"] 
       id: projectId,
       ...(slug && { slug }),
       ...(name && { name }),
-      ...(eventSettings && { events_display_settings: JSON.stringify(eventSettings) }),
+      ...(eventSettings && { events_display_settings: eventSettings }),
     });
 
     if (result.kind === "error") {

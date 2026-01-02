@@ -4,7 +4,7 @@ import path from 'node:path';
 import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 import { createClient } from '@clickhouse/client';
 
-export const CLICKHOUSE_IMAGE = 'clickhouse/clickhouse-server:24.8-alpine';
+export const CLICKHOUSE_IMAGE = 'clickhouse/clickhouse-server:25.8-alpine';
 export const HTTP_PORT = 8123;
 
 type ClickHouseTestConfig = {

@@ -105,6 +105,12 @@ export async function updateProject(project: UpdatableProjectRow): Promise<void>
   const createdAt = coerceClickHouseDateTime(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
+
+  const eventsDisplaySettingsValue =
+    events_display_settings === null || events_display_settings === undefined
+      ? sql.param(null, "Nullable(JSON)")
+      : events_display_settings;
+
   await sql`
     INSERT INTO projects (
       id, 
@@ -118,7 +124,7 @@ export async function updateProject(project: UpdatableProjectRow): Promise<void>
       ${id}, 
       ${name}, 
       ${slug}, 
-      ${events_display_settings ?? null},
+      ${eventsDisplaySettingsValue},
       toDateTime(${createdAtSeconds}), 
       toDateTime(${updatedAtSeconds})
     )

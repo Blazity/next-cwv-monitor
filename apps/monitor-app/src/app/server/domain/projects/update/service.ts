@@ -1,6 +1,7 @@
 import { getProjectById, updateProject } from "@/app/server/lib/clickhouse/repositories/projects-repository";
-import { UpdatableProjectRow } from "@/app/server/lib/clickhouse/schema";
+import { eventDisplaySettingsSchema, UpdatableProjectRow } from "@/app/server/lib/clickhouse/schema";
 import { UpdateProjectResult } from "@/app/server/domain/projects/update/types";
+import { ArkErrors } from "arktype";
 
 export class ProjectsUpdateService {
   async execute(input: Omit<UpdatableProjectRow, "created_at">): Promise<UpdateProjectResult> {
@@ -11,19 +12,23 @@ export class ProjectsUpdateService {
         return { kind: "error", message: "Project not found." };
       }
 
-      const existingSettings = current.events_display_settings ? JSON.parse(current.events_display_settings) : {};
+      const existingParsed = eventDisplaySettingsSchema(current.events_display_settings);
+      const existingSettings =
+        existingParsed instanceof ArkErrors || existingParsed === null ? {} : existingParsed;
 
-      const incomingSettings = input.events_display_settings ? JSON.parse(input.events_display_settings) : {};
+      const incomingParsed = eventDisplaySettingsSchema(input.events_display_settings ?? null);
+      const incomingSettings =
+        incomingParsed instanceof ArkErrors || incomingParsed === null ? {} : incomingParsed;
 
-      const mergedSettings = JSON.stringify({
+      const mergedSettingsObject = {
         ...existingSettings,
         ...incomingSettings,
-      });
+      };
 
       const hasChanged =
         input.name !== current.name ||
         input.slug !== current.slug ||
-        JSON.stringify(mergedSettings) !== JSON.stringify(current.events_display_settings);
+        JSON.stringify(mergedSettingsObject) !== JSON.stringify(existingSettings);
 
       if (!hasChanged) {
         return { kind: "ok" };
@@ -32,7 +37,7 @@ export class ProjectsUpdateService {
       await updateProject({
         ...current,
         ...input,
-        events_display_settings: mergedSettings,
+        events_display_settings: mergedSettingsObject,
       });
 
       return { kind: "ok" };

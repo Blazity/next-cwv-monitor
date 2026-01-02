@@ -5,7 +5,7 @@ export type ProjectRow = {
   id: string;
   slug: string;
   name: string;
-  events_display_settings?: string | null;
+  events_display_settings?: Record<string, unknown> | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -15,18 +15,9 @@ const eventSettings = type({
   "customName?": "string",
 });
 
-export const eventDisplaySettingsSchema = type("string")
-  .pipe((v) => {
-    try {
-      return JSON.parse(v as string) || {};
-    } catch {
-      return {};
-    }
-  })
-  .to({
-    "[string]": eventSettings.or("undefined"),
-  })
-  .or("null");
+export const eventDisplaySettingsSchema = type({
+  "[string]": eventSettings.or("undefined"),
+}).or("null");
 
 export type EventDisplaySettings = typeof eventDisplaySettingsSchema.infer;
 
