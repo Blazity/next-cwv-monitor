@@ -11,7 +11,7 @@ import { EventsCards } from "@/components/events/events-cards";
 import { EventsTabs } from "@/components/events/events-tabs";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { getCachedProject } from "@/lib/cache";
-import { eventsSearchParamsSchema } from "@/lib/search-params";
+import { eventsSearchParamsCache } from "@/lib/search-params";
 import { ArkErrors } from "arktype";
 import { notFound } from "next/navigation";
 
@@ -19,7 +19,7 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
   await getAuthorizedSession();
   const { projectId } = await params;
   // TODO: time range should handle 24h here
-  const { timeRange, event = "" } = eventsSearchParamsSchema.parse(await searchParams);
+  const { timeRange, event = "" } = eventsSearchParamsCache.parse(await searchParams);
 
   const [allEvents, names, project] = await Promise.all([
     fetchEvents({ projectId, range: timeRange }),

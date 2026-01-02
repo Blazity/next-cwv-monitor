@@ -25,7 +25,7 @@ export const dashboardSearchParsers = {
 
 export const dashboardSearchParamsCache = createSearchParamsCache(dashboardSearchParsers);
 
-export const eventsSearchParamsSchema = createSearchParamsCache({
+export const eventsSearchParamsCache = createSearchParamsCache({
   ...dashboardSearchParsers,
   event: parseAsString.withDefault('')
 });
