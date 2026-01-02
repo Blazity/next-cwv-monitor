@@ -72,6 +72,21 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
   const [copiedId, setCopiedId] = useState(false);
   const [copiedSDK, setCopiedSDK] = useState(false);
 
+  const { execute: executeReset } = useAction(resetProjectDataAction, {
+    onSuccess: ({ data }) => {
+      if (data.success) toast.success(data.message);
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Failed to reset project data");
+    }
+  });
+
+  const { execute: executeDelete } = useAction(deleteProjectAction, {
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Failed to delete project");
+    }
+  });
+
   return (
     <main className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-4">
@@ -168,11 +183,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             label="Reset"
             icon={RefreshCw}
             confirmText={project.name}
-            onConfirm={async () => {
-              const res = await resetProjectDataAction(project.id);
-              if (res.success) toast.success("Project data has been cleared");
-              else toast.error("Failed to reset data");
-            }}
+            onConfirm={() => executeReset({ projectId: project.id })}
           />
           <DangerRow
             title="Delete project"
@@ -180,11 +191,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             label="Delete"
             icon={Trash2}
             confirmText={project.name}
-            onConfirm={async () => {
-              const res = await deleteProjectAction(project.id);
-              if (res.success) router.push("/projects");
-              else toast.error(res.message);
-            }}
+            onConfirm={() => executeDelete({ projectId: project.id })}
           />
         </CardContent>
       </Card>
