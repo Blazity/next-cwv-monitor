@@ -132,6 +132,7 @@ export async function setupClickHouseContainer(): Promise<{
     'CREATE DATABASE'
   );
 
+  // We only override the ClickHouse port for tests. Everything else comes from `.env.test` / `.env.ci`.
   overrideClickHousePortForTest(port);
   await runClickHouseMigrations({
     CH_MIGRATIONS_HOST: host,
