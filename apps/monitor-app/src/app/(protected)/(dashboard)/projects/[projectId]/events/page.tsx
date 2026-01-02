@@ -47,7 +47,7 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
   const [events, eventsStats, chartData] =
     hasEvents && selectedEvent
       ? await Promise.all([
-          fetchEventsStatsData({ eventName: selectedEvent, projectId, range: "90d" }),
+          fetchEventsStatsData({ eventName: selectedEvent, projectId, range: timeRange }),
           fetchTotalStatsEvents({ projectId, range: timeRange }),
           fetchConversionTrend({ projectId, range: timeRange, eventName: selectedEvent }),
         ])
