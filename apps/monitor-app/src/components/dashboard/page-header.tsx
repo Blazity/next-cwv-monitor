@@ -58,8 +58,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
         </div>
       )}
 
-      <div ref={headerRef} className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1">
+      <div ref={headerRef} className="flex items-center justify-between gap-4">
+        <div className="flex gap-2 min-w-0 transition-all duration-200 flex-col sm:flex-row items-start sm:items-center">
           <div className="flex items-center gap-2">
             <h1 className="text-foreground text-2xl font-semibold">{title}</h1>
             {children}

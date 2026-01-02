@@ -65,7 +65,7 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
   // Set to the beginning of that day (00:00:00.000) to include the full day
   const start = new Date(end);
   const days = daysToNumber[timeRange];
-  start.setDate(start.getDate() - days);
+  start.setDate(start.getDate() - (days - 1));
   start.setHours(0, 0, 0, 0);
 
   return { start, end };

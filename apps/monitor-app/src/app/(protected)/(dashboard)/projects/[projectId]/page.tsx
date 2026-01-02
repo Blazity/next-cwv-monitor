@@ -1,39 +1,29 @@
-import { Suspense } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { DashboardOverviewService } from '@/app/server/domain/dashboard/overview/service';
 import { WorstRoutesByMetric } from '@/components/dashboard/worst-routes-by-metric';
 import { TrendChartByMetric } from '@/components/dashboard/trend-chart-by-metric';
 import { QuickStats } from '@/components/dashboard/quick-stats';
+import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
 import { buildDashboardOverviewQuery } from '@/app/server/domain/dashboard/overview/mappers';
 import { cacheLife } from 'next/cache';
 import { timeRangeToDateRange } from '@/lib/utils';
-import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
-import type { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
-import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
-import { notFound } from 'next/navigation';
-import { CoreWebVitals } from '@/components/dashboard/core-web-vitals';
 import { dashboardSearchParamsCache } from '@/lib/search-params';
+import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
 import { getAuthorizedSession } from '@/lib/auth-utils';
+import { notFound } from 'next/navigation';
+import type { OverviewDeviceType as DeviceType, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
 async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
   'use cache';
-
   cacheLife(CACHE_LIFE_DEFAULT);
-
   const dateRange = timeRangeToDateRange(timeRange);
-
-  const query = buildDashboardOverviewQuery({
-    projectId,
-    deviceType,
-    range: dateRange
-  });
-
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, range: dateRange });
   return await dashboardOverviewService.getOverview(query);
 }
 
-async function ProjectPageContent({
+export default async function ProjectPage({
   params,
   searchParams
 }: {
@@ -51,7 +41,7 @@ async function ProjectPageContent({
   }
 
   if (overview.kind !== 'ok') {
-    throw new Error(`Failed to load dashboard: ${overview.kind}`);
+    throw new Error(`Failed: ${overview.kind}`);
   }
 
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
@@ -69,28 +59,5 @@ async function ProjectPageContent({
       <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>
-  );
-}
-
-function ProjectPageLoading() {
-  return (
-    <div>
-      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
-      <div className="mt-6 space-y-6">
-        <div className="bg-muted h-64 animate-pulse rounded-lg" />
-        <div className="bg-muted h-96 animate-pulse rounded-lg" />
-      </div>
-    </div>
-  );
-}
-
-export default function ProjectPage(props: {
-  params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  return (
-    <Suspense fallback={<ProjectPageLoading />}>
-      <ProjectPageContent {...props} />
-    </Suspense>
   );
 }
