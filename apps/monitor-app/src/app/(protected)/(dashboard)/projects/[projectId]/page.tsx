@@ -30,10 +30,10 @@ export default async function ProjectPage({
   params: Promise<{ projectId: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  await getAuthorizedSession();
+
   const { projectId } = await params;
   const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
-
-  await getAuthorizedSession();
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
   if (overview.kind === 'project-not-found') {

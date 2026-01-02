@@ -19,7 +19,7 @@ export function TimeRangeSelector() {
     parseAsString.withDefault(DEFAULT_TIME_RANGE).withOptions({ shallow: false })
   );
   const handleTimeRangeChange = (value: string) => {
-    setTimeRange(value);
+    void setTimeRange(value);
   };
 
   return (

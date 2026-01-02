@@ -8,11 +8,12 @@ export async function provisionInitialUser() {
   const initialName = env.INITIAL_USER_NAME || "Initial User";
 
   try {
-    await auth.api.signUpEmail({
+    await auth.api.createUser({
       body: {
         email: initialEmail,
         password: initialPassword,
         name: initialName,
+        role: "admin",
       },
     });
   } catch (error) {

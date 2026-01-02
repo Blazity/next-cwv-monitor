@@ -6,12 +6,24 @@ import type {
   UpdatableProjectRow
 } from '@/app/server/lib/clickhouse/schema';
 
+function coerceClickHouseDateTime(value: Date | string): Date {
+  if (value instanceof Date) return value;
+
+  // ClickHouse DateTime commonly comes back as `YYYY-MM-DD HH:mm:ss` (no timezone).
+  // Treat that as UTC to avoid local-time parsing shifts.
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
+    return new Date(`${value.replace(' ', 'T')}Z`);
+  }
+
+  return new Date(value);
+}
+
 export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();
   const updatedAtRaw = project.updated_at ?? createdAtRaw;
 
-  const createdAt = createdAtRaw instanceof Date ? createdAtRaw : new Date(createdAtRaw);
-  const updatedAt = updatedAtRaw instanceof Date ? updatedAtRaw : new Date(updatedAtRaw);
+  const createdAt = coerceClickHouseDateTime(createdAtRaw);
+  const updatedAt = coerceClickHouseDateTime(updatedAtRaw);
 
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(updatedAt.getTime() / 1000);
@@ -99,7 +111,7 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
   const { id, name, slug, created_at } = project;
-  const createdAt = created_at instanceof Date ? created_at : new Date(created_at);
+  const createdAt = coerceClickHouseDateTime(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
 

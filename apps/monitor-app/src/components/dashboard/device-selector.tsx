@@ -25,7 +25,7 @@ export function DeviceSelector() {
   );
 
   const handleDeviceChange = (value: OverviewDeviceType) => {
-    setDeviceType(value);
+    void setDeviceType(value);
   };
 
   return (
