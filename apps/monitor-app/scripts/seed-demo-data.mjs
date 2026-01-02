@@ -235,7 +235,7 @@ async function seedCustomEventsData(client) {
     process.env.CUSTOM_EVENTS_SESSIONS,
     Math.max(2000, Math.floor(TARGET_EVENTS / 5))
   );
-  const RESET_BEFORE_SEED = process.env.CUSTOM_EVENTS_RESET !== 'true';
+  const RESET_BEFORE_SEED = process.env.CUSTOM_EVENTS_RESET === 'true';
   const RANDOM_SEED = Number.parseInt(process.env.CUSTOM_EVENTS_RANDOM_SEED ?? '7331', 10);
 
   const ROUTES_FOR_CUSTOM_EVENTS = [
