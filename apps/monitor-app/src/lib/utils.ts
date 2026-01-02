@@ -79,16 +79,11 @@ export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
 
 export function* chunkGenerator<T>({ array }: { array: T[] }) {
   const chunks = chunk(array, 1000);
-  let currentChunkIndex = 0;
-  for (const chunk of chunks) {
-    console.log(`processing: ${currentChunkIndex} / ${array.length}`);
-    yield chunk;
-    currentChunkIndex += chunk.length;
-  }
+  for (const chunk of chunks) yield chunk;
 }
 
-export function assertNever(v: never) {
-  console.log(`Unexpected ${v} value, should be never`);
+export function assertNever(v: never): never {
+  throw new Error(`Unexpected ${v} value, should be never`);
 }
 
 export function capitalizeFirstLetter(text: string): string {
