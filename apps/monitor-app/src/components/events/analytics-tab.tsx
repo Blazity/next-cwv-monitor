@@ -42,11 +42,15 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
     true,
   );
 
-  const totalConversionsForEvent = hasStats ? sumBy(eventStats, (v) => Number(v.conversions_cur) || 0) : 0;
+  const totalConversionsForEvent = hasStats ? sumBy(eventStats, (v) => v.conversions_cur) : 0;
 
   const overallRateForEvent = hasStats
-    ? sumBy(eventStats, (v) => Number(v.conversion_rate) || 0) / eventStats.length
-    : 0;
+    ? (() => {
+        const rates = eventStats.map((v) => v.conversion_rate).filter((v): v is number => v !== null);
+        if (rates.length === 0) return null;
+        return rates.reduce((sum, v) => sum + v, 0) / rates.length;
+      })()
+    : null;
 
   return (
     <>
@@ -108,7 +112,10 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
                   conversions
                 </span>
                 <span className="text-muted-foreground">
-                  Overall rate: <span className="text-foreground font-medium">{overallRateForEvent.toFixed(2)}%</span>
+                  Overall rate:{" "}
+                  <span className="text-foreground font-medium">
+                    {overallRateForEvent === null ? "—" : `${overallRateForEvent.toFixed(2)}%`}
+                  </span>
                 </span>
               </div>
             </div>

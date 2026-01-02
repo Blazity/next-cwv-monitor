@@ -20,7 +20,7 @@ export function AnalyticsChart({ chartData }: Props) {
     () =>
       chartData.map((point) => ({
         date: new Date(point.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        rate: point.conversion_rate ?? 0,
+        rate: point.conversion_rate,
         events: point.events,
         views: point.views
       })),
@@ -60,7 +60,7 @@ export function AnalyticsChart({ chartData }: Props) {
             if (!active || payload.length === 0) return null;
             const point = payload[0].payload as {
               date: string;
-              rate: number;
+              rate: number | null;
               events: number;
               views: number;
             };
@@ -70,7 +70,9 @@ export function AnalyticsChart({ chartData }: Props) {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-foreground text-sm">Conversion Rate</span>
-                    <span className="text-foreground font-mono text-sm font-medium">{point.rate.toFixed(2)}%</span>
+                    <span className="text-foreground font-mono text-sm font-medium">
+                      {point.rate === null ? '—' : `${point.rate.toFixed(2)}%`}
+                    </span>
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {point.events.toLocaleString()} events / {point.views.toLocaleString()} views

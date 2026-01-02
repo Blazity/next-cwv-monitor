@@ -109,13 +109,13 @@ type FetchEventsStatsData = {
 
 type FetchEventsStatsDataResult = {
   route: string;
-  conversions_cur: string;
-  views_cur: string;
-  conversions_prev: string;
-  views_prev: string;
-  conversion_change_pct: string;
-  views_change_pct: string;
-  conversion_rate: string;
+  conversions_cur: number;
+  views_cur: number;
+  conversions_prev: number;
+  views_prev: number;
+  conversion_change_pct: number | null;
+  views_change_pct: number | null;
+  conversion_rate: number | null;
 };
 
 export async function fetchEventsStatsData({ range, eventName, projectId }: FetchEventsStatsData) {
@@ -131,7 +131,7 @@ export async function fetchEventsStatsData({ range, eventName, projectId }: Fetc
       uniqExact(session_id) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') as views_prev,
       uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${eventName}) as conversions_prev,
   
-      if(views_cur > 0, (conversions_cur / views_cur) * 100, 0) as conversion_rate,
+      if(views_cur = 0, NULL, (conversions_cur / views_cur) * 100) as conversion_rate,
 
       if(conversions_prev = 0, NULL, ((conversions_cur - conversions_prev) / ((conversions_cur + conversions_prev) / 2)) * 100) AS conversion_change_pct,
       if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev) / 2)) * 100) AS views_change_pct
@@ -154,16 +154,16 @@ type FetchTotalStatsEvents = {
 };
 
 type FetchTotalStatsEventsResult = {
-  total_conversions_cur: string;
-  total_views_cur: string;
-  total_events_cur: string;
+  total_conversions_cur: number;
+  total_views_cur: number;
+  total_events_cur: number;
 
-  total_conversions_prev: string;
-  total_views_prev: string;
-  total_events_prev: string;
+  total_conversions_prev: number;
+  total_views_prev: number;
+  total_events_prev: number;
 
-  total_conversion_change_pct: string;
-  total_views_change_pct: string;
+  total_conversion_change_pct: number | null;
+  total_views_change_pct: number | null;
 };
 
 export async function fetchTotalStatsEvents({ projectId, range }: FetchTotalStatsEvents) {
@@ -179,8 +179,8 @@ export async function fetchTotalStatsEvents({ projectId, range }: FetchTotalStat
       uniqExactIf(session_id, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') AS total_views_prev,
       uniqExactIf(event_name, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != '$page_view') AS total_events_prev,
 
-      if(total_conversions_prev = 0, 0, ((total_conversions_cur - total_conversions_prev) / total_conversions_prev) * 100) AS total_conversion_change_pct,
-      if(total_views_prev = 0, 0, ((total_views_cur - total_views_prev) / total_views_prev) * 100) AS total_views_change_pct
+      if(total_conversions_prev = 0, NULL, ((total_conversions_cur - total_conversions_prev) / total_conversions_prev) * 100) AS total_conversion_change_pct,
+      if(total_views_prev = 0, NULL, ((total_views_cur - total_views_prev) / total_views_prev) * 100) AS total_views_change_pct
     FROM custom_events
     WHERE 
       project_id = ${projectId} 

@@ -11,7 +11,7 @@ type TableData = {
   views: string;
   conversions: string;
   conversionRate: string;
-  difference: number;
+  difference: number | null;
 };
 
 const columns: ColumnDef<TableData>[] = [
@@ -32,6 +32,9 @@ const columns: ColumnDef<TableData>[] = [
     header: 'VS PREVIOUS',
     cell: ({ row }) => {
       const value = row.original.difference;
+      if (value === null) {
+        return <span className="text-muted-foreground text-sm">—</span>;
+      }
       return (
         <span
           className={cn(`text-status-poor flex items-center justify-end gap-1 text-sm`, {
@@ -62,11 +65,11 @@ export function AnalyticsTable({ eventStats }: Props) {
       eventStats.map(
         (v) =>
           ({
-            conversionRate: `${Number(v.conversion_rate).toFixed(2)}%`,
-            conversions: `${Number(v.conversions_cur).toLocaleString()}`,
-            difference: Number(v.conversion_change_pct),
+            conversionRate: v.conversion_rate === null ? '—' : `${v.conversion_rate.toFixed(2)}%`,
+            conversions: `${v.conversions_cur.toLocaleString()}`,
+            difference: v.conversion_change_pct,
             route: `${v.route}`,
-            views: `${Number(v.views_cur).toLocaleString()}`
+            views: `${v.views_cur.toLocaleString()}`
           }) satisfies TableData
       ),
     [eventStats]
