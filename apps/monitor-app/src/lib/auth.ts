@@ -3,12 +3,12 @@ import { admin } from "better-auth/plugins";
 import { env } from "@/env";
 import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
 import { nextCookies } from "better-auth/next-js";
-import { ac, ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl } from "@/lib/auth-shared";
+import { accessControl, ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl } from "@/lib/auth-shared";
 
 export const adminPluginOptions = {
   defaultRole: AUTH_ROLES_MAP.member,
   adminRoles: ADMIN_ROLES,
-  ac,
+  ac: accessControl,
   roles: roleAccessControl,
   schema: {
     user: { fields: { banExpires: "ban_expires", banReason: "ban_reason" } },

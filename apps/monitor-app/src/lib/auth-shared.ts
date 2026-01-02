@@ -15,16 +15,16 @@ export const statement = {
   project: ["create", "get", "update", "delete", "reset"],
 } as const;
 
-export const ac = createAccessControl(statement);
+export const accessControl = createAccessControl(statement);
 
-type AccessControlObject = ReturnType<typeof ac.newRole>;
+type AccessControlObject = ReturnType<typeof accessControl.newRole>;
 
 export const roleAccessControl = {
-  [AUTH_ROLES_MAP.admin]: ac.newRole({
+  [AUTH_ROLES_MAP.admin]: accessControl.newRole({
     ...adminAc.statements,
     project: ["create", "get", "update", "delete", "reset"],
   }),
-  [AUTH_ROLES_MAP.member]: ac.newRole({
+  [AUTH_ROLES_MAP.member]: accessControl.newRole({
     ...userAc.statements,
     project: ["get"],
   }),
