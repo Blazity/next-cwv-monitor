@@ -103,7 +103,7 @@ describe('projects-list-service (integration)', () => {
       UNION ALL
       SELECT ${projectId1}, '/', 'desktop', 'LCP', yesterday(), countState()
       UNION ALL
-      SELECT ${projectId2}, '/settings', 'mobile', 'FID', today(), countState()
+      SELECT ${projectId2}, '/settings', 'mobile', 'LCP', today(), countState()
     `.command();
 
     const result = await projectsListService.listWithViews();
