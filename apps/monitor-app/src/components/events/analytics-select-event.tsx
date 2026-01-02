@@ -13,16 +13,17 @@ type Props = {
 export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
   const filteredEvents = events.filter((e) => !eventDisplaySettings?.[e]?.isHidden);
   const hasEvents = filteredEvents.length > 0;
+  const eventEnumValues = events.length > 0 ? events : [""];
 
   const [selectedEvent, setSelectedEvent] = useQueryState(
     "event",
-    parseAsStringEnum(events)
-      .withDefault(filteredEvents[0] || "")
+    parseAsStringEnum(eventEnumValues)
+      .withDefault(filteredEvents[0] ?? eventEnumValues[0])
       .withOptions({ shallow: false }),
   );
 
   useEffect(() => {
-    if (hasEvents && !filteredEvents.includes(selectedEvent)) {
+    if (hasEvents && (!selectedEvent || !filteredEvents.includes(selectedEvent))) {
       void setSelectedEvent(filteredEvents[0]);
     }
   }, [filteredEvents, setSelectedEvent, selectedEvent, hasEvents]);
@@ -30,6 +31,8 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
   if (!hasEvents) {
     return (
       <div className="flex items-center gap-3 opacity-50">
+        <span className="text-muted-foreground text-sm">Viewing:</span>
+        <span className="text-muted-foreground text-sm italic">No events</span>
       </div>
     );
   }
