@@ -11,6 +11,7 @@ type TableData = {
   views: string;
   conversions: string;
   conversionRate: string;
+  previousConversionRate: string;
   difference: number | null;
 };
 
@@ -27,6 +28,7 @@ const columns: ColumnDef<TableData>[] = [
     header: 'CONVERSION RATE',
     cell: ({ row }) => <span className="text-foreground text-sm font-medium">{row.original.conversionRate}</span>
   },
+  { accessorKey: 'previousConversionRate', header: 'PREVIOUS RATE' },
   {
     accessorKey: 'difference',
     header: 'VS PREVIOUS',
@@ -66,6 +68,7 @@ export function AnalyticsTable({ eventStats }: Props) {
         (v) =>
           ({
             conversionRate: v.conversion_rate === null ? '—' : `${v.conversion_rate.toFixed(2)}%`,
+            previousConversionRate: v.conversion_rate_prev === null ? '—' : `${v.conversion_rate_prev.toFixed(2)}%`,
             conversions: `${v.conversions_cur.toLocaleString()}`,
             difference: v.conversion_change_pct,
             route: `${v.route}`,

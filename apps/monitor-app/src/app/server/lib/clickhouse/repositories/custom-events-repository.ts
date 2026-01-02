@@ -113,6 +113,7 @@ type FetchEventsStatsDataResult = {
   views_cur: number;
   conversions_prev: number;
   views_prev: number;
+  conversion_rate_prev: number | null;
   conversion_change_pct: number | null;
   views_change_pct: number | null;
   conversion_rate: number | null;
@@ -124,18 +125,26 @@ export async function fetchEventsStatsData({ range, eventName, projectId }: Fetc
   const { currentStart, prevStart } = getPeriodDates(range);
 
   const query = sql<FetchEventsStatsDataResult>`
+    WITH
+      if(views_cur = 0, NULL, (conversions_cur / views_cur) * 100) AS conversion_rate,
+      if(views_prev = 0, NULL, (conversions_prev / views_prev) * 100) AS conversion_rate_prev
     SELECT
       route,
       uniqExact(session_id) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = '$page_view') as views_cur,
       uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = ${eventName}) as conversions_cur,
       uniqExact(session_id) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') as views_prev,
       uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${eventName}) as conversions_prev,
-  
-      if(views_cur = 0, NULL, (conversions_cur / views_cur) * 100) as conversion_rate,
 
-      if(conversions_prev = 0, NULL, ((conversions_cur - conversions_prev) / ((conversions_cur + conversions_prev) / 2)) * 100) AS conversion_change_pct,
-      if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev) / 2)) * 100) AS views_change_pct
-  
+      conversion_rate,
+      conversion_rate_prev,
+      if(
+        conversion_rate_prev IS NULL OR conversion_rate_prev = 0,
+        NULL,
+        ((conversion_rate - conversion_rate_prev) / conversion_rate_prev) * 100
+      ) AS conversion_change_pct,
+
+      if(views_prev = 0, NULL, ((views_cur - views_prev) / views_prev) * 100) AS views_change_pct
+
     FROM custom_events
     WHERE project_id = ${projectId}
       AND recorded_at >= ${prevStart}
