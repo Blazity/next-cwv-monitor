@@ -11,8 +11,7 @@ import { dashboardSearchParamsCache } from '@/lib/search-params';
 import { CACHE_LIFE_DEFAULT } from '@/lib/cache';
 import { getAuthorizedSession } from '@/lib/auth-utils';
 import { notFound } from 'next/navigation';
-import type { OverviewDeviceType as DeviceType } from '@/app/server/domain/dashboard/overview/types';
-import { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
+import type { OverviewDeviceType as DeviceType, TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
 
 const dashboardOverviewService = new DashboardOverviewService();
 
