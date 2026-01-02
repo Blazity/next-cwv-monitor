@@ -87,7 +87,7 @@ const buildColumnValuePairs = (
   model: string,
   fieldNameGetter: FieldNameGetter
 ): { columns: SqlFragment; values: SqlFragment } => {
-  const entries = Object.entries(formatDataForInsert(data));
+  const entries = Object.entries(formatDataForInsert(data)).filter(([, value]) => value !== undefined);
   if (isEmpty(entries)) throw new Error('No fields to insert');
 
   const columns = joinSql(
@@ -95,7 +95,10 @@ const buildColumnValuePairs = (
     sql`, `
   );
   const values = joinSql(
-    entries.map(([, value]) => sql`${sql.param(value, 'String')}`),
+    entries.map(([, value]) => {
+      if (value === null) return sql`NULL`;
+      return sql`${sql.param(value, 'String')}`;
+    }),
     sql`, `
   );
 
@@ -206,10 +209,15 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         if (isEmpty(entries)) throw new Error('No fields to update');
 
         return joinSql(
-          entries.map(
-            ([key, value]) =>
-              sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`
-          ),
+          entries
+            .map(([key, value]) => {
+              if (key === 'updated_at') return null;
+              if (value === null) {
+                return sql`${sql.identifier(getFieldName({ model, field: key }))} = NULL`;
+              }
+              return sql`${sql.identifier(getFieldName({ model, field: key }))} = ${sql.param(formatDateValue(value), 'String')}`;
+            })
+            .filter((v) => v !== null),
           sql`, `
         );
       };
@@ -221,7 +229,8 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
         },
 
         findOne: async ({ model, where }) => {
-          return selectOne(model, buildWhereClause(where, model));
+          const result = await selectOne(model, buildWhereClause(where, model));
+          return result;
         },
 
         findMany: async ({ model, where, limit, offset, sortBy }) => {
@@ -251,11 +260,10 @@ export const clickHouseAdapter = (config: ClickHouseAdapterConfig = {}) =>
 
         update: async ({ model, where, update: updateData }) => {
           const safeData = omit(updateDataSchema.parse(updateData), ['id', 'createdAt', 'updatedAt']);
-          const whereClause = buildWhereClause(where, model);
-
+          const userToUpdate = await selectOne(model, buildWhereClause(where, model));
+          const setUser = { ...userToUpdate, ...updateData };
           if (!isEmpty(safeData)) {
-            const setClause = buildSetClause(safeData, model);
-            await buildUpdateQuery(model, setClause, whereClause).command();
+            await buildInsertQuery(model, setUser).command();
           }
 
           return selectOne(model, buildWhereClause(where, model));

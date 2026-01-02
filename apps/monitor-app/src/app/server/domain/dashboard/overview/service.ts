@@ -9,6 +9,7 @@ import {
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import { ArkErrors } from "arktype";
 
 import {
   type DashboardOverview,
@@ -21,6 +22,7 @@ import {
   METRIC_NAMES,
   QuickStatsData,
 } from "@/app/server/domain/dashboard/overview/types";
+import { projectIdSchema } from "@/app/server/domain/projects/schema";
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -52,6 +54,11 @@ function getPreviousPeriod(start: Date, end: Date): { start: Date; end: Date } {
 
 export class DashboardOverviewService {
   async getOverview(query: GetDashboardOverviewQuery): Promise<GetDashboardOverviewResult> {
+    const validatedProjectId = projectIdSchema(query.projectId);
+    if (validatedProjectId instanceof ArkErrors) {
+      return { kind: "project-not-found", projectId: query.projectId };
+    }
+
     const project = await getProjectById(query.projectId);
     if (!project) {
       return { kind: "project-not-found", projectId: query.projectId };
@@ -131,8 +138,11 @@ export class DashboardOverviewService {
       statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
-    const currentTotalViews = metricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
-    const previousTotalViews = previousMetricsRows.reduce((acc, row) => acc + Number(row.sample_size || 0), 0);
+    const lcpRow = metricsRows.find(r => r.metric_name === 'LCP');
+    const prevLcpRow = previousMetricsRows.find(r => r.metric_name === 'LCP');
+    
+    const currentTotalViews = Number(lcpRow?.sample_size || 0);
+    const previousTotalViews = Number(prevLcpRow?.sample_size || 0);
 
     let viewTrend = 0;
     if (previousTotalViews > 0) {
