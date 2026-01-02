@@ -1,8 +1,8 @@
-import { TimeRangeKey } from '@/app/server/domain/dashboard/overview/types';
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { CustomEventRow, InsertableCustomEventRow } from '@/app/server/lib/clickhouse/schema';
-import { chunkGenerator, daysToNumber } from '@/lib/utils';
-import { map, mapValues } from 'remeda';
+import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
+import { chunkGenerator, daysToNumber, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
+import { coerceClickHouseDateTime } from "@/lib/utils";
 
 type CustomEventFilters = {
   projectId: string;
@@ -16,8 +16,8 @@ type CustomEventFilters = {
 export async function insertCustomEvents(events: InsertableCustomEventRow[]): Promise<void> {
   if (events.length === 0) return;
   const rows = events.map((event) => {
-    const recordedAt = event.recorded_at ?? new Date();
-    const ingestedAt = event.ingested_at ?? new Date();
+    const recordedAt = coerceClickHouseDateTime(event.recorded_at ?? new Date());
+    const ingestedAt = coerceClickHouseDateTime(event.ingested_at ?? new Date());
 
     return [
       event.project_id,
@@ -27,7 +27,7 @@ export async function insertCustomEvents(events: InsertableCustomEventRow[]): Pr
       event.device_type,
       event.event_name,
       recordedAt,
-      ingestedAt
+      ingestedAt,
     ];
   });
 
@@ -46,16 +46,16 @@ export async function insertCustomEvents(events: InsertableCustomEventRow[]): Pr
           ingested_at
         )
         VALUES ${sql.values(chunk, [
-          'String',
-          'String',
-          'String',
-          'String',
-          'String',
-          'String',
-          'DateTime64(3)',
-          'DateTime64(3)'
+          "String",
+          "String",
+          "String",
+          "String",
+          "String",
+          "String",
+          "DateTime64(3)",
+          "DateTime64(3)",
         ])}
-      `.command()
+      `.command(),
     );
   }
   await Promise.all(promiseChunk);
@@ -87,11 +87,13 @@ export async function fetchCustomEvents(filters: CustomEventFilters): Promise<Cu
   }
 
   if (start) {
-    query.append(sql` AND recorded_at >= ${start}`);
+    const startCoerced = coerceClickHouseDateTime(start);
+    query.append(sql` AND recorded_at >= ${startCoerced}`);
   }
 
   if (end) {
-    query.append(sql` AND recorded_at <= ${end}`);
+    const endCoerced = coerceClickHouseDateTime(end);
+    query.append(sql` AND recorded_at <= ${endCoerced}`);
   }
 
   query.append(sql` ORDER BY recorded_at DESC LIMIT ${limit}`);
@@ -110,8 +112,6 @@ type FetchEventsStatsDataResult = {
   conversions_cur: string;
   views_cur: string;
   conversions_prev: string;
-  events_prev: string;
-  events_cur: string;
   views_prev: string;
   conversion_change_pct: string;
   views_change_pct: string;
@@ -119,57 +119,33 @@ type FetchEventsStatsDataResult = {
 };
 
 export async function fetchEventsStatsData({ range, eventName, projectId }: FetchEventsStatsData) {
-  const negativeRange = daysToNumber[range] * -1;
   if (!eventName) return [];
+
+  const { currentStart, prevStart } = getPeriodDates(range);
+
   const query = sql<FetchEventsStatsDataResult>`
     SELECT
-    	ce.route,
-    	uniqExactIf(tuple(ce.session_id, ce.event_name),
-                ce.recorded_at >= addDays(now(), ${negativeRange}) AND ce.recorded_at < now()
-                AND ce.event_name NOT LIKE '$page_view') AS conversions_cur,
-    	uniqExactIf(tuple(ce.session_id),
-                ce.recorded_at >= addDays(now(), ${negativeRange}) AND ce.recorded_at < now()
-                AND ce.event_name LIKE '$page_view') AS views_cur,
-      uniqExactIf(tuple(ce.session_id, ce.event_name),
-          ce.recorded_at >= addDays(now(), ${negativeRange})
-          AND ce.recorded_at < now() AND ce.event_name NOT LIKE '$page_view'
-        ) AS events_cur,
+      route,
+      uniqExact(session_id) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = '$page_view') as views_cur,
+      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = ${eventName}) as conversions_cur,
+      uniqExact(session_id) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') as views_prev,
+      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${eventName}) as conversions_prev,
+  
+      if(views_cur > 0, (conversions_cur / views_cur) * 100, 0) as conversion_rate,
 
-    	uniqExactIf(tuple(ce.session_id, ce.event_name),
-                ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at < addDays(now(), ${negativeRange})
-                AND ce.event_name NOT LIKE '$page_view') AS conversions_prev,
-    	uniqExactIf(tuple(ce.session_id),
-                ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at < addDays(now(), ${negativeRange})
-                AND ce.event_name LIKE '$page_view') AS views_prev,
-      uniqExactIf(tuple(ce.session_id, ce.event_name),
-                    ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange})
-                    AND ce.recorded_at < addDays(now(), ${negativeRange})
-                    AND ce.event_name NOT LIKE '$page_view'
-                ) AS events_prev,
-
-    	if(conversions_prev = 0, NULL, ((conversions_cur - conversions_prev) / ((conversions_cur + conversions_prev)/ 2)) * 100) AS conversion_change_pct,
-    	if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev)/ 2)) * 100) AS views_change_pct,
-      if(events_cur = 0, NULL, (events_cur / views_cur) * 100) as conversion_rate
-
-        FROM
-        custom_events AS ce
-        WHERE
-        ce.recorded_at >= addDays(now(), 2 * ${negativeRange})
-        AND ce.recorded_at < now()
-        AND ce.project_id = ${projectId}
-        AND (ce.event_name = ${eventName} OR ce.event_name = '$page_view')
-        GROUP BY
-        ce.route
-        ORDER BY
-        conversions_cur DESC;
+      if(conversions_prev = 0, NULL, ((conversions_cur - conversions_prev) / ((conversions_cur + conversions_prev) / 2)) * 100) AS conversion_change_pct,
+      if(views_prev = 0, NULL, ((views_cur - views_prev) / ((views_cur + views_prev) / 2)) * 100) AS views_change_pct
+  
+    FROM custom_events
+    WHERE project_id = ${projectId}
+      AND recorded_at >= ${prevStart}
+      AND (event_name = ${eventName} OR event_name = '$page_view')
+    GROUP BY route
+    ORDER BY conversions_cur DESC
   `;
-  const data = await query;
-  return map(data, (v) =>
-    mapValues(v, (v) => {
-      if (!Number.isNaN(Number(v))) return Number(v);
-      return v;
-    })
-  );
+
+  const results = await query;
+  return results.map((row) => parseClickHouseNumbers(row));
 }
 
 type FetchTotalStatsEvents = {
@@ -191,49 +167,27 @@ type FetchTotalStatsEventsResult = {
 };
 
 export async function fetchTotalStatsEvents({ projectId, range }: FetchTotalStatsEvents) {
-  const negativeRange = daysToNumber[range] * -1;
+  const { now, currentStart, prevStart } = getPeriodDates(range);
+
   const query = await sql<FetchTotalStatsEventsResult>`
     SELECT
-    	uniqExactIf(tuple(ce.session_id, ce.event_name),
-                    ce.recorded_at >= addDays(now(), ${negativeRange}) AND ce.recorded_at <= now()
-                    AND ce.event_name NOT LIKE '$page_view'
-                    )
-              AS total_conversions_cur,
-    	uniqExactIf(ce.session_id,
-                    ce.recorded_at >= addDays(now(), ${negativeRange}) AND ce.recorded_at <= now()
-                    AND ce.event_name LIKE '$page_view') AS total_views_cur,
-    	uniqExactIf(
-          ce.event_name,
-          ce.recorded_at >= addDays(now(), ${negativeRange})
-          AND ce.recorded_at < now() AND ce.event_name NOT LIKE '$page_view'
-        ) AS total_events_cur,
- 
-    	uniqExactIf(tuple(ce.session_id, ce.event_name),
-                    ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at <= addDays(now(), ${negativeRange})
-                    AND ce.event_name NOT LIKE '$page_view') AS total_conversions_prev,
-    	uniqExactIf(ce.session_id,
-                    ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange}) AND ce.recorded_at <= addDays(now(), ${negativeRange})
-                    AND ce.event_name LIKE '$page_view') AS total_views_prev,
-    	uniqExactIf(
-                    ce.event_name,
-                    ce.recorded_at >= addDays(addDays(now(), ${negativeRange}), 2 * ${negativeRange})
-                    AND ce.recorded_at < addDays(now(), ${negativeRange})
-                    AND ce.event_name NOT LIKE '$page_view'
-                ) AS total_events_prev,
-      if(total_conversions_prev = 0, NULL, ((total_conversions_cur - total_conversions_prev) / ((total_conversions_cur + total_conversions_prev)/ 2)) * 100) AS total_conversion_change_pct,
-    	if(total_views_prev = 0, NULL, ((total_views_cur - total_views_prev) / ((total_views_cur + total_views_prev)/ 2)) * 100) AS total_views_change_pct
-    FROM
-    	custom_events ce
-    WHERE
-    	ce.recorded_at >= addDays(now(), 2 * ${negativeRange})
-    	AND ce.recorded_at <= now()
-    	AND ce.project_id = ${projectId}
+      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${currentStart} AND event_name != '$page_view') AS total_conversions_cur,
+      uniqExactIf(session_id, recorded_at >= ${currentStart} AND event_name = '$page_view') AS total_views_cur,
+      uniqExactIf(event_name, recorded_at >= ${currentStart} AND event_name != '$page_view') AS total_events_cur,
+
+      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != '$page_view') AS total_conversions_prev,
+      uniqExactIf(session_id, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') AS total_views_prev,
+      uniqExactIf(event_name, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != '$page_view') AS total_events_prev,
+
+      if(total_conversions_prev = 0, 0, ((total_conversions_cur - total_conversions_prev) / total_conversions_prev) * 100) AS total_conversion_change_pct,
+      if(total_views_prev = 0, 0, ((total_views_cur - total_views_prev) / total_views_prev) * 100) AS total_views_change_pct
+    FROM custom_events
+    WHERE 
+      project_id = ${projectId} 
+      AND recorded_at >= ${prevStart} AND recorded_at <= ${now}
   `;
-  const [totalStats] = query;
-  return mapValues(totalStats, (v) => {
-    if (!Number.isNaN(Number(v))) return Number(v);
-    return v;
-  });
+
+  return parseClickHouseNumbers(query[0]);
 }
 
 type FetchEvents = {
@@ -281,36 +235,40 @@ type FetchConversionTrendResult = {
 };
 
 export async function fetchConversionTrend({ projectId, eventName, range }: FetchConversionTrend) {
-  const negativeRange = daysToNumber[range] * -1;
   if (!eventName) return [];
+
+  const { now, currentStart } = getPeriodDates(range);
+
+  const startUnix = Math.floor(currentStart.getTime() / 1000);
+  const endUnix = Math.floor(now.getTime() / 1000);
+
   const query = sql<FetchConversionTrendResult>`
     SELECT
-    	day,
-    	views,
-    	events,
-    	if(views = 0, NULL, events / views * 100) AS conversion_rate
-    FROM
-    	(
-    	SELECT
-    		toDate(ce.recorded_at) AS day,
-    		uniqExactIf(ce.session_id, ce.event_name = '$page_view') AS views,
-    		uniqExactIf(tuple(ce.session_id, ce.event_name), ce.event_name != '$page_view') AS events
-    	FROM
-    		custom_events AS ce
-    	WHERE
-    		ce.recorded_at >= toDate(addDays(now(), ${negativeRange}))
-    		AND ce.recorded_at < addDays(toDate(now()), 1)
-    		AND ce.project_id = ${projectId}
-        AND (ce.event_name = ${eventName} OR ce.event_name = '$page_view')
+      day,
+      views,
+      events,
+      if(views = 0, NULL, (events / views) * 100) AS conversion_rate
+    FROM (
+      SELECT
+        toDate(ce.recorded_at) AS day,
+        uniqExactIf(ce.session_id, ce.event_name = '$page_view') AS views,
+        uniqExactIf(tuple(ce.session_id, ce.event_name), ce.event_name = ${eventName}) AS events
+      FROM
+        custom_events AS ce
+      WHERE
+        ce.project_id = ${projectId}
+        /* Filter precisely by timestamp */
+        AND ce.recorded_at >= toDateTime64(${startUnix}, 3)
+        AND ce.recorded_at <= toDateTime64(${endUnix}, 3)
+        AND ce.event_name IN (${eventName}, '$page_view')
       GROUP BY
-    		day
+        day
     )
-    ORDER BY
-    	day
+    ORDER BY day
     WITH FILL
-    FROM
-    	toDate(addDays(now(), ${negativeRange}))
-      TO toDate(now())
+      /* Align fill start to the calendar day of our real-time start */
+      FROM toDate(toDateTime64(${startUnix}, 3))
+      TO toDate(toDateTime64(${endUnix}, 3))
       STEP 1;
   `;
 

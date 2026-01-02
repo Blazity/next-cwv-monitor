@@ -58,18 +58,22 @@ export async function execOrThrow(target: StartedTestContainer, command: string[
   }
 }
 
-export async function runClickHouseMigrations(): Promise<void> {
-  const scriptPath = path.resolve(process.cwd(), 'scripts/run-clickhouse-migrate.mjs');
+
+export async function runClickHouseMigrations(dynamicOverrides: Record<string, string>): Promise<void> {
+  const scriptPath = path.resolve(process.cwd(), "scripts/run-clickhouse-migrate.mjs");
 
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, [scriptPath], {
       cwd: path.resolve(process.cwd()),
-      stdio: 'inherit',
-      env: {...process.env}
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        ...dynamicOverrides,
+      },
     });
 
-    child.on('error', reject);
-    child.on('exit', (code) => {
+    child.on("error", reject);
+    child.on("exit", (code) => {
       if (code === 0) {
         resolve();
       } else {
@@ -128,9 +132,14 @@ export async function setupClickHouseContainer(): Promise<{
     'CREATE DATABASE'
   );
 
-  // We only override the ClickHouse port for tests. Everything else comes from `.env.test` / `.env.ci`.
   overrideClickHousePortForTest(port);
-  await runClickHouseMigrations();
+  await runClickHouseMigrations({
+    CH_MIGRATIONS_HOST: host,
+    CH_MIGRATIONS_PORT: String(port),
+    CH_MIGRATIONS_DB: cfg.database,
+    CH_MIGRATIONS_USER: cfg.username,
+    CH_MIGRATIONS_PASSWORD: cfg.password,
+  });
 
   await waitForClickHouse(host, port, 30, {
     database: cfg.database,

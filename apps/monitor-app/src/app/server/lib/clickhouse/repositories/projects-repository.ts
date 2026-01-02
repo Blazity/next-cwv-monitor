@@ -5,18 +5,7 @@ import type {
   ProjectWithViews,
   UpdatableProjectRow,
 } from "@/app/server/lib/clickhouse/schema";
-
-function coerceClickHouseDateTime(value: Date | string): Date {
-  if (value instanceof Date) return value;
-
-  // ClickHouse DateTime commonly comes back as `YYYY-MM-DD HH:mm:ss` (no timezone).
-  // Treat that as UTC to avoid local-time parsing shifts.
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
-    return new Date(`${value.replace(" ", "T")}Z`);
-  }
-
-  return new Date(value);
-}
+import { coerceClickHouseDateTime } from "@/lib/utils";
 
 export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();
@@ -103,7 +92,7 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
   const { id, name, slug, created_at, events_display_settings } = project;
-  const createdAt = created_at instanceof Date ? created_at : new Date(created_at);
+  const createdAt = coerceClickHouseDateTime(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
   await sql`

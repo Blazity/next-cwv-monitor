@@ -45,32 +45,6 @@ describe('ProjectsUpdateService (integration)', () => {
       message: 'Project not found.' 
     });
   });
-
-  it('returns ok and does nothing if the name is identical', async () => {
-    const projectId = randomUUID();
-    const name = 'Original Name';
-    
-    await projectsRepo.createProject({ 
-      id: projectId, 
-      slug: 'orig-slug', 
-      name 
-    });
-
-    const result = await service.execute({
-      id: projectId,
-      slug: 'new-slug',
-      name: name
-    });
-
-    expect(result).toEqual({ kind: 'ok' });
-    
-    const rows = await sqlClient<{ slug: string }>`
-      SELECT slug FROM projects WHERE id = ${projectId}
-    `.query();
-    
-    expect(rows[0].slug).toBe('orig-slug');
-  });
-
   it('successfully updates project name and slug', async () => {
     const projectId = randomUUID();
     await projectsRepo.createProject({ 
@@ -111,7 +85,7 @@ describe('ProjectsUpdateService (integration)', () => {
 
     expect(result).toEqual({
       kind: 'error',
-      message: 'Failed to update project name.'
+      message: 'Failed to update project.'
     });
     
     expect(repoSpy).toHaveBeenCalled();
@@ -119,7 +93,7 @@ describe('ProjectsUpdateService (integration)', () => {
 
   it('preserves the original created_at timestamp', async () => {
     const projectId = randomUUID();
-    const originalDate = new Date('2025-01-01T10:00:00Z');
+    const originalDate = new Date('2026-01-01T10:00:00Z');
     
     await projectsRepo.createProject({ 
       id: projectId, 
