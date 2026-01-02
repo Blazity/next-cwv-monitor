@@ -36,8 +36,13 @@ export default async function ProjectPage({
   await getAuthorizedSession();
   const overview = await getCachedOverview(projectId, deviceType, timeRange);
 
-  if (overview.kind === 'project-not-found') notFound();
-  if (overview.kind !== 'ok') throw new Error(`Failed: ${overview.kind}`);
+  if (overview.kind === 'project-not-found') {
+    notFound();
+  }
+
+  if (overview.kind !== 'ok') {
+    throw new Error(`Failed: ${overview.kind}`);
+  }
 
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
