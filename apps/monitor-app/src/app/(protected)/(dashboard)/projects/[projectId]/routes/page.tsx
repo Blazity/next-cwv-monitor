@@ -92,7 +92,7 @@ export default async function RoutesPage({
 
   if (routesResult.kind === "unsupported-metric") {
     return (
-      <div>
+      <div className="space-y-6">
         <PageHeader title="Routes" description={headerDescription}>
           <RouteHelpTooltip />
         </PageHeader>
@@ -102,7 +102,7 @@ export default async function RoutesPage({
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <PageHeader title="Routes" description={headerDescription}>
         <RouteHelpTooltip />
       </PageHeader>

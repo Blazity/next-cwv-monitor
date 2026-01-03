@@ -36,7 +36,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
     <>
       {showFilters && (
         <div className="pointer-events-none sticky top-14 z-40 -mx-3 h-px sm:-mx-4 lg:-mx-6">
-          <div className="absolute left-0 right-0 top-0 overflow-hidden">
+          <div className="absolute top-0 right-0 left-0 overflow-hidden">
             <div
               className={cn(
                 "bg-background/95 border-border border-b backdrop-blur will-change-transform",
@@ -58,8 +58,8 @@ export function PageHeader({ title, description, children, showFilters = true }:
         </div>
       )}
 
-      <div ref={headerRef} className="flex items-center justify-between gap-4">
-        <div className="flex gap-2 min-w-0 transition-all duration-200 flex-col sm:flex-row items-start sm:items-center">
+      <div ref={headerRef} className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-2 transition-all duration-200">
           <div className="flex items-center gap-2">
             <h1 className="text-foreground text-2xl font-semibold">{title}</h1>
             {children}
