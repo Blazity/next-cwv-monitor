@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
 import { Card } from "@/components/ui/card";
@@ -33,6 +33,7 @@ type RoutesListProps = {
 
 export function RoutesList({ projectId, data, pageSize, appliedMetric, appliedPercentile }: RoutesListProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useQueryStates(routesListSearchParsers, QUERY_STATE_OPTIONS);
   const currentPage = Math.max(1, query.page);
@@ -100,8 +101,13 @@ export function RoutesList({ projectId, data, pageSize, appliedMetric, appliedPe
   );
 
   const handleRowClick = (route: string) => {
+    const qs = searchParams.toString();
     startTransition(() => {
-      router.push(`/projects/${projectId}/routes/${encodeURIComponent(route)}`);
+      router.push(
+        qs
+          ? `/projects/${projectId}/routes/${encodeURIComponent(route)}?${qs}`
+          : `/projects/${projectId}/routes/${encodeURIComponent(route)}`,
+      );
     });
   };
 
