@@ -12,29 +12,23 @@ import { Label } from "@/components/ui/label";
 import { changePasswordAction } from "@/app/server/actions/users/change-password";
 import { type Route } from "next";
 import { ChangePasswordData, changePasswordSchema } from "@/app/server/domain/users/change-password/types";
-import { authClient } from "@/lib/auth-client";
 
 export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
   const router = useRouter();
 
   const { execute, isPending, result } = useAction(changePasswordAction, {
     onSuccess: async () => {
-      await authClient.getSession({
-        fetchOptions: {
-          cache: "no-store",
-        },
-      });
       router.push(callbackUrl);
       router.refresh();
     },
     onError: ({ error }) => {
       if (error.validationErrors) {
-        Object.entries(error.validationErrors).forEach(([key, messages]) => {
+        for (const [key, messages] of Object.entries(error.validationErrors)) {
           setError(key as keyof ChangePasswordData, {
             type: "server",
-            message: messages.length ? messages[0] : "Invalid input",
+            message: messages.length > 0 ? messages[0] : "Invalid input",
           });
-        });
+        }
       }
 
       if (error.serverError) {
@@ -95,7 +89,7 @@ export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="mt-6">
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? "Updating..." : "Update Password"}
           </Button>

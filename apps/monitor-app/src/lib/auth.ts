@@ -5,13 +5,13 @@ import { env } from "@/env";
 import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
 import { nextCookies } from "better-auth/next-js";
 import { setSessionCookie } from "better-auth/cookies";
-import { ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl } from "@/lib/auth-shared";
-
+import { ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl, accessControl } from "@/lib/auth-shared";
 
 export const adminPluginOptions = {
   defaultRole: AUTH_ROLES_MAP.member,
   adminRoles: ADMIN_ROLES,
   roles: roleAccessControl,
+  ac: accessControl,
   schema: {
     user: { fields: { banExpires: "ban_expires", banReason: "ban_reason" } },
   },
