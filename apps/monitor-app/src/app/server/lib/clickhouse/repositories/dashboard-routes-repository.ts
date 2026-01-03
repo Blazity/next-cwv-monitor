@@ -1,12 +1,12 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
-export type RoutesDeviceFilter = DeviceType | 'all';
-export type MetricName = 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB';
-export type Percentile = 'p50' | 'p75' | 'p90' | 'p95' | 'p99';
+export type RoutesDeviceFilter = DeviceType | "all";
+export type MetricName = "LCP" | "INP" | "CLS" | "FCP" | "TTFB";
+export type Percentile = "p50" | "p75" | "p90" | "p95" | "p99";
 
-export type SortField = 'route' | 'views' | 'metric';
-export type SortDirection = 'asc' | 'desc';
+export type SortField = "route" | "views" | "metric";
+export type SortDirection = "asc" | "desc";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -21,7 +21,7 @@ type BaseFilters = {
   deviceType: RoutesDeviceFilter;
 };
 
-const PAGE_VIEW_EVENT_NAME = '$page_view';
+const PAGE_VIEW_EVENT_NAME = "$page_view";
 
 function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -40,7 +40,7 @@ function endExclusiveUtc(date: Date): Date {
 function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date } {
   return {
     start: startOfDayUtc(range.start),
-    endExclusive: endExclusiveUtc(range.end)
+    endExclusive: endExclusiveUtc(range.end),
   };
 }
 
@@ -53,7 +53,7 @@ function buildPageViewsWhereClause(filters: BaseFilters, search?: string): SqlFr
       AND event_name = ${PAGE_VIEW_EVENT_NAME}
   `;
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 
@@ -85,7 +85,7 @@ function buildCustomEventsWhereClause(filters: BaseFilters, eventNames: string[]
     where.append(sql`)`);
   }
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 
@@ -96,7 +96,12 @@ function buildCustomEventsWhereClause(filters: BaseFilters, eventNames: string[]
   return where;
 }
 
-function buildDailyAggregatesWhereClause(filters: BaseFilters, metricName: MetricName, route?: string): SqlFragment {
+function buildDailyAggregatesWhereClause(
+  filters: BaseFilters,
+  metricName: MetricName,
+  route?: string,
+  search?: string,
+): SqlFragment {
   const start = toDateOnlyString(filters.range.start);
   const end = toDateOnlyString(filters.range.end);
   const where = sql`
@@ -105,12 +110,35 @@ function buildDailyAggregatesWhereClause(filters: BaseFilters, metricName: Metri
       AND metric_name = ${metricName}
   `;
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 
   if (route) {
     where.append(sql` AND route = ${route}`);
+  }
+
+  if (search) {
+    where.append(sql` AND positionCaseInsensitive(route, ${search}) > 0`);
+  }
+
+  return where;
+}
+
+function buildDailyAggregatesBaseWhereClause(filters: BaseFilters, search?: string): SqlFragment {
+  const start = toDateOnlyString(filters.range.start);
+  const end = toDateOnlyString(filters.range.end);
+  const where = sql`
+    WHERE project_id = ${filters.projectId}
+      AND event_date BETWEEN toDate(${start}) AND toDate(${end})
+  `;
+
+  if (filters.deviceType !== "all") {
+    where.append(sql` AND device_type = ${filters.deviceType}`);
+  }
+
+  if (search) {
+    where.append(sql` AND positionCaseInsensitive(route, ${search}) > 0`);
   }
 
   return where;
@@ -126,7 +154,7 @@ function buildCwvEventsWhereClause(filters: BaseFilters, metricName: MetricName,
       AND recorded_at < ${endExclusive}
   `;
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 
@@ -135,19 +163,19 @@ function buildCwvEventsWhereClause(filters: BaseFilters, metricName: MetricName,
 
 function percentileIndex(percentile: Percentile): number {
   switch (percentile) {
-    case 'p50': {
+    case "p50": {
       return 1;
     }
-    case 'p75': {
+    case "p75": {
       return 2;
     }
-    case 'p90': {
+    case "p90": {
       return 3;
     }
-    case 'p95': {
+    case "p95": {
       return 4;
     }
-    case 'p99': {
+    case "p99": {
       return 5;
     }
   }
@@ -172,24 +200,39 @@ export type RoutesListRow = {
 
 export async function fetchRoutesListPage(query: RoutesListPageQuery): Promise<RoutesListRow[]> {
   const viewsWhere = buildPageViewsWhereClause(query, query.search);
-  const aggregatesWhere = buildDailyAggregatesWhereClause(query, query.metricName);
+  const routesWhere = buildDailyAggregatesBaseWhereClause(query, query.search);
+  const aggregatesWhere = buildDailyAggregatesWhereClause(query, query.metricName, undefined, query.search);
   const idx = percentileIndex(query.percentile);
 
   const q = sql<RoutesListRow>`
     SELECT
-      v.route AS route,
-      toString(v.views) AS views,
-      toString(m.metric_sample_size) AS metric_sample_size,
+      b.route AS route,
+      toString(ifNull(v.views, 0)) AS views,
+      toString(ifNull(m.metric_sample_size, 0)) AS metric_sample_size,
       m.percentiles AS percentiles,
       m.metric_value AS metric_value
     FROM (
+      SELECT route
+      FROM custom_events
+      ${viewsWhere}
+      GROUP BY route
+
+      UNION DISTINCT
+
+      SELECT route
+      FROM cwv_daily_aggregates
+      ${routesWhere}
+      GROUP BY route
+    ) b
+    LEFT JOIN (
       SELECT
         route,
-        countDistinct(session_id) AS views
+        toNullable(countDistinct(session_id)) AS views
       FROM custom_events
       ${viewsWhere}
       GROUP BY route
     ) v
+    USING (route)
     LEFT JOIN (
       SELECT
         route,
@@ -209,17 +252,19 @@ export async function fetchRoutesListPage(query: RoutesListPageQuery): Promise<R
     USING (route)
   `;
 
-  if (query.sort.field === 'route') {
-    q.append(query.sort.direction === 'asc' ? sql` ORDER BY route ASC` : sql` ORDER BY route DESC`);
-  } else if (query.sort.field === 'views') {
+  if (query.sort.field === "route") {
+    q.append(query.sort.direction === "asc" ? sql` ORDER BY route ASC` : sql` ORDER BY route DESC`);
+  } else if (query.sort.field === "views") {
     q.append(
-      query.sort.direction === 'asc' ? sql` ORDER BY v.views ASC, route ASC` : sql` ORDER BY v.views DESC, route ASC`
+      query.sort.direction === "asc"
+        ? sql` ORDER BY ifNull(v.views, 0) ASC, route ASC`
+        : sql` ORDER BY ifNull(v.views, 0) DESC, route ASC`,
     );
   } else {
     q.append(
-      query.sort.direction === 'asc'
-        ? sql` ORDER BY isNull(metric_value) ASC, metric_value ASC, v.views DESC, route ASC`
-        : sql` ORDER BY isNull(metric_value) ASC, metric_value DESC, v.views DESC, route ASC`
+      query.sort.direction === "asc"
+        ? sql` ORDER BY isNull(metric_value) ASC, metric_value ASC, ifNull(v.views, 0) DESC, route ASC`
+        : sql` ORDER BY isNull(metric_value) ASC, metric_value DESC, ifNull(v.views, 0) DESC, route ASC`,
     );
   }
 
@@ -237,6 +282,8 @@ type TotalCountRow = {
 
 export async function fetchRoutesListTotalCount(query: RoutesListTotalCountQuery): Promise<number> {
   const where = buildPageViewsWhereClause(query, query.search);
+  const routesWhere = buildDailyAggregatesBaseWhereClause(query, query.search);
+
   const rows = await sql<TotalCountRow>`
     SELECT
       toString(count()) AS total_routes
@@ -244,6 +291,13 @@ export async function fetchRoutesListTotalCount(query: RoutesListTotalCountQuery
       SELECT route
       FROM custom_events
       ${where}
+      GROUP BY route
+
+      UNION DISTINCT
+
+      SELECT route
+      FROM cwv_daily_aggregates
+      ${routesWhere}
       GROUP BY route
     )
   `;
@@ -264,10 +318,11 @@ export type RouteStatusDistributionRow = {
 };
 
 export async function fetchRoutesStatusDistribution(
-  query: RoutesStatusDistributionQuery
+  query: RoutesStatusDistributionQuery,
 ): Promise<RouteStatusDistributionRow[]> {
   const viewsWhere = buildPageViewsWhereClause(query, query.search);
-  const aggregatesWhere = buildDailyAggregatesWhereClause(query, query.metricName);
+  const routesWhere = buildDailyAggregatesBaseWhereClause(query, query.search);
+  const aggregatesWhere = buildDailyAggregatesWhereClause(query, query.metricName, undefined, query.search);
   const idx = percentileIndex(query.percentile);
 
   return sql<RouteStatusDistributionRow>`
@@ -287,6 +342,13 @@ export async function fetchRoutesStatusDistribution(
         SELECT route
         FROM custom_events
         ${viewsWhere}
+        GROUP BY route
+
+        UNION DISTINCT
+
+        SELECT route
+        FROM cwv_daily_aggregates
+        ${routesWhere}
         GROUP BY route
       ) v
       INNER JOIN (
@@ -348,7 +410,7 @@ export async function fetchRouteMetricsSummary(query: RouteMetricsSummaryQuery):
       AND event_date BETWEEN toDate(${start}) AND toDate(${end})
   `;
 
-  if (query.deviceType !== 'all') {
+  if (query.deviceType !== "all") {
     where.append(sql` AND device_type = ${query.deviceType}`);
   }
 
@@ -376,7 +438,7 @@ export type RouteMetricDailySeriesRow = {
 };
 
 export async function fetchRouteMetricDailySeries(
-  query: RouteMetricDailySeriesQuery
+  query: RouteMetricDailySeriesQuery,
 ): Promise<RouteMetricDailySeriesRow[]> {
   const where = buildDailyAggregatesWhereClause(query, query.metricName, query.route);
 
@@ -403,7 +465,7 @@ export type RouteMetricDistributionRow = {
 };
 
 export async function fetchRouteMetricDistribution(
-  query: RouteMetricDistributionQuery
+  query: RouteMetricDistributionQuery,
 ): Promise<RouteMetricDistributionRow[]> {
   const where = buildCwvEventsWhereClause(query, query.metricName, query.route);
 
