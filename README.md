@@ -12,7 +12,8 @@
 <p align="center">
   <a href="#"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Next.js-15+-black.svg" alt="Next.js 15+"></a>
+  <a href="#"><img src="https://img.shields.io/badge/SDK-Next.js_13+-black.svg" alt="SDK: Next.js 13+"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Monitor-Next.js_16-black.svg" alt="Monitor: Next.js 16"></a>
   <a href="#"><img src="https://img.shields.io/badge/ClickHouse-25.8-yellow.svg" alt="ClickHouse"></a>
 </p>
 
@@ -51,7 +52,9 @@ pnpm install
 pnpm docker:dev
 ```
 
-Then add the SDK to your Next.js app:
+Open [http://localhost:3000](http://localhost:3000) to access the dashboard, then create a project to get your `projectId`.
+
+Add the SDK to the Next.js app you want to monitor:
 
 ```tsx
 // app/providers.tsx
@@ -60,14 +63,17 @@ import { CWVMonitor } from "cwv-monitor-sdk/app-router";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <CWVMonitor projectId="YOUR_PROJECT_UUID" endpoint="http://localhost:3000">
+    <CWVMonitor
+      projectId="YOUR_PROJECT_UUID" // From the dashboard
+      endpoint="http://localhost:3000"
+    >
       {children}
     </CWVMonitor>
   );
 }
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to access the dashboard 🎉
+That's it! Your app will start sending CWV metrics 🎉
 
 ## ✨ Features
 
@@ -135,7 +141,7 @@ pnpm docker:dev
 | Monitor Dashboard | http://localhost:3000 |
 | Demo Client App   | http://localhost:3001 |
 
-> 📖 For production deployment guides (Docker, Kubernetes, reverse proxy), see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+> 📖 For production deployment guides, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## ⚙️ Configuration
 
