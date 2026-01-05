@@ -25,7 +25,8 @@
     "lint": "eslint",
     "dev": "tsup --watch",
     "test": "vitest",
-    "build": "tsup"
+    "build": "tsup",
+    "check-size": "node scripts/check-bundle-size.js"
   },
   "files": [
     "dist"
