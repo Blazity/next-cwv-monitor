@@ -57,7 +57,7 @@ Open [http://localhost:3000](http://localhost:3000) to access the dashboard, the
 Add the SDK to the Next.js app you want to monitor:
 
 ```tsx
-// app/providers.tsx
+// app/providers.tsx — wrap your root layout with this provider
 "use client";
 import { CWVMonitor } from "cwv-monitor-sdk/app-router";
 
@@ -72,6 +72,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 }
 ```
+
+> 💡 Using Pages Router? Import from `cwv-monitor-sdk/pages-router` instead and wrap your `_app.tsx`. See [SDK docs](./packages/client-sdk/README.md) for details.
 
 That's it! Your app will start sending CWV metrics 🎉
 
@@ -145,56 +147,26 @@ pnpm docker:dev
 
 ## ⚙️ Configuration
 
-### Environment Variables
-
-| Variable                | Required | Default       | Description                                                             |
-| ----------------------- | -------- | ------------- | ----------------------------------------------------------------------- |
-| `AUTH_BASE_URL`         | ✅       | —             | Base URL for auth callbacks (e.g., `http://localhost:3000`)             |
-| `BETTER_AUTH_SECRET`    | ✅       | —             | Secret for signing auth tokens                                          |
-| `INITIAL_USER_EMAIL`    | ✅       | —             | Email for the first admin user                                          |
-| `INITIAL_USER_PASSWORD` | ✅       | —             | Password for the first admin user (min 8 chars)                         |
-| `INITIAL_USER_NAME`     | ✅       | —             | Display name for the first admin user                                   |
-| `CLICKHOUSE_HOST`       | ✅       | `clickhouse`  | ClickHouse server hostname                                              |
-| `CLICKHOUSE_PORT`       | ✅       | `8123`        | ClickHouse HTTP port                                                    |
-| `CLICKHOUSE_DB`         | ✅       | `cwv_monitor` | ClickHouse database name                                                |
-| `CLICKHOUSE_USER`       | ✅       | `default`     | ClickHouse username                                                     |
-| `CLICKHOUSE_PASSWORD`   | ✅       | `secret`      | ClickHouse password                                                     |
-| `TRUST_PROXY`           | ❌       | `false`       | Set to `true` when behind a reverse proxy                               |
-| `LOG_LEVEL`             | ❌       | `info`        | Log level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` |
-
-### SDK Configuration
-
-See the full SDK documentation in [`packages/client-sdk/README.md`](./packages/client-sdk/README.md).
-
-**App Router** (`app/` directory):
-
-```tsx
-import { CWVMonitor } from "cwv-monitor-sdk/app-router";
-```
-
-**Pages Router** (`pages/` directory):
-
-```tsx
-import { CWVMonitor } from "cwv-monitor-sdk/pages-router";
-```
+- **Monitor App** — Environment variables and deployment options are documented in [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+- **Client SDK** — Usage and API reference in [`packages/client-sdk/README.md`](./packages/client-sdk/README.md)
 
 ## ❓ FAQ
 
-<details>
+<details open>
 <summary><strong>Why self-host CWV monitoring?</strong></summary>
 
 Self-hosting gives you **full data ownership**, no per-seat pricing, custom event correlation with business metrics, and the flexibility to run on your own infrastructure with no external dependencies.
 
 </details>
 
-<details>
+<details open>
 <summary><strong>What's the performance impact of the SDK?</strong></summary>
 
 The SDK is designed to be lightweight with tree-shakeable router-specific entrypoints. Events are batched and sent asynchronously using sendBeacon for reliable delivery without blocking navigation.
 
 </details>
 
-<details>
+<details open>
 <summary><strong>How long is data retained?</strong></summary>
 
 Default retention: **Raw events** — 90 days, **Daily aggregates** — 365 days. Older data is automatically cleaned up by ClickHouse TTL.
