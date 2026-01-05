@@ -1,22 +1,11 @@
-import { sql } from '@/app/server/lib/clickhouse/client';
+import { sql } from "@/app/server/lib/clickhouse/client";
 import type {
   InsertableProjectRow,
   ProjectRow,
   ProjectWithViews,
-  UpdatableProjectRow
-} from '@/app/server/lib/clickhouse/schema';
-
-function coerceClickHouseDateTime(value: Date | string): Date {
-  if (value instanceof Date) return value;
-
-  // ClickHouse DateTime commonly comes back as `YYYY-MM-DD HH:mm:ss` (no timezone).
-  // Treat that as UTC to avoid local-time parsing shifts.
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)) {
-    return new Date(`${value.replace(' ', 'T')}Z`);
-  }
-
-  return new Date(value);
-}
+  UpdatableProjectRow,
+} from "@/app/server/lib/clickhouse/schema";
+import { coerceClickHouseDateTime } from "@/lib/utils";
 
 export async function createProject(project: InsertableProjectRow): Promise<void> {
   const createdAtRaw = project.created_at ?? new Date();
@@ -41,8 +30,10 @@ export async function createProject(project: InsertableProjectRow): Promise<void
 }
 
 export async function getProjectById(id: string): Promise<ProjectRow | null> {
+  // TODO: We should consider don't we need top-level method that will use `use cache` with specific tag
+  // Now we are not caching projects that doesn't change very often
   const rows = await sql<ProjectRow>`
-    SELECT id, slug, name, created_at, updated_at
+    SELECT id, slug, name, events_display_settings, created_at, updated_at
     FROM projects FINAL
     WHERE id = ${id}
     ORDER BY updated_at DESC
@@ -110,17 +101,30 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 }
 
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
-  const { id, name, slug, created_at } = project;
+  const { id, name, slug, created_at, events_display_settings } = project;
   const createdAt = coerceClickHouseDateTime(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
 
+  const eventsDisplaySettingsValue =
+    events_display_settings === null || events_display_settings === undefined
+      ? sql.param(null, "Nullable(JSON)")
+      : events_display_settings;
+
   await sql`
-    INSERT INTO projects (id, name, slug, created_at, updated_at)
+    INSERT INTO projects (
+      id, 
+      name, 
+      slug, 
+      events_display_settings, 
+      created_at, 
+      updated_at
+    )
     VALUES (
       ${id}, 
       ${name}, 
       ${slug}, 
+      ${eventsDisplaySettingsValue},
       toDateTime(${createdAtSeconds}), 
       toDateTime(${updatedAtSeconds})
     )

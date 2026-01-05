@@ -1,15 +1,44 @@
 import { createSafeActionClient } from 'next-safe-action';
-import { ForbiddenError, getAuthorizedSession } from '@/lib/auth-utils';
+import { ForbiddenError, getAuthorizedSession, redirectToLogin, UnauthorizedError } from '@/lib/auth-utils';
 import { auth } from '@/lib/auth';
+
+function isNextRedirectError(value: unknown): value is { digest: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'digest' in value &&
+    typeof (value as { digest: unknown }).digest === 'string' &&
+    (value as { digest: string }).digest.startsWith('NEXT_REDIRECT')
+  );
+}
+
+function isNextNotFoundError(value: unknown): value is { digest: string } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'digest' in value &&
+    typeof (value as { digest: unknown }).digest === 'string' &&
+    (value as { digest: string }).digest.startsWith('NEXT_NOT_FOUND')
+  );
+}
 
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
-    return e.message || 'An unexpected error occurred.';
+    if (isNextRedirectError(e) || isNextNotFoundError(e)) throw e;
+    return e instanceof Error ? e.message || 'An unexpected error occurred.' : 'An unexpected error occurred.';
   }
 });
 
 export const authActionClient = actionClient.use(async ({ next }) => {
-  const session = await getAuthorizedSession();
+  let session;
+  try {
+    session = await getAuthorizedSession();
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return redirectToLogin();
+    }
+    throw error;
+  }
 
   return next({ ctx: { session } });
 });

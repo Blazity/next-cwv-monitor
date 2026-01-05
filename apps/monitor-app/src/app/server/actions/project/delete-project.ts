@@ -1,26 +1,22 @@
-'use server';
+"use server";
 
-import { redirect } from 'next/navigation';
-import { projectsDeleteService } from '@/app/server/domain/projects/delete/service';
-import { getAuthorizedSession, redirectToLogin, UnauthorizedError } from '@/lib/auth-utils';
-import { ActionResponse } from '@/app/server/actions/types';
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { permissionActionClient } from "@/app/server/lib/safe-action";
+import { projectsDeleteService } from "@/app/server/domain/projects/delete/service";
+import { deleteProjectSchema } from "@/app/server/domain/projects/delete/types";
 
-export async function deleteProjectAction(projectId: string): Promise<ActionResponse<never>> {
-  try {
-    await getAuthorizedSession();
+export const deleteProjectAction = permissionActionClient({ project: ["delete"] })
+  .inputSchema(deleteProjectSchema)
+  .action(async ({ parsedInput }) => {
+    const { projectId } = parsedInput;
 
     const result = await projectsDeleteService.execute(projectId);
 
-    if (result.kind === 'ok') {
-      redirect('/projects');
+    if (result.kind === "error") {
+      throw new Error(result.message);
     }
 
-    return { success: false, message: result.message };
-  } catch (error) {
-    if (error instanceof UnauthorizedError) {
-      return redirectToLogin();
-    }
-
-    return { success: false, message: 'An unexpected internal error occurred.' };
-  }
-}
+    revalidatePath("/projects");
+    redirect("/projects");
+  });

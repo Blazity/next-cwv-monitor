@@ -1,22 +1,14 @@
 import { betterAuth } from "better-auth";
 import { admin } from "better-auth/plugins";
-import { adminAc, userAc } from "better-auth/plugins/admin/access";
-
 import { env } from "@/env";
 import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
 import { nextCookies } from "better-auth/next-js";
-import { ADMIN_ROLES, AUTH_ROLES_MAP, AuthRole } from "@/lib/auth-shared";
-
-type AccessControlObject = typeof userAc;
-
-const roleAccessControl = {
-  [AUTH_ROLES_MAP.admin]: adminAc,
-  [AUTH_ROLES_MAP.member]: userAc,
-} satisfies Record<AuthRole, AccessControlObject>;
+import { accessControl, ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl } from "@/lib/auth-shared";
 
 export const adminPluginOptions = {
   defaultRole: AUTH_ROLES_MAP.member,
   adminRoles: ADMIN_ROLES,
+  ac: accessControl,
   roles: roleAccessControl,
   schema: {
     user: { fields: { banExpires: "ban_expires", banReason: "ban_reason" } },

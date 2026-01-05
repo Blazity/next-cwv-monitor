@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, useController, FormProvider } from "react-hook-form";
+import { useForm, useController } from "react-hook-form";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { useAction } from "next-safe-action/hooks";
 import { UserPlus } from "lucide-react";
@@ -72,47 +72,47 @@ export function CreateUserBtn() {
         successDescription="Save these credentials. The password will not be shown again."
         result={result}
       >
-        <FormProvider {...methods}>
-          <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">
-            <CustomInput
-              {...register("name")}
-              label="Name"
-              type="text"
-              placeholder="John Doe"
-              autoComplete="off"
-              data-1p-ignore
-            />
+        <form onSubmit={handleSubmit((data) => execute(data))} className="space-y-4">
+          <CustomInput
+            registration={register("name")}
+            control={control}
+            label="Name"
+            type="text"
+            placeholder="John Doe"
+            autoComplete="off"
+            data-1p-ignore
+          />
 
-            <CustomInput 
-              {...register("email")} 
-              label="Email" 
-              type="email" 
-              placeholder="john@example.com" 
-            />
+          <CustomInput
+            registration={register("email")}
+            control={control}
+            label="Email"
+            type="email"
+            placeholder="john@example.com"
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={roleField.value} onValueChange={roleField.onChange}>
-                <SelectTrigger id="role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select value={roleField.value} onValueChange={roleField.onChange}>
+              <SelectTrigger id="role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!isValid || isPending}>
-                {isPending ? "Creating..." : "Create User"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </FormProvider>
+          <DialogFooter className="pt-4">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!isValid || isPending}>
+              {isPending ? "Creating..." : "Create User"}
+            </Button>
+          </DialogFooter>
+        </form>
       </CredentialsDialog>
     </>
   );

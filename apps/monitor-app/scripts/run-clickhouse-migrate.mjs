@@ -1,54 +1,52 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process';
-import 'dotenv/config';
+import "dotenv/config";
+import { spawn } from "node:child_process";
+if (!process.env.CLICKHOUSE_HOST) {
+  await import("dotenv/config");
+}
 
-const {
-  CH_MIGRATIONS_HOST,
-  CH_MIGRATIONS_PORT,
-  CH_MIGRATIONS_DATABASE,
-  CH_MIGRATIONS_USER,
-  CH_MIGRATIONS_PASSWORD,
-  CLICKHOUSE_HOST,
-  CLICKHOUSE_PORT,
-  CLICKHOUSE_DB,
-  CLICKHOUSE_USER,
-  CLICKHOUSE_PASSWORD
-} = process.env;
+const getEnv = (key, fallback) => {
+  const val = process.env[key];
+  // Check if the value is literally "${VAR_NAME}"
+  if (!val || val.startsWith("${")) return fallback;
+  return val;
+};
 
-const rawHost = CH_MIGRATIONS_HOST ?? CLICKHOUSE_HOST ?? 'localhost';
-const port = CH_MIGRATIONS_PORT ?? CLICKHOUSE_PORT ?? '8123';
+const rawHost = getEnv("CH_MIGRATIONS_HOST", getEnv("CLICKHOUSE_HOST", "127.0.0.1"));
+const port = getEnv("CH_MIGRATIONS_PORT", getEnv("CLICKHOUSE_PORT", "8123"));
+const database = getEnv("CH_MIGRATIONS_DATABASE", getEnv("CLICKHOUSE_DB", "cwv_monitor"));
+const user = getEnv("CH_MIGRATIONS_USER", getEnv("CLICKHOUSE_USER", "default"));
+const password = getEnv("CH_MIGRATIONS_PASSWORD", getEnv("CLICKHOUSE_PASSWORD", ""));
+if (rawHost.includes("${")) {
+  throw new Error("Environment variables not properly resolved. Check your .env files.");
+}
 const hostHasProtocol = /^https?:\/\//.test(rawHost);
 const resolvedHost = hostHasProtocol ? rawHost : `http://${rawHost}:${port}`;
 
-const CH_MIGRATIONS_HOME = process.env.CH_MIGRATIONS_HOME ?? process.env.CH_MIGRATIONS_DIR ?? 'clickhouse/migrations';
-
-const database = CH_MIGRATIONS_DATABASE ?? CLICKHOUSE_DB ?? 'cwv_monitor';
-const user = CH_MIGRATIONS_USER ?? CLICKHOUSE_USER ?? 'default';
-const password = CH_MIGRATIONS_PASSWORD ?? CLICKHOUSE_PASSWORD ?? '';
-
+const CH_MIGRATIONS_HOME = process.env.CH_MIGRATIONS_HOME ?? process.env.CH_MIGRATIONS_DIR ?? "clickhouse/migrations";
 const extraArgs = process.argv.slice(2);
 
 const args = [
-  'migrate',
-  '--host',
+  "migrate",
+  "--host",
   resolvedHost,
-  '--db',
+  "--db",
   database,
-  '--user',
+  "--user",
   user,
-  '--password',
+  "--password",
   password,
-  '--migrations-home',
+  "--migrations-home",
   CH_MIGRATIONS_HOME,
-  ...extraArgs
+  ...extraArgs,
 ];
 
-let child = spawn('clickhouse-migrations', args, {
-  stdio: 'inherit',
+let child = spawn("clickhouse-migrations", args, {
+  stdio: "inherit",
   env: process.env,
-  shell: process.platform === 'win32'
+  shell: process.platform === "win32",
 });
 
-child.on('exit', (code) => {
+child.on("exit", (code) => {
   process.exit(code ?? 0);
 });

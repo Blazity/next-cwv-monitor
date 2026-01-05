@@ -1,30 +1,40 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { UseFormRegisterReturn, useFormState } from 'react-hook-form';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UseFormRegisterReturn, useFormState, Control, FieldValues, Path } from "react-hook-form";
 
-type Props = UseFormRegisterReturn &
-  React.ComponentProps<typeof Input> & {
-    label?: string;
-    placeholder?: string;
-    'data-1p-ignore'?: boolean | 'true' | 'false';
-  };
+type Props<T extends FieldValues> = {
+  label?: string;
+  registration: UseFormRegisterReturn<Path<T>>;
+  control: Control<T>;
+  "data-1p-ignore"?: boolean | "true" | "false";
+} & React.ComponentProps<typeof Input>
 
-export function CustomInput({
+export function CustomInput<T extends FieldValues>({
   label,
   placeholder,
-  autoComplete = 'off',
-  'data-1p-ignore': data1pIgnore = 'false',
+  autoComplete = "off",
+  "data-1p-ignore": data1pIgnore = "false",
+  registration,
+  control,
   ...props
-}: Props) {
-  const { errors } = useFormState();
-  const error = errors[props.name]?.message;
-  const id = props.id ?? props.name;
+}: Props<T>) {
+  const { errors } = useFormState({ control });
+
+  const error = errors[registration.name]?.message;
+  const id = props.id ?? registration.name;
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} placeholder={placeholder} autoComplete={autoComplete} data-1p-ignore={data1pIgnore} {...props} />
-      {typeof error === 'string' && <p className="text-red-500">{error}</p>}
+      {label && <Label htmlFor={id}>{label}</Label>}
+      <Input
+        id={id}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        data-1p-ignore={data1pIgnore}
+        {...registration}
+        {...props}
+      />
+      {typeof error === "string" && <p className="text-destructive text-xs font-medium">{error}</p>}
     </div>
   );
 }
