@@ -1,5 +1,5 @@
 import type { AppProps } from 'next/app';
-import { CWVMonitor } from 'cwv-monitor-sdk/pages-router';
+import { CWVMonitor } from '@next-cwv-monitor/cwv-monitor-sdk/pages-router';
 import { env } from '../env';
 import '../app/globals.css';
 

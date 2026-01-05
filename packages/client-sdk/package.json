@@ -24,7 +24,7 @@
   "author": "Blazity",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Blazity/next-cwv-monitor.git",
+    "url": "git+https://github.com/Blazity/next-cwv-monitor.git",
     "directory": "packages/client-sdk"
   },
   "license": "MIT",

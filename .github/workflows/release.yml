@@ -40,7 +40,7 @@ jobs:
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm release
+          publish: "${{ secrets.NPM_TOKEN && 'pnpm release' || 'echo \"Skipping publish: No token\"' }}"
           version: pnpm version-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

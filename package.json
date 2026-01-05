@@ -1,7 +1,6 @@
 {
   "name": "next-cwv-monitor-monorepo",
   "private": false,
-  "workspaces": [],
   "scripts": {
     "dev": "pnpm -r --parallel --filter \"./(apps|packages)/*\" dev",
     "dev:client": "pnpm --parallel --filter cwv-monitor-sdk --filter cwv-monitor-client dev",

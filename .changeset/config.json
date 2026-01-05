@@ -7,5 +7,5 @@
   "access": "restricted",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["cwv-monitor-client", "cwv-monitor-app", "cwv-monitor-contracts"]
+  "ignore": ["cwv-monitor-client", "cwv-monitor-app"]
 }
