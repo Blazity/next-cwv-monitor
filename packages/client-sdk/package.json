@@ -1,7 +1,36 @@
 {
-  "name": "cwv-monitor-sdk",
-  "type": "module",
+  "name": "@next-cwv-monitor/cwv-monitor-sdk",
+  "description": "A client-side collector for the Blazity Next.js CWV Monitor. Lightweight React SDK for capturing Core Web Vitals and custom events with automatic route normalization and privacy-first session handling.",
+  "homepage": "https://github.com/Blazity/next-cwv-monitor",
+  "bugs": {
+    "url": "https://github.com/Blazity/next-cwv-monitor/issues"
+  },
+  "keywords": [
+    "nextjs",
+    "react",
+    "core-web-vitals",
+    "web-vitals",
+    "performance-monitoring",
+    "real-user-monitoring",
+    "rum",
+    "analytics",
+    "open-source-analytics",
+    "lcp",
+    "inp",
+    "cls",
+    "app-router",
+    "pages-router"
+  ],
+  "author": "Blazity",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Blazity/next-cwv-monitor.git",
+    "directory": "packages/client-sdk"
+  },
+  "license": "MIT",
   "version": "1.0.0",
+  "type": "module",
+  "sideEffects": false,
   "exports": {
     "./package.json": "./package.json",
     "./app-router": {
