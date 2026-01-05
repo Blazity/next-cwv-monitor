@@ -3,9 +3,7 @@ import { getAuthorizedSession, getSafeCallbackUrl } from "@/lib/auth-utils";
 
 export default async function ChangePasswordPage({
   searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: PageProps<"/change-password">) {
   await getAuthorizedSession();
   const params = await searchParams;
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
