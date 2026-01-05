@@ -5,7 +5,7 @@ export default function Loading() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="">
+        <CardHeader>
           <Skeleton className="h-6 w-1/2" />
           <Skeleton className="h-4 w-full" />
         </CardHeader>
