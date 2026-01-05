@@ -13,6 +13,9 @@ export default defineConfig([
     minify: true,
     treeshake: true,
     external: ['react', 'react-dom', 'next', 'next/*'],
+    esbuildOptions(options) {
+      options.mangleProps = /^_/;
+    },
     // Use onSuccess to bypass Rollup's directive-stripping logic on treeshake
     async onSuccess() {
       const files = ['dist/app-router.js', 'dist/app-router.cjs'];
