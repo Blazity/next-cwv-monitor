@@ -1,71 +1,66 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useAction } from "next-safe-action/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { changePasswordAction } from "@/app/server/actions/users/change-password";
 import { type Route } from "next";
-import { ChangePasswordData, changePasswordSchema } from "@/app/server/domain/users/change-password/types";
+import { changePasswordSchema } from "@/app/server/domain/users/change-password/types";
 import { toast } from "sonner";
 
 export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
   const router = useRouter();
 
-  const { execute, isPending } = useAction(changePasswordAction, {
-    onSuccess: async () => {
-      toast.success("Password updated successfully");
-      router.push(callbackUrl);
-      router.refresh();
+  const { form, action, handleSubmitWithAction } = useHookFormAction(
+    changePasswordAction,
+    arktypeResolver(changePasswordSchema),
+    {
+      actionProps: {
+        onSuccess: async () => {
+          toast.success("Password updated successfully");
+          router.push(callbackUrl);
+          router.refresh();
+        },
+        onError: ({ error }) => {
+          if (error.serverError) {
+            form.setError("root", {
+              type: "server",
+              message: error.serverError,
+            });
+          }
+        },
+      },
+      formProps: {
+        defaultValues: {
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        },
+      },
+      errorMapProps: {
+        joinBy: ", ",
+      },
     },
-    onError: ({ error }) => {
-      if (error.validationErrors) {
-        for (const [key, messages] of Object.entries(error.validationErrors)) {
-          setError(key as keyof ChangePasswordData, {
-            type: "server",
-            message: messages.length > 0 ? messages[0] : "Invalid input",
-          });
-        }
-      }
-
-      if (error.serverError) {
-        setError("root", {
-          type: "server",
-          message: error.serverError,
-        });
-      }
-    },
-  });
+  );
 
   const {
     register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm({
-    resolver: arktypeResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const isLoading = isPending || isSubmitting;
-
-  return (
+    formState: { errors },
+  } = form;
+  const isLoading = action.isPending || form.formState.isSubmitting;
+  return ( 
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Set New Password</CardTitle>
         <CardDescription>Your admin has reset your password. Please set a new one to continue.</CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit(execute)}>
+      <form onSubmit={handleSubmitWithAction}>
         <CardContent className="space-y-4">
           {errors.root && (
             <div className="bg-destructive/10 text-destructive flex gap-2 rounded-md p-3 text-sm">

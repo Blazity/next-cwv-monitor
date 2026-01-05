@@ -93,7 +93,7 @@ export const auth = betterAuth({
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path === "/change-password") {
         const result = ctx.context.returned as SessionData;
-        if (ctx.context.returned) {
+        if ('user' in result && result.user.id) {
           const updatedUser = await ctx.context.internalAdapter.updateUser(result.user.id, {
             isPasswordTemporary: false,
           });
