@@ -46,29 +46,32 @@ describe('ProjectsUpdateService (integration)', () => {
     });
   });
 
-  it('returns ok and does nothing if the name is identical', async () => {
+  it('returns ok and does nothing if the name and slug are identical', async () => {
     const projectId = randomUUID();
-    const name = 'Original Name';
-    
-    await projectsRepo.createProject({ 
-      id: projectId, 
-      slug: 'orig-slug', 
-      name 
+    const originalDate = new Date('2026-01-01T10:00:00Z');
+
+    await projectsRepo.createProject({
+      id: projectId,
+      slug: 'same-slug',
+      name: 'Same Name',
+      created_at: originalDate,
+      updated_at: originalDate
     });
 
     const result = await service.execute({
       id: projectId,
-      slug: 'new-slug',
-      name: name
+      name: 'Same Name',
+      slug: 'same-slug'
     });
 
     expect(result).toEqual({ kind: 'ok' });
-    
-    const rows = await sqlClient<{ slug: string }>`
-      SELECT slug FROM projects WHERE id = ${projectId}
+
+    const rows = await sqlClient<{ ts: string }>`
+      SELECT toUnixTimestamp(updated_at) as ts FROM projects FINAL WHERE id = ${projectId}
     `.query();
-    
-    expect(rows[0].slug).toBe('orig-slug');
+
+    const expectedTs = Math.floor(originalDate.getTime() / 1000);
+    expect(Number(rows[0].ts)).toBe(expectedTs);
   });
 
   it('successfully updates project name and slug', async () => {
@@ -111,7 +114,7 @@ describe('ProjectsUpdateService (integration)', () => {
 
     expect(result).toEqual({
       kind: 'error',
-      message: 'Failed to update project name.'
+      message: 'Failed to update project.'
     });
     
     expect(repoSpy).toHaveBeenCalled();
@@ -119,7 +122,7 @@ describe('ProjectsUpdateService (integration)', () => {
 
   it('preserves the original created_at timestamp', async () => {
     const projectId = randomUUID();
-    const originalDate = new Date('2025-01-01T10:00:00Z');
+    const originalDate = new Date('2026-01-01T10:00:00Z');
     
     await projectsRepo.createProject({ 
       id: projectId, 

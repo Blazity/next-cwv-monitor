@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
-import { toast } from 'sonner';
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -16,13 +16,13 @@ import {
   Eye,
   Trash2,
   RefreshCw,
-  LucideIcon
-} from 'lucide-react';
+  LucideIcon,
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -31,15 +31,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-import { updateProjectNameAction } from '@/app/server/actions/project/update-project';
-import { deleteProjectAction } from '@/app/server/actions/project/delete-project';
-import { resetProjectDataAction } from '@/app/server/actions/project/reset-project';
-import { UpdateProjectNameInput, updateProjectNameSchema } from '@/app/server/domain/projects/schema';
-import { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
-import { capitalizeFirstLetter, cn, formatDate } from '@/lib/utils';
+import { deleteProjectAction } from "@/app/server/actions/project/delete-project";
+import { resetProjectDataAction } from "@/app/server/actions/project/reset-project";
+import { UpdateProjectNameInput, updateProjectNameSchema } from "@/app/server/domain/projects/update/types";
+import { ProjectWithViews } from "@/app/server/lib/clickhouse/schema";
+import { capitalizeFirstLetter, cn, formatDate } from "@/lib/utils";
+import { updateProjectAction } from "@/app/server/actions/project/update-project";
+import { useAction } from "next-safe-action/hooks";
 
 const getSdkCode = (id: string) => `'use client';
 
@@ -57,7 +58,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 const handleCopy = async (text: string, setter: (v: boolean) => void) => {
   await navigator.clipboard.writeText(text);
   setter(true);
-  toast.success('Copied to clipboard');
+  toast.success("Copied to clipboard");
   setTimeout(() => setter(false), 2000);
 };
 
@@ -70,6 +71,21 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
   const sdkCode = getSdkCode(project.id);
   const [copiedId, setCopiedId] = useState(false);
   const [copiedSDK, setCopiedSDK] = useState(false);
+
+  const { execute: executeReset } = useAction(resetProjectDataAction, {
+    onSuccess: ({ data }) => {
+      if (data.success) toast.success(data.message);
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Failed to reset project data");
+    }
+  });
+
+  const { execute: executeDelete } = useAction(deleteProjectAction, {
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Failed to delete project");
+    }
+  });
 
   return (
     <main className="mx-auto max-w-3xl space-y-6">
@@ -91,7 +107,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
         <CardContent className="space-y-4">
           <div className="text-muted-foreground grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
             <div className="flex items-center gap-2">
-              <Globe className="size-4" /> {project.slug || 'No domain'}
+              <Globe className="size-4" /> {project.slug || "No domain"}
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="size-4" /> Created {formatDate(project.created_at)}
@@ -141,11 +157,11 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
               className="absolute top-2 right-2 h-8 gap-1.5 bg-transparent"
             >
               {copiedSDK ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copiedSDK ? 'Copied' : 'Copy'}
+              {copiedSDK ? "Copied" : "Copy"}
             </Button>
           </div>
           <p className="text-muted-foreground text-sm">
-            Install the SDK with{' '}
+            Install the SDK with{" "}
             <code className="bg-muted text-foreground rounded px-1.5 py-0.5">npm install cwv-monitor-sdk</code> and add
             this to your app's entry point
           </p>
@@ -167,11 +183,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             label="Reset"
             icon={RefreshCw}
             confirmText={project.name}
-            onConfirm={async () => {
-              const res = await resetProjectDataAction(project.id);
-              if (res.success) toast.success('Project data has been cleared');
-              else toast.error('Failed to reset data');
-            }}
+            onConfirm={() => executeReset({ projectId: project.id })}
           />
           <DangerRow
             title="Delete project"
@@ -179,11 +191,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             label="Delete"
             icon={Trash2}
             confirmText={project.name}
-            onConfirm={async () => {
-              const res = await deleteProjectAction(project.id);
-              if (res.success) router.push('/dashboard');
-              else toast.error(res.message);
-            }}
+            onConfirm={() => executeDelete({ projectId: project.id })}
           />
         </CardContent>
       </Card>
@@ -192,10 +200,9 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
 }
 
 function UpdateNameForm({ project }: { project: ProjectWithViews }) {
-  const [isPending, startTransition] = useTransition();
   const form = useForm<UpdateProjectNameInput>({
     resolver: arktypeResolver(updateProjectNameSchema),
-    defaultValues: { name: project.name }
+    defaultValues: { name: project.name },
   });
 
   const {
@@ -203,33 +210,35 @@ function UpdateNameForm({ project }: { project: ProjectWithViews }) {
     handleSubmit,
     reset,
     setError,
-    formState: { errors, isDirty }
+    formState: { errors, isDirty },
   } = form;
 
   useEffect(() => reset({ name: project.name }), [project.name, reset]);
 
-  const applyServerErrors = (serverErrors: Record<string, string | string[]>) => {
-    for (const [key, value] of Object.entries(serverErrors)) {
-      setError(key as keyof UpdateProjectNameInput, {
-        type: 'server',
-        message: Array.isArray(value) ? value[0] : value
-      });
-    }
-  };
-
-  const onSubmit = (data: UpdateProjectNameInput) => {
-    startTransition(async () => {
-      const result = await updateProjectNameAction(project.id, project.slug, data.name);
-
-      if (result.success) {
-        toast.success('Project name has been updated');
-        reset(data);
-      } else {
-        if (result.errors) {
-          applyServerErrors(result.errors);
-        }
-        toast.error(result.message || 'Failed to update project name');
+  const { execute, isPending } = useAction(updateProjectAction, {
+    onSuccess: ({ data }) => {
+      if (data.success) {
+        toast.success("Project name has been updated");
+        reset({ name: form.getValues().name });
       }
+    },
+    onError: ({ error }) => {
+      if (error.validationErrors) {
+        for (const [key, value] of Object.entries(error.validationErrors)) {
+          setError(key as keyof UpdateProjectNameInput, {
+            type: "server",
+            message: Array.isArray(value) ? value[0] : (value as string),
+          });
+        }
+      }
+      toast.error(error.serverError || "Failed to update project name");
+    },
+  });
+
+  const onSubmit = (values: UpdateProjectNameInput) => {
+    execute({
+      projectId: project.id,
+      name: values.name,
     });
   };
 
@@ -237,7 +246,7 @@ function UpdateNameForm({ project }: { project: ProjectWithViews }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <Label htmlFor="name">Project Name</Label>
       <div className="flex gap-2">
-        <Input {...register('name')} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" />
+        <Input {...register("name")} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" />
         <Button type="submit" disabled={!isDirty || isPending}>
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Save
@@ -265,7 +274,7 @@ type DangerActionProps = {
   icon: LucideIcon;
   onConfirm: () => void;
   isPending: boolean;
-  variant?: 'destructive' | 'outline';
+  variant?: "destructive" | "outline";
 };
 
 function DangerRow({ title, desc, onConfirm, confirmText, label, icon: Icon }: DangerRowProps) {
@@ -298,9 +307,9 @@ function DangerAction({
   icon: Icon,
   onConfirm,
   isPending,
-  variant = 'outline'
+  variant = "outline",
 }: DangerActionProps) {
-  const [confirmInput, setConfirmInput] = useState('');
+  const [confirmInput, setConfirmInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -308,7 +317,7 @@ function DangerAction({
     setIsOpen(open);
     if (open) {
       setCountdown(10);
-      setConfirmInput('');
+      setConfirmInput("");
     }
   };
 
@@ -346,9 +355,9 @@ function DangerAction({
           variant={variant}
           disabled={isPending}
           className={cn(
-            'gap-2',
-            variant === 'outline' &&
-              'text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive'
+            "gap-2",
+            variant === "outline" &&
+              "text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive",
           )}
         >
           {isPending ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
@@ -396,11 +405,11 @@ function DangerAction({
             >
               {isPending ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
-              ) : (isTimerRunning ? (
+              ) : isTimerRunning ? (
                 `Wait ${countdown}s`
               ) : (
                 `Confirm ${buttonLabel}`
-              ))}
+              )}
             </Button>
           </AlertDialogFooter>
         </form>

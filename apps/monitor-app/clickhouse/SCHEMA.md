@@ -127,6 +127,11 @@ The monitor app uses Better Auth for authentication. The following tables are cr
 | `name`           | String           | Display name            |
 | `email`          | String           | User email address      |
 | `email_verified` | Bool             | Defaults to `false`     |
+| `role`           | String           | Defaults to `'user'`    |
+| `banned`         | Bool             | Defaults to `false`     |
+| `is_password_temporary` | Bool      | Defaults to `false`     |
+| `ban_reason`     | Nullable(String) | Optional ban reason     |
+| `ban_expires`    | Nullable(DateTime) | Optional ban expiration |
 | `image`          | Nullable(String) | Optional avatar/image   |
 | `created_at`     | DateTime         | Defaults to `now()`     |
 | `updated_at`     | DateTime         | Defaults to `now()`     |
@@ -147,6 +152,7 @@ Indexes: `idx_user_email` (bloom filter)
 | `ip_address` | Nullable(String) | Optional client IP address   |
 | `user_agent` | Nullable(String) | Optional client user agent   |
 | `user_id`    | String           | Owning user (`user.id`)      |
+| `impersonated_by` | Nullable(String) | Optional impersonator user id |
 
 Engine: `ReplacingMergeTree(updated_at)`  
 Order key: `(token)`  
@@ -166,7 +172,6 @@ Indexes: `idx_session_user_id` (bloom filter)
 | `id_token`                 | Nullable(String)       | Provider ID token                      |
 | `access_token_expires_at`  | Nullable(DateTime)     | Access token expiration                |
 | `refresh_token_expires_at` | Nullable(DateTime)     | Refresh token expiration               |
-| `scope`                    | Nullable(String)       | Provider scopes                        |
 | `password`                 | Nullable(String)       | Password hash (credentials-based auth) |
 | `created_at`               | DateTime               | Defaults to `now()`                    |
 | `updated_at`               | DateTime               | Defaults to `now()`                    |

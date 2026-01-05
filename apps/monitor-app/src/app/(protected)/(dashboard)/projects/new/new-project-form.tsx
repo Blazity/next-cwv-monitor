@@ -1,17 +1,17 @@
 "use client";
 
-import { useTransition } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { Loader2 } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProjectAction } from "@/app/server/actions/project/create-project";
-import { createProjectSchema, type CreateProjectInput } from "@/app/server/domain/projects/schema";
+import { createProjectSchema, type CreateProjectInput } from "@/app/server/domain/projects/create/types";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { useAction } from "next-safe-action/hooks";
+import { toast } from "sonner";
 
 const slugify = (name: string) =>
   name
@@ -22,8 +22,6 @@ const slugify = (name: string) =>
     .replaceAll(/-+/g, "-");
 
 export function NewProjectForm() {
-  const [isPending, startTransition] = useTransition();
-
   const form = useForm<CreateProjectInput>({
     resolver: arktypeResolver(createProjectSchema),
     mode: "onBlur",
@@ -39,25 +37,23 @@ export function NewProjectForm() {
     formState: { errors, dirtyFields },
   } = form;
 
-  const applyServerErrors = (serverErrors: Record<string, string | string[]>) => {
-    for (const [key, value] of Object.entries(serverErrors)) {
-      setError(key as keyof CreateProjectInput, {
-        type: "server",
-        message: Array.isArray(value) ? value[0] : value,
-      });
-    }
-  };
+  const { execute, isPending } = useAction(createProjectAction, {
+    onError: ({ error }) => {
+      if (error.validationErrors) {
+        for (const [key, value] of Object.entries(error.validationErrors)) {
+          setError(key as keyof CreateProjectInput, {
+            type: "server",
+            message: Array.isArray(value) ? value[0] : (value as string),
+          });
+        }
+      } else if (error.serverError) {
+        toast.error(error.serverError);
+      }
+    },
+  });
 
   const onSubmit = (data: CreateProjectInput) => {
-    startTransition(async () => {
-      const formData = new FormData();
-      for (const [key, val] of Object.entries(data)) formData.append(key, val);
-
-      const result = await createProjectAction(formData);
-      if (result.errors) {
-        applyServerErrors(result.errors);
-      }
-    });
+    execute(data);
   };
 
   return (
@@ -91,9 +87,7 @@ export function NewProjectForm() {
           placeholder="my-awesome-app"
           disabled={isPending}
         />
-        <p className="text-muted-foreground text-xs">
-          This will be used in your dashboard URL and API identifiers.
-        </p>
+        <p className="text-muted-foreground text-xs">This will be used in your dashboard URL and API identifiers.</p>
         {errors.slug?.message && (
           <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>
         )}

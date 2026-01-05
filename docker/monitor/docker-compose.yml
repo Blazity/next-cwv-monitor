@@ -10,7 +10,7 @@ x-clickhouse-env: &clickhouse-env
 
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:24.8
+    image: clickhouse/clickhouse-server:25.8
     restart: unless-stopped
     environment:
       <<: *clickhouse-env

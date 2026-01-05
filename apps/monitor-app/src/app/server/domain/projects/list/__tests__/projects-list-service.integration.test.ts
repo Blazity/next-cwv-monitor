@@ -103,7 +103,7 @@ describe('projects-list-service (integration)', () => {
       UNION ALL
       SELECT ${projectId1}, '/', 'desktop', 'LCP', yesterday(), countState()
       UNION ALL
-      SELECT ${projectId2}, '/settings', 'mobile', 'FID', today(), countState()
+      SELECT ${projectId2}, '/settings', 'mobile', 'LCP', today(), countState()
     `.command();
 
     const result = await projectsListService.listWithViews();
@@ -113,8 +113,8 @@ describe('projects-list-service (integration)', () => {
     const p1 = result.find((p) => p.id === projectId1);
     const p2 = result.find((p) => p.id === projectId2);
 
-    expect(p1?.trackedViews).toBe("2");
-    expect(p2?.trackedViews).toBe("1");
+    expect(p1?.trackedViews).toBe(2);
+    expect(p2?.trackedViews).toBe(1);
   });
 
   it('returns 0 tracked views for projects with no aggregate data (LEFT JOIN)', async () => {
@@ -123,6 +123,6 @@ describe('projects-list-service (integration)', () => {
     const result = await projectsListService.listWithViews();
 
     expect(result).toHaveLength(1);
-    expect(result[0].trackedViews).toBe("0");
+    expect(result[0].trackedViews).toBe(0);
   });
 });
