@@ -143,7 +143,24 @@ pnpm docker:dev
 | Monitor Dashboard | http://localhost:3000 |
 | Demo Client App   | http://localhost:3001 |
 
-> 📖 For production deployment guides, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+### Production Deployment
+
+1. Create a `.env` in `docker/monitor/` using [`apps/monitor-app/.env.example`](./apps/monitor-app/.env.example) as a reference.
+
+**Key considerations:**
+
+- 🔐 Generate a strong `BETTER_AUTH_SECRET` (use `openssl rand -base64 32`)
+- 🌐 Set `AUTH_BASE_URL` to your public domain
+- 🔄 Set `TRUST_PROXY=true` when behind a load balancer or reverse proxy
+- 💾 ClickHouse data persists in Docker volumes by default
+
+2. Start the production stack (ClickHouse + monitor app):
+
+```bash
+pnpm docker:prod
+```
+
+> 📖 For complete deployment guides, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## ⚙️ Configuration
 
