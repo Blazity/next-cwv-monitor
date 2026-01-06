@@ -14,7 +14,7 @@ importers:
 
   apps/client-app:
     dependencies:
-      '@next-cwv-monitor/cwv-monitor-sdk':
+      'next-cwv-monitor':
         specifier: workspace:*
         version: link:../../packages/client-sdk
       '@t3-oss/env-nextjs':

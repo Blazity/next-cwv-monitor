@@ -1,4 +1,4 @@
-# @next-cwv-monitor/cwv-monitor-sdk
+# next-cwv-monitor
 
 ## 1.0.0
 

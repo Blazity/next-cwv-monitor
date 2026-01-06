@@ -1,5 +1,5 @@
 {
-  "name": "@next-cwv-monitor/cwv-monitor-sdk",
+  "name": "next-cwv-monitor",
   "description": "A client-side collector for the Blazity Next.js CWV Monitor. Lightweight React SDK for capturing Core Web Vitals and custom events with automatic route normalization and privacy-first session handling.",
   "homepage": "https://github.com/Blazity/next-cwv-monitor",
   "bugs": {

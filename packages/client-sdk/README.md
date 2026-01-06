@@ -12,7 +12,7 @@ A lightweight React SDK for monitoring Core Web Vitals and custom events in Next
 
 ## Installation
 
-    npm install @next-cwv-monitor/cwv-monitor-sdk
+    npm install next-cwv-monitor
     
 
 ## Usage
