@@ -1,4 +1,4 @@
-# cwv-monitor-sdk
+# next-cwv-monitor
 
 A lightweight React SDK for monitoring Core Web Vitals and custom events in Next.js applications. It features automatic session rotation, smart batching, and zero-persistence privacy.
 
@@ -24,7 +24,7 @@ Select the entry point that matches your Next.js architecture. The SDK is split 
 Wrap your root layout or a provider component.
 
 ```tsx
-import { CWVMonitor } from 'cwv-monitor-sdk/app-router';
+import { CWVMonitor } from 'next-cwv-monitor/app-router';
     
 export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,7 +49,7 @@ Wrap your application in app.tsx.
 
 ```tsx
 import type { AppProps } from 'next/app';
-import { CWVMonitor } from 'cwv-monitor-sdk/pages-router';
+import { CWVMonitor } from 'next-cwv-monitor/pages-router';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -65,7 +65,7 @@ export default function App({ Component, pageProps }: AppProps) {
 Use the hook to track business logic events (like conversions). These are never sampled and always delivered.
 
 ```tsx
-import { useTrackCustomEvent } from 'cwv-monitor-sdk/app-router'; // or /pages-router
+import { useTrackCustomEvent } from 'next-cwv-monitor/app-router'; // or /pages-router
 
 export function CheckoutButton() {
   const trackCustomEvent = useTrackCustomEvent();

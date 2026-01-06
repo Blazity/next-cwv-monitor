@@ -31,10 +31,10 @@ jobs:
       - name: Install & Build
         run: |
           pnpm install --frozen-lockfile
-          pnpm --filter cwv-monitor-sdk build
+          pnpm --filter next-cwv-monitor build
 
       - name: Size Guard
-        run: pnpm --filter cwv-monitor-sdk check-size
+        run: pnpm --filter next-cwv-monitor check-size
 
       - name: Create Release PR or Publish
         id: changesets
