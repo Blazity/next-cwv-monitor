@@ -1,6 +1,6 @@
 'use client';
 
-import { CWVMonitor } from 'next-cwv-monitor';
+import { CWVMonitor } from 'next-cwv-monitor/app-router';
 import { env } from '../env';
 
 interface Props {

@@ -1,15 +1,17 @@
-import { betterAuth } from "better-auth";
-import { admin } from "better-auth/plugins";
+import { betterAuth, GenericEndpointContext } from "better-auth";
+import { admin, createAuthMiddleware } from "better-auth/plugins";
+
 import { env } from "@/env";
 import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
 import { nextCookies } from "better-auth/next-js";
-import { accessControl, ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl } from "@/lib/auth-shared";
+import { setSessionCookie } from "better-auth/cookies";
+import { ADMIN_ROLES, AUTH_ROLES_MAP, roleAccessControl, accessControl } from "@/lib/auth-shared";
 
 export const adminPluginOptions = {
   defaultRole: AUTH_ROLES_MAP.member,
   adminRoles: ADMIN_ROLES,
-  ac: accessControl,
   roles: roleAccessControl,
+  ac: accessControl,
   schema: {
     user: { fields: { banExpires: "ban_expires", banReason: "ban_reason" } },
   },
@@ -87,19 +89,31 @@ export const auth = betterAuth({
     window: env.RATE_LIMIT_WINDOW_MS,
     max: env.MAX_LOGIN_ATTEMPTS,
   },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/change-password") {
+        const result = ctx.context.returned as SessionData;
+        if ('user' in result && result.user.id) {
+          const updatedUser = await ctx.context.internalAdapter.updateUser(result.user.id, {
+            isPasswordTemporary: false,
+          });
+          const newSession = ctx.context.newSession;
+          if (newSession) {
+            await setSessionCookie(ctx as unknown as GenericEndpointContext, {
+              user: { ...newSession.user, ...updatedUser },
+              session: newSession.session,
+            });
+          }
+        }
+      }
+    }),
+  },
   emailAndPassword: {
     enabled: true,
     // TODO: Enable
     requireEmailVerification: false,
     password: {
       async hash(password: string) {
-        /* FIXME: this should be moved to account creation/password change logic */
-        /*
-        const validation = validatePasswordStrength(password);
-        if (!validation.valid) {
-          throw new Error(validation.message);
-        }
-        */
         const { hashPassword } = await import("better-auth/crypto");
         return hashPassword(password);
       },
