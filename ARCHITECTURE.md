@@ -2,9 +2,9 @@
   <img src="./app-diagram.png" height="120" alt="Next CWV Monitor">
 </p>
 
-# ARCHITECTURE.md
+# Architecture
 
-Architecture overview for Next CWV Monitor, organized using the structure from the public template at [architecture.md](https://architecture.md/).
+System design overview for Next CWV Monitor - a self-hosted Core Web Vitals monitoring platform for Next.js.
 
 ## 1. Project Structure
 
@@ -48,7 +48,7 @@ next-cwv-monitor/
 └── README.md                     # Project overview
 ```
 
-## 2. High-Level System Diagram
+## 2. System Diagram
 
 ```mermaid
 flowchart LR
@@ -89,69 +89,44 @@ sequenceDiagram
 
 ## 3. Core Components
 
-### 3.1. Frontend: Monitor App (`apps/monitor-app`)
+### 3.1. Monitor App (`apps/monitor-app`)
 
-**Description:** The main user interface for viewing Core Web Vitals dashboards, managing projects, and administering users. Built with Next.js 16 App Router using server actions for mutations.
+The main dashboard for viewing Core Web Vitals, managing projects, and administering users.
 
-**Technologies:** Next.js 16, React, Tailwind CSS, shadcn/ui, Better Auth
-
-**Deployment:** Docker container via `monitor-app.prod.Dockerfile`
+- **Stack:** Next.js 16 App Router, Tailwind CSS, shadcn/ui
+- **Auth:** Better Auth with role-based access (admin, user)
+- **Deployment:** Docker container via `monitor-app.prod.Dockerfile`
 
 ### 3.2. Client SDK (`packages/client-sdk`)
 
-**Description:** Lightweight browser SDK that collects CWV metrics (LCP, FID, CLS, INP, TTFB, FCP), automatic `$page_view` events, and custom business events. Provides router-specific entrypoints for App Router and Pages Router.
+Lightweight browser SDK that collects CWV metrics (LCP, FID, CLS, INP, TTFB, FCP), `$page_view` events, and custom business events.
 
-**Technologies:** TypeScript, web-vitals, React hooks
+- **Stack:** TypeScript, web-vitals, React hooks
+- **Entrypoints:** `cwv-monitor-sdk/app-router` and `cwv-monitor-sdk/pages-router`
+- **Privacy:** In-memory session ID per page view — no cookies or localStorage
+- **Batching:** Flushes on queue ≥10, 50ms idle, or page unload (sendBeacon)
 
-**Key Features:**
+### 3.3. Ingest API (`/api/ingest`)
 
-- Router-aware route normalization (e.g., `/blog/[slug]`)
-- Privacy-first: in-memory session ID per page view, no cookies/localStorage
-- Smart batching: flushes on queue size ≥10, 50ms idle, or page unload (sendBeacon)
+Receives batched events from the SDK, validates, enriches, and persists to ClickHouse.
 
-### 3.3. Backend Services
+- **Validation:** arktype schemas from `cwv-monitor-contracts`
+- **Rate limiting:** IP-based (enable `TRUST_PROXY` behind a proxy)
+- **CORS:** Currently `*`; per-project scoping planned
 
-#### 3.3.1. Ingest API (`/api/ingest`)
+### 3.4. Contracts Package (`packages/cwv-monitor-contracts`)
 
-**Description:** Receives batched CWV and custom events from the SDK, validates payloads, applies rate limiting, enriches with device/IP/timestamp data, and persists to ClickHouse.
+Shared TypeScript schemas for ingest payloads. Imported by both SDK and monitor app to prevent drift.
 
-**Technologies:** Next.js API routes, arktype validation
+### 3.5. Demo Client (`apps/client-app`)
 
-**Key Features:**
+Sample Next.js app demonstrating SDK integration for both routers. Runs on port 3001 in dev.
 
-- CORS support (configurable per-project in future)
-- IP-based rate limiting
-- `TRUST_PROXY` support for forwarded headers
+## 4. Data Store
 
-#### 3.3.2. Auth API (`/api/auth`)
+> Full schema details: [`apps/monitor-app/clickhouse/SCHEMA.md`](./apps/monitor-app/clickhouse/SCHEMA.md)
 
-**Description:** Better Auth endpoints for authentication flows (login, signup, session management).
-
-**Technologies:** Better Auth, ClickHouse adapter
-
-### 3.4. Demo Client (`apps/client-app`)
-
-**Description:** Sample Next.js application demonstrating SDK integration for both App Router and Pages Router. Generates synthetic traffic for dashboard demos.
-
-**Technologies:** Next.js, cwv-monitor-sdk
-
-**Deployment:** Port 3001 in development
-
-### 3.5. Contracts Package (`packages/cwv-monitor-contracts`)
-
-**Description:** Shared TypeScript schemas for ingest payloads using arktype. Ensures SDK and backend stay in sync on payload structure.
-
-**Technologies:** TypeScript, arktype
-
-## 4. Data Stores
-
-### 4.1. ClickHouse (Primary Analytics Database)
-
-**Type:** ClickHouse 25.8
-
-**Purpose:** High-performance analytics storage for CWV events, custom events, and pre-aggregated daily statistics.
-
-**Key Tables:**
+**ClickHouse 25.8** — High-performance columnar database for analytics.
 
 | Table                                        | Engine               | Purpose                  | TTL      |
 | -------------------------------------------- | -------------------- | ------------------------ | -------- |
@@ -161,99 +136,49 @@ sequenceDiagram
 | `cwv_daily_aggregates`                       | AggregatingMergeTree | Pre-computed percentiles | 365 days |
 | `user`, `session`, `account`, `verification` | ReplacingMergeTree   | Better Auth tables       | varies   |
 
-**Design Rationale:**
+**Design choices:**
 
-- **Multi-tenant first:** `project_id` in every table and sort key
-- **Append-only events:** Plain MergeTree for fast writes
-- **Pre-aggregated quantiles:** `quantilesState()` for efficient p50/p75/p90/p95/p99 queries
-- **TTL-based retention:** Automatic cleanup without manual intervention
-- **LowCardinality:** Optimized storage for enum-like fields (metric_name, device_type)
+- `project_id` in every table for multi-tenancy
+- Append-only MergeTree for fast writes
+- `quantilesState()` for efficient percentile queries (p50–p99)
+- TTL-based retention for automatic cleanup
+- `LowCardinality` for enum-like columns
 
-### 4.2. Docker Volumes
-
-**Purpose:** Persist ClickHouse data between container restarts.
-
-**Volumes:**
-
-- `clickhouse-data` / `clickhouse-dev-data` — Database files
-- `clickhouse-logs` / `clickhouse-dev-logs` — Server logs
-
-## 5. External Integrations / APIs
-
-**None required by default.** The system is fully self-hosted with no external dependencies.
-
-**Optional:**
-
-- Reverse proxy (nginx, Caddy, Traefik) for TLS termination
-- Load balancer for horizontal scaling
-
-## 6. Deployment & Infrastructure
-
-**Cloud Provider:** Self-hosted (any Docker-capable environment)
-
-**Key Services:**
-
-- Docker & Docker Compose
-- ClickHouse (containerized)
-- Next.js (containerized or standalone)
-
-**CI/CD Pipeline:** Not included; integrate with your preferred CI (GitHub Actions, GitLab CI, etc.)
-
-**Deployment Modes:**
+## 5. Deployment
 
 | Mode        | Command            | Description                  |
 | ----------- | ------------------ | ---------------------------- |
 | Development | `pnpm docker:dev`  | Hot reload, seeded demo data |
 | Production  | `pnpm docker:prod` | Optimized build, no seed     |
 
-**Environment Variables:**
+**Required environment variables:**
 
-| Variable             | Required | Description                                 |
-| -------------------- | -------- | ------------------------------------------- |
-| `AUTH_BASE_URL`      | Yes      | Public URL for auth callbacks               |
-| `BETTER_AUTH_SECRET` | Yes      | Auth secret (use `openssl rand -base64 32`) |
-| `TRUST_PROXY`        | No       | Enable forwarded header trust               |
-| `CLICKHOUSE_*`       | Yes      | Database connection settings                |
+| Variable             | Description                                 |
+| -------------------- | ------------------------------------------- |
+| `AUTH_BASE_URL`      | Public URL for auth callbacks               |
+| `BETTER_AUTH_SECRET` | Auth secret (`openssl rand -base64 32`)     |
+| `CLICKHOUSE_*`       | Database connection (host, port, user, etc) |
+| `TRUST_PROXY`        | Set `true` if behind a reverse proxy        |
 
-## 7. Security Considerations
+## 6. Security
 
-**Authentication:** Better Auth with email/password; role-based access (admin, user)
+- **Auth:** Better Auth with email/password; role-based access control
+- **Rate limiting:** IP-based on ingest endpoint
+- **Sessions:** Stored in ClickHouse with TTL expiration
+- **SDK privacy:** Ephemeral session IDs only — no PII collected
+- **CORS:** Permissive (`*`) for now; per-project domains planned
 
-**Authorization:** Role checks on server actions and protected routes
+## 7. Development
 
-**Data Encryption:**
-
-- TLS in transit (configure via reverse proxy)
-- ClickHouse supports encryption at rest (configure separately)
-
-**Key Security Practices:**
-
-- IP-based rate limiting on ingest endpoint
-- `TRUST_PROXY=false` unless behind trusted proxy
-- Session tokens stored in ClickHouse with TTL expiration
-- No PII in SDK payloads (ephemeral session IDs only)
-
-**CORS:** Currently permissive (`*`) for ingest; per-project domain scoping planned.
-
-## 8. Development & Testing Environment
-
-**Local Setup:** See [Quick Start](./README.md#-quick-start)
+**Local setup:** See [Quick Start](./README.md#-quick-start)
 
 ```bash
-# Prerequisites: Node 20+, pnpm 10.1+, Docker
 pnpm install
 pnpm docker:dev
 ```
 
-**Testing Frameworks:**
+**Testing:** Vitest + React Testing Library
 
-- Vitest (unit & integration tests)
-- React Testing Library (component tests)
+**Code quality:** ESLint, Prettier, TypeScript strict mode
 
-**Code Quality Tools:**
-
-- ESLint
-- Prettier
-- TypeScript strict mode
-
-**Storybook:** Available in `apps/monitor-app/src/stories/`
+**Storybook:** `apps/monitor-app/src/stories/`
