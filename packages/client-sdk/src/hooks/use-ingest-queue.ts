@@ -5,10 +5,11 @@ export function useIngestQueueLifecycle(): void {
   const { config, runtime } = useCWV();
   const { endpoint, abortTime, projectId } = config;
   const sampleRate = config.sampleRate ?? 1;
+  const useBeacon = config.useBeacon ?? true;
   const { _ingestQueue } = runtime;
 
   useEffect(() => {
-    _ingestQueue._configure({ endpoint, abortTime, projectId, sampleRate });
+    _ingestQueue._configure({ endpoint, abortTime, projectId, sampleRate, useBeacon });
     _ingestQueue._start();
 
     return () => {
@@ -17,5 +18,5 @@ export function useIngestQueueLifecycle(): void {
         _ingestQueue._flush();
       }
     };
-  }, [abortTime, endpoint, _ingestQueue, projectId, sampleRate]);
+  }, [abortTime, endpoint, _ingestQueue, projectId, sampleRate, useBeacon]);
 }

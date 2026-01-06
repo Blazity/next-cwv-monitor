@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { DemoShell } from '../../app/_components/demo-shell';
+import { DemoShell } from '../../components/shared/demo-shell';
 
 export default function PagesRouterSubPage() {
   return (
@@ -33,7 +33,8 @@ export default function PagesRouterSubPage() {
             <li>A `$page_view` event should be enqueued on navigation.</li>
             <li>Session id should rotate per view.</li>
             <li>
-              <span className="font-mono">route</span> should equal <span className="font-mono">/pages-router/sub-page</span>.
+              <span className="font-mono">route</span> should equal{' '}
+              <span className="font-mono">/pages-router/sub-page</span>.
             </li>
           </ul>
         </div>
@@ -41,4 +42,3 @@ export default function PagesRouterSubPage() {
     </DemoShell>
   );
 }
-

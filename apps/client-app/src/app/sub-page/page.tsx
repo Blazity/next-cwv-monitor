@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { DemoShell } from '../_components/demo-shell';
+import { DemoShell } from '../../components/shared/demo-shell';
 
 export default function SubPage() {
   return (

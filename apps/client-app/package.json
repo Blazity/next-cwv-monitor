@@ -6,23 +6,27 @@
     "dev": "next dev -p 3001",
     "build": "eslint && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "playwright test"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.8",
-    "next-cwv-monitor": "workspace:*",
     "next": "16.1.1",
+    "next-cwv-monitor": "workspace:*",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "arktype": "^2.1.28",
+    "cwv-monitor-contracts": "workspace:*",
     "eslint": "^9",
-    "eslint-config-next": "16.0.6",
+    "eslint-config-next": "16.1.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-unicorn": "^62.0.0",
     "prettier": "^3.7.4",

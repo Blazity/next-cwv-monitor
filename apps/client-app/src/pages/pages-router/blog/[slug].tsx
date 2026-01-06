@@ -2,8 +2,9 @@ import type { GetStaticPaths, GetStaticProps, InferGetStaticPropsType } from 'ne
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { DemoShell } from '../../../app/_components/demo-shell';
+import { DemoShell } from '../../../components/shared/demo-shell';
 import { BLOG_POSTS, type BlogPost, getBlogPost } from '../../../app/blog/_posts';
+import CustomEventButton from '@/src/components/pages-router/custom-event-button';
 
 type Props = {
   post: BlogPost;
@@ -45,6 +46,9 @@ export default function PagesRouterBlogPostPage({ post }: InferGetStaticPropsTyp
               <Link href="/pages-router/blog" className="hover:underline">
                 Blog
               </Link>
+              <CustomEventButton eventName="Subscribe" name="subscribe">
+                Subscribe
+              </CustomEventButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">{post.slug}</span>
             </nav>
@@ -56,7 +60,7 @@ export default function PagesRouterBlogPostPage({ post }: InferGetStaticPropsTyp
                 </span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-300">{post.publishedAt}</span>
                 <span className="text-xs text-zinc-400 dark:text-zinc-600">•</span>
-                <span className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-mono text-zinc-700 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-950/80 dark:text-zinc-200">
+                <span className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1 font-mono text-xs text-zinc-700 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-950/80 dark:text-zinc-200">
                   {router.pathname}
                 </span>
               </div>
@@ -112,7 +116,10 @@ export default function PagesRouterBlogPostPage({ post }: InferGetStaticPropsTyp
             </div>
 
             <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-              Compare App Router: <Link href={`/blog/${post.slug}`} className="underline">/blog/{post.slug}</Link>
+              Compare App Router:{' '}
+              <Link href={`/blog/${post.slug}`} className="underline">
+                /blog/{post.slug}
+              </Link>
             </div>
           </div>
         </aside>
@@ -120,4 +127,3 @@ export default function PagesRouterBlogPostPage({ post }: InferGetStaticPropsTyp
     </DemoShell>
   );
 }
-

@@ -9,6 +9,7 @@ export type CWVConfig = {
   projectId: string;
   abortTime?: number;
   sampleRate?: number;
+  useBeacon?: boolean;
 };
 
 export type CWVView = {

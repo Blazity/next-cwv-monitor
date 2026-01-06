@@ -5,9 +5,8 @@ import '../app/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <CWVMonitor projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID} endpoint={env.NEXT_PUBLIC_MONITOR_API}>
+    <CWVMonitor projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID} endpoint={env.NEXT_PUBLIC_MONITOR_API} useBeacon={!env.NEXT_PUBLIC_DISABLE_BEACON}>
       <Component {...pageProps} />
     </CWVMonitor>
   );
 }
-

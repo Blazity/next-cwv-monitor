@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { DemoShell } from '../_components/demo-shell';
+import { DemoShell } from '../../components/shared/demo-shell';
 import { BLOG_POSTS } from './_posts';
+import CustomEventButton from '@/src/components/app-router/custom-event-button';
 
 export default function BlogIndexPage() {
   return (
@@ -13,6 +14,10 @@ export default function BlogIndexPage() {
               <Link href="/" className="hover:underline">
                 Home
               </Link>
+
+              <CustomEventButton eventName="Subscribe" name="subscribe">
+                Subscribe
+              </CustomEventButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">Blog</span>
             </div>
@@ -69,7 +74,7 @@ export default function BlogIndexPage() {
                   </span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-300">{post.publishedAt}</span>
                   <span className="text-xs text-zinc-400 dark:text-zinc-600">•</span>
-                  <span className="text-xs font-mono text-zinc-500 dark:text-zinc-300">/blog/{post.slug}</span>
+                  <span className="font-mono text-xs text-zinc-500 dark:text-zinc-300">/blog/{post.slug}</span>
                 </div>
 
                 <h2 className="text-lg font-semibold tracking-tight group-hover:underline">{post.title}</h2>
@@ -97,5 +102,3 @@ export default function BlogIndexPage() {
     </DemoShell>
   );
 }
-
-
