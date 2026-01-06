@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { SessionContext } from '@/contexts/session-context';
 import { auth } from '@/lib/auth';
 
@@ -17,15 +17,6 @@ export function SessionProvider({
   children: React.ReactNode;
 }) {
   const value = useMemo(() => initialSessionData, [initialSessionData]);
-  const wasAskedForChange = useRef(false);
-
-  useEffect(() => {
-    if (value.user.isPasswordTemporary && wasAskedForChange.current === false) {
-      // FIXME: replace with a proper forced password-change UX.
-      alert('TODO: change password');
-      wasAskedForChange.current = true;
-    }
-  }, [value]);
 
   return <SessionContext value={value}>{children}</SessionContext>;
 }
