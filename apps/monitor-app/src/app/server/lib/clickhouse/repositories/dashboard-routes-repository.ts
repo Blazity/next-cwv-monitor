@@ -320,8 +320,6 @@ export type RouteStatusDistributionRow = {
 export async function fetchRoutesStatusDistribution(
   query: RoutesStatusDistributionQuery,
 ): Promise<RouteStatusDistributionRow[]> {
-  const viewsWhere = buildPageViewsWhereClause(query, query.search);
-  const routesWhere = buildDailyAggregatesBaseWhereClause(query, query.search);
   const aggregatesWhere = buildDailyAggregatesWhereClause(query, query.metricName, undefined, query.search);
   const idx = percentileIndex(query.percentile);
 
@@ -335,37 +333,18 @@ export async function fetchRoutesStatusDistribution(
       toString(count()) AS route_count
     FROM (
       SELECT
-        v.route,
-        m.metric_value,
-        multiIf(m.metric_value <= good_threshold, 'good', m.metric_value <= needs_threshold, 'needs-improvement', 'poor') AS status
+        route,
+        multiIf(metric_value <= good_threshold, 'good', metric_value <= needs_threshold, 'needs-improvement', 'poor') AS status
       FROM (
-        SELECT route
-        FROM custom_events
-        ${viewsWhere}
-        GROUP BY route
-
-        UNION DISTINCT
-
-        SELECT route
-        FROM cwv_daily_aggregates
-        ${routesWhere}
-        GROUP BY route
-      ) v
-      INNER JOIN (
         SELECT
           route,
+          quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
           if(length(percentiles) >= ${idx}, percentiles[${idx}], NULL) AS metric_value
-        FROM (
-          SELECT
-            route,
-            quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles
-          FROM cwv_daily_aggregates
-          ${aggregatesWhere}
-          GROUP BY route
-        )
-      ) m
-      USING (route)
-      WHERE m.metric_value IS NOT NULL
+        FROM cwv_daily_aggregates
+        ${aggregatesWhere}
+        GROUP BY route
+      )
+      WHERE metric_value IS NOT NULL
     )
     GROUP BY status
   `;
