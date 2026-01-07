@@ -56,7 +56,7 @@ export default async function ProjectPage({
         statusDistribution={statusDistribution}
       />
       <CoreWebVitals metricOverview={metricOverview} />
-      <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" />
+      <TrendChartByMetric timeSeriesByMetric={timeSeriesByMetric} initialMetric="LCP" dateRange={timeRangeToDateRange(timeRange)}/>
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>
   );
