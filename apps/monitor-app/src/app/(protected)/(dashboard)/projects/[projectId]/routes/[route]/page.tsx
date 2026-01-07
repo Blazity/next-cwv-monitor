@@ -25,24 +25,6 @@ function safeDecodeURIComponent(value: string): string {
   }
 }
 
-function toQueryObject(searchParams: {
-  [key: string]: string | string[] | undefined;
-}): Record<string, string | string[]> {
-  const query: Record<string, string | string[]> = {};
-  for (const [key, value] of Object.entries(searchParams)) {
-    if (typeof value === "string") {
-      query[key] = value;
-      continue;
-    }
-
-    if (Array.isArray(value)) {
-      query[key] = value;
-    }
-  }
-
-  return query;
-}
-
 export default async function RoutePage({ params, searchParams }: PageProps<"/projects/[projectId]/routes/[route]">) {
   await getAuthorizedSession();
 
@@ -75,11 +57,10 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
     );
   }
 
-  const routesQuery = toQueryObject(rawSearchParams);
-  const routesHref =
-    Object.keys(routesQuery).length > 0
-      ? { pathname: `/projects/${projectId}/routes`, query: routesQuery }
-      : { pathname: `/projects/${projectId}/routes` };
+  const routesQuery = Object.fromEntries(
+    Object.entries(rawSearchParams).filter((entry): entry is [string, string | string[]] => entry[1] !== undefined),
+  );
+  const routesHref = { pathname: `/projects/${projectId}/routes`, query: routesQuery };
 
   if (detailResult.kind === "route-not-found") {
     notFound();
