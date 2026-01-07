@@ -2,23 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, AlertTriangle, CheckCircle2, Info, Lightbulb } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Info } from "lucide-react";
 import type { UrlObject } from "node:url";
 
-import { Badge as StatusBadge } from "@/components/badge";
-import { statusToBadge } from "@/consts/status-to-badge";
 import { MetricSelector } from "@/components/dashboard/metric-selector";
 import { DeviceSelector } from "@/components/dashboard/device-selector";
 import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
+import { RouteMetricCard } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-metric-card";
+import { DistributionChart } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/distribution-chart";
+import { InsightsCard } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/insights-card";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TimeSeriesChart, type TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
-import PercentileChart from "@/components/dashboard/percentile-chart";
 import { CORE_WEB_VITALS, OTHER_METRICS } from "@/consts/metrics";
-import { cn, capitalize, formatMetricValue } from "@/lib/utils";
+import { cn, capitalize } from "@/lib/utils";
 import { QUERY_STATE_OPTIONS, routeDetailSearchParsers, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
-import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { METRIC_INFO } from "@/app/server/lib/cwv-metadata";
 import type { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import type { RouteDetail } from "@/app/server/domain/routes/detail/types";
@@ -40,33 +39,6 @@ type RouteDetailViewProps = {
 };
 
 const LOW_DATA_VIEWS_THRESHOLD = 1000;
-
-type InsightKind = RouteDetail["insights"][number]["kind"];
-
-function getInsightMeta(kind: InsightKind) {
-  switch (kind) {
-    case "success": {
-      return { icon: CheckCircle2, className: "text-status-good bg-status-good/10 border-status-good/20" };
-    }
-    case "warning": {
-      return {
-        icon: AlertTriangle,
-        className: "text-status-needs-improvement bg-status-needs-improvement/10 border-status-needs-improvement/20",
-      };
-    }
-    case "info": {
-      return { icon: Info, className: "text-muted-foreground bg-muted border-border" };
-    }
-  }
-}
-
-function getPercentileValue(
-  quantiles: RouteDetail["metrics"][number]["quantiles"],
-  percentile: Percentile,
-): number | null {
-  if (!quantiles) return null;
-  return quantiles[percentile];
-}
 
 function getEventLabel(eventName: string, settings: EventDisplaySettings | null): string {
   const customName = settings?.[eventName]?.customName?.trim();
@@ -222,14 +194,18 @@ export function RouteDetailView({
             <span className="text-muted-foreground text-xs">({percentileLabel})</span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {CORE_WEB_VITALS.map((metricName) => (
-              <RouteMetricCard
-                key={metricName}
-                metricName={metricName}
-                metric={metricsByName.get(metricName) ?? null}
-                selectedPercentile={selectedPercentile}
-              />
-            ))}
+            {CORE_WEB_VITALS.map((metricName) => {
+              const metric = metricsByName.get(metricName);
+              return (
+                <RouteMetricCard
+                  key={metricName}
+                  metricName={metricName}
+                  quantiles={metric?.quantiles ?? null}
+                  sampleSize={metric?.sampleSize ?? 0}
+                  selectedPercentile={selectedPercentile}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -239,14 +215,18 @@ export function RouteDetailView({
             <span className="text-muted-foreground text-xs">({percentileLabel})</span>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-            {OTHER_METRICS.map((metricName) => (
-              <RouteMetricCard
-                key={metricName}
-                metricName={metricName}
-                metric={metricsByName.get(metricName) ?? null}
-                selectedPercentile={selectedPercentile}
-              />
-            ))}
+            {OTHER_METRICS.map((metricName) => {
+              const metric = metricsByName.get(metricName);
+              return (
+                <RouteMetricCard
+                  key={metricName}
+                  metricName={metricName}
+                  quantiles={metric?.quantiles ?? null}
+                  sampleSize={metric?.sampleSize ?? 0}
+                  selectedPercentile={selectedPercentile}
+                />
+              );
+            })}
           </div>
         </section>
 
@@ -311,182 +291,9 @@ export function RouteDetailView({
             </CardFooter>
           </Card>
 
-          <Card className="bg-card border-border flex flex-col">
-            <CardHeader>
-              <CardTitle className="text-foreground flex items-center gap-2 text-lg font-medium">
-                <Lightbulb className="text-primary h-5 w-5" />
-                Insights
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <div className="space-y-3">
-                {data.insights.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No insights available.</p>
-                ) : (
-                  data.insights.map((insight) => {
-                    const meta = getInsightMeta(insight.kind);
-                    const Icon = meta.icon;
-
-                    return (
-                      <div
-                        key={`${insight.kind}:${insight.message}`}
-                        className={cn("flex items-start gap-3 rounded-lg border p-3", meta.className)}
-                      >
-                        <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-                        <p className="text-foreground text-sm">{insight.message}</p>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </CardContent>
-            <CardFooter className="border-border border-t">
-              <p className="text-muted-foreground text-xs">
-                Insights are heuristic-based. Low sample sizes may affect accuracy.
-              </p>
-            </CardFooter>
-          </Card>
+          <InsightsCard insights={data.insights} />
         </div>
       </TooltipProvider>
-    </div>
-  );
-}
-
-function RouteMetricCard({
-  metricName,
-  metric,
-  selectedPercentile,
-}: {
-  metricName: MetricName;
-  metric: RouteDetail["metrics"][number] | null;
-  selectedPercentile: Percentile;
-}) {
-  const info = METRIC_INFO[metricName];
-  const thresholds = getMetricThresholds(metricName);
-  const value = getPercentileValue(metric?.quantiles ?? null, selectedPercentile);
-  const status = typeof value === "number" ? getRatingForValue(metricName, value) : null;
-  const sampleSize = metric?.sampleSize ?? 0;
-
-  if (!metric?.quantiles) {
-    return (
-      <Card className="bg-card border-border opacity-60">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{info.friendlyLabel}</CardTitle>
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <span className="font-medium">{metricName}</span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="border-border mt-2 flex flex-col items-center justify-center border-t border-dashed py-4">
-          <p className="text-muted-foreground text-xs tracking-wider uppercase">No Data Available</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const percentileItems = (
-    [
-      { label: "P50", value: metric.quantiles.p50 },
-      { label: "P75", value: metric.quantiles.p75 },
-      { label: "P90", value: metric.quantiles.p90 },
-      { label: "P95", value: metric.quantiles.p95 },
-      { label: "P99", value: metric.quantiles.p99 },
-    ] as const
-  ).map((p) => ({ label: p.label, value: p.value, type: getRatingForValue(metricName, p.value) }));
-
-  return (
-    <Card className="bg-card border-border">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0">
-        <div className="space-y-1">
-          <CardTitle className="text-lg">{info.friendlyLabel}</CardTitle>
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
-            <span className="font-medium">{metricName}</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" className="hover:text-foreground transition-colors">
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <p className="font-medium">{info.name}</p>
-                <p className="mt-1 text-xs">{info.description}</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-        {status && <StatusBadge {...statusToBadge[status]} size="sm" />}
-      </CardHeader>
-      <CardContent>
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <div className="flex items-baseline gap-2">
-            <span className="text-foreground font-mono text-2xl font-semibold">
-              {typeof value === "number" ? formatMetricValue(metricName, value) : "--"}
-            </span>
-            <span className="text-muted-foreground text-sm">{selectedPercentile.toUpperCase()}</span>
-          </div>
-          <span className="text-muted-foreground text-xs">{sampleSize.toLocaleString()} samples</span>
-        </div>
-
-        <PercentileChart
-          title="View all percentiles"
-          metric={metricName}
-          selectedLabel={selectedPercentile.toUpperCase()}
-          thresholds={thresholds}
-          percentiles={percentileItems}
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
-function DistributionChart({ good, needsImprovement, poor }: { good: number; needsImprovement: number; poor: number }) {
-  const total = good + needsImprovement + poor;
-
-  const segments = [
-    {
-      name: "Good",
-      value: good,
-      percent: total > 0 ? (good / total) * 100 : 0,
-      fill: "var(--status-good)",
-    },
-    {
-      name: "Needs improvement",
-      value: needsImprovement,
-      percent: total > 0 ? (needsImprovement / total) * 100 : 0,
-      fill: "var(--status-needs-improvement)",
-    },
-    {
-      name: "Poor",
-      value: poor,
-      percent: total > 0 ? (poor / total) * 100 : 0,
-      fill: "var(--status-poor)",
-    },
-  ];
-
-  return (
-    <div className="space-y-3">
-      <div className="bg-muted flex h-3 overflow-hidden rounded-full">
-        {segments.map((item) => (
-          <div
-            key={item.name}
-            className="h-full transition-all duration-300"
-            style={{ width: `${item.percent}%`, backgroundColor: item.fill }}
-          />
-        ))}
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        {segments.map((item) => (
-          <div key={item.name} className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.fill }} />
-            <span className="text-muted-foreground text-xs">
-              {item.name}: <span className="text-foreground font-medium">{item.percent.toFixed(1)}%</span>
-              <span className="text-muted-foreground ml-1">({item.value.toLocaleString()})</span>
-            </span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
