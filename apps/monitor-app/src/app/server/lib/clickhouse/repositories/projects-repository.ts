@@ -109,7 +109,7 @@ export async function updateProject(project: UpdatableProjectRow): Promise<void>
   const eventsDisplaySettingsValue =
     events_display_settings === null || events_display_settings === undefined
       ? sql.param(null, "Nullable(JSON)")
-      : events_display_settings;
+      : JSON.stringify(events_display_settings);
 
   await sql`
     INSERT INTO projects (
