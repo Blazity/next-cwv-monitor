@@ -1,4 +1,5 @@
 import { getAuthorizedSession } from "@/lib/auth-utils";
+import { formatMetricValue } from "@/lib/utils";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import {
@@ -45,22 +46,24 @@ function buildInsights(views: number, metrics: MetricSummary[]): InsightItem[] {
 
     if (typeof p75 !== "number") continue;
 
+    const p75Formatted = formatMetricValue(metricName, p75);
+
     const status = item?.status;
     // eslint-disable-next-line unicorn/prefer-switch -- Explicit if/else reads clearer for this ordered classification.
     if (status === "good") {
       insights.push({
         kind: "success",
-        message: `${metricName} is performing well (P75 = ${p75}).`,
+        message: `${metricName} is performing well (P75 = ${p75Formatted}).`,
       });
     } else if (status === "poor") {
       insights.push({
         kind: "warning",
-        message: `${metricName} needs attention (P75 = ${p75}).`,
+        message: `${metricName} needs attention (P75 = ${p75Formatted}).`,
       });
     } else if (status === "needs-improvement") {
       insights.push({
         kind: "info",
-        message: `${metricName} is close to the "Poor" threshold (P75 = ${p75}).`,
+        message: `${metricName} is close to the "Poor" threshold (P75 = ${p75Formatted}).`,
       });
     }
 
