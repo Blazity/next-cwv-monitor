@@ -26,7 +26,7 @@ export const Primary: Story = {
     thresholds: { good: 2500, needsImprovement: 4000 },
     title: 'My test tooltip',
     fixedPercentile: true,
-    value: 300,
+    selectedLabel: 'P75',
     metric: 'LCP'
   }
 };

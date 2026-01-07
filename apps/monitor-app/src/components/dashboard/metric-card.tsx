@@ -87,10 +87,10 @@ export function MetricCard({ metric }: MetricCardProps) {
         </div>
         <PercentileChart
           title="View all percentiles"
-          value={p75Value}
           metric={metricName}
           thresholds={thresholds}
           percentiles={percentileItems}
+          selectedLabel="P75"
           fixedPercentile
         />
       </CardContent>

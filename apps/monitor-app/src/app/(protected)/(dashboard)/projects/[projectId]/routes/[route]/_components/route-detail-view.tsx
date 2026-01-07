@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, AlertTriangle, CheckCircle2, ChevronDown, Info, Lightbulb } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CheckCircle2, Info, Lightbulb } from "lucide-react";
 import type { UrlObject } from "node:url";
 
 import { Badge as StatusBadge } from "@/components/badge";
@@ -11,10 +11,10 @@ import { MetricSelector } from "@/components/dashboard/metric-selector";
 import { DeviceSelector } from "@/components/dashboard/device-selector";
 import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TimeSeriesChart, type TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
+import PercentileChart from "@/components/dashboard/percentile-chart";
 import { cn, capitalize, formatMetricValue } from "@/lib/utils";
 import { QUERY_STATE_OPTIONS, routeDetailSearchParsers, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
@@ -430,75 +430,15 @@ function RouteMetricCard({
           <span className="text-muted-foreground text-xs">{sampleSize.toLocaleString()} samples</span>
         </div>
 
-        <PercentilePopover
-          metricName={metricName}
-          selectedPercentile={selectedPercentile}
+        <PercentileChart
+          title="View all percentiles"
+          metric={metricName}
+          selectedLabel={selectedPercentile.toUpperCase()}
           thresholds={thresholds}
           percentiles={percentileItems}
         />
       </CardContent>
     </Card>
-  );
-}
-
-function PercentilePopover({
-  metricName,
-  selectedPercentile,
-  thresholds,
-  percentiles,
-}: {
-  metricName: MetricName;
-  selectedPercentile: Percentile;
-  thresholds: { good: number; needsImprovement: number };
-  percentiles: { label: string; value: number; type: ReturnType<typeof getRatingForValue> }[];
-}) {
-  const selectedLabel = selectedPercentile.toUpperCase();
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
-        >
-          View all percentiles
-          <ChevronDown className="h-3 w-3" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="bg-popover text-popover-foreground border-border w-72 p-3" align="start">
-        <div className="space-y-2">
-          <div className="text-muted-foreground mb-3 text-xs font-medium">Percentile Distribution</div>
-          {percentiles.map((p) => (
-            <div
-              key={p.label}
-              className={cn(
-                "ring-foreground/20 relative flex items-center justify-between overflow-hidden rounded px-2 py-1 ring-1",
-                p.label === selectedLabel && "bg-muted/40",
-              )}
-            >
-              <span
-                className={cn(
-                  "text-muted-foreground relative text-sm",
-                  p.label === selectedLabel && "text-foreground font-medium",
-                )}
-              >
-                {p.label}
-                {p.label === selectedLabel && " (selected)"}
-              </span>
-              <span className="text-foreground relative font-mono text-sm">
-                {formatMetricValue(metricName, p.value)}
-              </span>
-            </div>
-          ))}
-          <div className="border-border mt-3 border-t pt-2">
-            <div className="text-muted-foreground text-xs">
-              Thresholds: Good ≤ {formatMetricValue(metricName, thresholds.good)}, Poor &gt;{" "}
-              {formatMetricValue(metricName, thresholds.needsImprovement)}
-            </div>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
   );
 }
 
