@@ -10,9 +10,8 @@ import { cacheLife } from "next/cache";
 import { notFound } from "next/navigation";
 import { RoutesList } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/routes-list";
 import { RoutesErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-error-state";
-import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import type {
-  MetricName,
   RoutesDeviceType,
   RoutesSortField,
   SortDirection,

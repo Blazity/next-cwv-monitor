@@ -1,6 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceType } from "@/app/server/lib/device-types";
-import { MetricName, Percentile, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, MetricName, Percentile, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
 
 export const ROUTES_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 export type RoutesDeviceType = DeviceType | "all";

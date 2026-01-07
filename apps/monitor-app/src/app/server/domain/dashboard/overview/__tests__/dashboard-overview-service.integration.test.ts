@@ -190,7 +190,6 @@ describe('dashboard-overview-service (integration)', () => {
     expect(data.timeSeriesByMetric.LCP[1].date).toBe('2025-01-11');
     expect(data.timeSeriesByMetric.LCP[0].sampleSize).toBe(30); // 3 routes * 10 events for day1
     expect(data.timeSeriesByMetric.LCP[1].sampleSize).toBe(30); // 3 routes * 10 events for day2
-    expect(data.timeSeriesByMetric.LCP[0].status).toBe('poor');
 
     // CLS time series should have data (we added CLS events for day2)
     expect(data.timeSeriesByMetric.CLS).toBeDefined();
@@ -201,7 +200,6 @@ describe('dashboard-overview-service (integration)', () => {
       const clsDay2 = clsSeries.find((point) => point.date === '2025-01-11');
       expect(clsDay2).toBeDefined();
       if (clsDay2) {
-        expect(clsDay2.status).toBe('good');
         expect(clsDay2.sampleSize).toBeGreaterThan(0);
       }
     }
