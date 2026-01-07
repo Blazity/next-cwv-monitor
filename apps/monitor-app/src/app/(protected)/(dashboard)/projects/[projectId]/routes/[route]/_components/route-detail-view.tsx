@@ -8,7 +8,7 @@ import type { UrlObject } from "node:url";
 import { MetricSelector } from "@/components/dashboard/metric-selector";
 import { DeviceSelector } from "@/components/dashboard/device-selector";
 import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
-import { RouteMetricCard } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-metric-card";
+import { MetricCard } from "@/components/dashboard/metric-card";
 import { DistributionChart } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/distribution-chart";
 import { InsightsCard } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/insights-card";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -197,11 +197,11 @@ export function RouteDetailView({
             {CORE_WEB_VITALS.map((metricName) => {
               const metric = metricsByName.get(metricName);
               return (
-                <RouteMetricCard
+                <MetricCard
                   key={metricName}
                   metricName={metricName}
                   quantiles={metric?.quantiles ?? null}
-                  sampleSize={metric?.sampleSize ?? 0}
+                  sampleCount={metric?.sampleSize ?? 0}
                   selectedPercentile={selectedPercentile}
                 />
               );
@@ -218,11 +218,11 @@ export function RouteDetailView({
             {OTHER_METRICS.map((metricName) => {
               const metric = metricsByName.get(metricName);
               return (
-                <RouteMetricCard
+                <MetricCard
                   key={metricName}
                   metricName={metricName}
                   quantiles={metric?.quantiles ?? null}
-                  sampleSize={metric?.sampleSize ?? 0}
+                  sampleCount={metric?.sampleSize ?? 0}
                   selectedPercentile={selectedPercentile}
                 />
               );

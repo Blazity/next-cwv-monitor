@@ -9,17 +9,7 @@ type CoreWebVitalsProps = {
 };
 
 export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
-  const coreMetrics = CORE_WEB_VITALS.map((name) => {
-    const data = metricOverview.find((m) => m.metricName === name);
-    return (
-      data || {
-        metricName: name,
-        quantiles: null,
-        status: null,
-        sampleSize: 0,
-      }
-    );
-  });
+  const coreMetrics = CORE_WEB_VITALS.map((name) => metricOverview.find((m) => m.metricName === name) ?? null);
 
   return (
     <TooltipProvider>
@@ -44,9 +34,10 @@ export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {coreMetrics.map((item) => (
-            <MetricCard key={item.metricName} metric={item} />
-          ))}
+          {CORE_WEB_VITALS.map((metricName, idx) => {
+            const item = coreMetrics[idx];
+            return <MetricCard key={metricName} metricName={metricName} quantiles={item?.quantiles ?? null} />;
+          })}
         </div>
       </section>
     </TooltipProvider>
