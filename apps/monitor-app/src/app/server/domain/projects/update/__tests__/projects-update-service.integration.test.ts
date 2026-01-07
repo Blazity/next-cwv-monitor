@@ -98,6 +98,25 @@ describe('ProjectsUpdateService (integration)', () => {
     expect(rows[0].slug).toBe('updated-slug');
   });
 
+  it('successfully updates events_display_settings (custom event display settings)', async () => {
+    const projectId = randomUUID();
+    await projectsRepo.createProject({ id: projectId, slug: 'test', name: 'Test' });
+
+    const result = await service.execute({
+      id: projectId,
+      events_display_settings: {
+        copy_snippet: { isHidden: false, customName: 'elo' }
+      }
+    });
+
+    expect(result).toEqual({ kind: 'ok' });
+
+    const updated = await projectsRepo.getProjectById(projectId);
+    expect(updated?.events_display_settings).toEqual({
+      copy_snippet: { isHidden: false, customName: 'elo' }
+    });
+  });
+
   it('handles database errors gracefully during update', async () => {
     const projectId = randomUUID();
     await projectsRepo.createProject({ id: projectId, slug: 'test', name: 'Test' });
