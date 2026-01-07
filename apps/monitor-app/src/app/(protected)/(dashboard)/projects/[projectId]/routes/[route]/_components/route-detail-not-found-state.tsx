@@ -1,11 +1,11 @@
+import type { ComponentProps } from "react";
 import Link from "next/link";
 import { ArrowLeft, FileQuestion } from "lucide-react";
-import type { UrlObject } from "node:url";
 
 import { Button } from "@/components/ui/button";
 
 type RouteDetailNotFoundStateProps = {
-  routesHref: UrlObject;
+  routesHref: ComponentProps<typeof Link>["href"];
   route: string;
 };
 

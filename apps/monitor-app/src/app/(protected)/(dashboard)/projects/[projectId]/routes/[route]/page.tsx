@@ -7,7 +7,6 @@ import { buildRouteEventOverlayQuery } from "@/app/server/domain/routes/overlay/
 import { fetchProjectEventNames } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
 import { RouteDetailErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-detail-error-state";
-import { RouteDetailNotFoundState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-detail-not-found-state";
 import { RouteDetailView } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-detail-view";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { getCachedProject } from "@/lib/cache";
@@ -44,12 +43,7 @@ function toQueryObject(searchParams: {
   return query;
 }
 
-type RouteDetailPageProps = {
-  params: Promise<{ projectId: string; route: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-};
-
-export default async function RoutePage({ params, searchParams }: RouteDetailPageProps) {
+export default async function RoutePage({ params, searchParams }: PageProps<"/projects/[projectId]/routes/[route]">) {
   await getAuthorizedSession();
 
   const { projectId, route: routeParam } = await params;
@@ -88,7 +82,7 @@ export default async function RoutePage({ params, searchParams }: RouteDetailPag
       : { pathname: `/projects/${projectId}/routes` };
 
   if (detailResult.kind === "route-not-found") {
-    return <RouteDetailNotFoundState routesHref={routesHref} route={detailResult.route} />;
+    notFound();
   }
 
   const project = await getCachedProject(projectId);
