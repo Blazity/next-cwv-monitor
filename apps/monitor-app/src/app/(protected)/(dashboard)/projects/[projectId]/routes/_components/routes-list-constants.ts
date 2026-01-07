@@ -1,12 +1,6 @@
-import type { MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
+import type { Percentile } from "@/app/server/domain/dashboard/overview/types";
 
-export const METRIC_DETAILS: Record<MetricName, string> = {
-  LCP: "Largest Contentful Paint",
-  INP: "Interaction to Next Paint",
-  CLS: "Cumulative Layout Shift",
-  FCP: "First Contentful Paint",
-  TTFB: "Time to First Byte",
-};
+export { METRIC_DETAILS } from "@/consts/metric-details";
 
 export const PERCENTILE_LABELS: Record<Percentile, string> = {
   p50: "P50",
