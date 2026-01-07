@@ -1,6 +1,6 @@
 import { createSearchParamsCache, parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs/server";
-import { TIME_RANGES, OVERVIEW_DEVICE_TYPES } from "@/app/server/domain/dashboard/overview/types";
-import { METRIC_NAMES, PERCENTILES } from "@/app/server/domain/routes/list/types";
+import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES } from "@/app/server/domain/dashboard/overview/types";
+import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
 import type { RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
 
 export const ROUTES_SORT_FIELDS = ["route", "views", "metric"] as const satisfies RoutesSortField[];

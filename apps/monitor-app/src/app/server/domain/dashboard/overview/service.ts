@@ -4,7 +4,6 @@ import {
   fetchAllMetricsDailySeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes,
-  MetricName,
 } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
@@ -21,6 +20,7 @@ import {
   type WorstRouteItem,
   METRIC_NAMES,
   QuickStatsData,
+  MetricName,
 } from "@/app/server/domain/dashboard/overview/types";
 import { projectIdSchema } from "@/app/server/domain/projects/schema";
 
@@ -109,14 +109,11 @@ export class DashboardOverviewService {
       if (!isMetricName(metric)) continue;
 
       const quantiles = toQuantileSummary(row.percentiles);
-      const p75 = quantiles?.p75;
-      const status = typeof p75 === "number" ? getRatingForValue(metric, p75) : null;
 
       timeSeriesByMetric.get(metric)?.push({
         date: row.event_date,
         sampleSize: Number(row.sample_size || 0),
-        quantiles,
-        status,
+        quantiles
       });
     }
 
