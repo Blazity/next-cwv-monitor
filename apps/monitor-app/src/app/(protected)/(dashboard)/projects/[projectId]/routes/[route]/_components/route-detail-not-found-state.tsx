@@ -1,11 +1,11 @@
-import type { ComponentProps } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { ArrowLeft, FileQuestion } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
 type RouteDetailNotFoundStateProps = {
-  routesHref: ComponentProps<typeof Link>["href"];
+  routesHref: string;
   route: string;
 };
 
@@ -22,7 +22,7 @@ export function RouteDetailNotFoundState({ routesHref, route }: RouteDetailNotFo
         </p>
       </div>
       <Button asChild variant="outline">
-        <Link href={routesHref}>
+        <Link href={routesHref as Route}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to routes
         </Link>
