@@ -13,11 +13,11 @@ import { RoutesErrorState } from "@/app/(protected)/(dashboard)/projects/[projec
 import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import type {
   MetricName,
-  Percentile,
   RoutesDeviceType,
   RoutesSortField,
   SortDirection,
 } from "@/app/server/domain/routes/list/types";
+import type { Percentile } from "@/app/server/domain/dashboard/overview/types";
 
 const routesListService = new RoutesListService();
 const PAGE_SIZE = 10;

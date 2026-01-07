@@ -1,19 +1,14 @@
+import { DateRange, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { Percentile } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceType } from "@/app/server/lib/device-types";
 
 export type RoutesDeviceFilter = DeviceType | "all";
-export type MetricName = "LCP" | "INP" | "CLS" | "FCP" | "TTFB";
-export type Percentile = "p50" | "p75" | "p90" | "p95" | "p99";
 
 export type SortField = "route" | "views" | "metric";
 export type SortDirection = "asc" | "desc";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
-
-type DateRange = {
-  start: Date;
-  end: Date;
-};
 
 type BaseFilters = {
   projectId: string;

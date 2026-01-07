@@ -20,13 +20,13 @@ const THRESHOLDS = {
   FID: { good: 100, needsImprovement: 300 }
 } as const;
 
-export type MetricName = keyof typeof THRESHOLDS;
+type ThresholdMetricName = keyof typeof THRESHOLDS;
 
-export function getMetricThresholds(metricName: MetricName): MetricThresholds {
+export function getMetricThresholds(metricName: ThresholdMetricName): MetricThresholds {
   return THRESHOLDS[metricName];
 }
 
-export function getRatingForValue(metricName: MetricName, value: number): WebVitalRatingV1 {
+export function getRatingForValue(metricName: ThresholdMetricName, value: number): WebVitalRatingV1 {
   const thresholds = getMetricThresholds(metricName);
 
   if (value <= thresholds.good) return 'good';
