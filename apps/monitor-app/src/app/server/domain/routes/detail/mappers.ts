@@ -1,4 +1,6 @@
-import type { DateRange, GetRouteDetailQuery, MetricName, RoutesDeviceType } from '@/app/server/domain/routes/detail/types';
+import { DateRange, MetricName } from '@/app/server/domain/dashboard/overview/types';
+import type { GetRouteDetailQuery } from '@/app/server/domain/routes/detail/types';
+import { RoutesDeviceType } from '@/app/server/domain/routes/list/types';
 
 const DEFAULT_RANGE_DAYS = 7;
 

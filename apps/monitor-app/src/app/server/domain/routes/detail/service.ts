@@ -13,13 +13,13 @@ import { CORE_WEB_VITALS } from "@/consts/metrics";
 
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type {
-  DailySeriesPoint,
   GetRouteDetailQuery,
   GetRouteDetailResult,
   InsightItem,
   MetricSummary,
   StatusDistribution,
 } from "@/app/server/domain/routes/detail/types";
+import { DailySeriesPoint } from "@/app/server/domain/dashboard/overview/types";
 const LOW_VIEWS_THRESHOLD = 1000;
 
 function emptyStatusDistribution(): StatusDistribution {
