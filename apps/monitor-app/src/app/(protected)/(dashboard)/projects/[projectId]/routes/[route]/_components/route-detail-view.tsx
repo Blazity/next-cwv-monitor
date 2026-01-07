@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TimeSeriesChart, type TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
 import PercentileChart from "@/components/dashboard/percentile-chart";
+import { CORE_WEB_VITALS, OTHER_METRICS } from "@/consts/metrics";
 import { cn, capitalize, formatMetricValue } from "@/lib/utils";
 import { QUERY_STATE_OPTIONS, routeDetailSearchParsers, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
@@ -37,9 +38,6 @@ type RouteDetailViewProps = {
   selectedEvent: string;
   overlay: RouteEventOverlay | null;
 };
-
-const CORE_WEB_VITALS = ["LCP", "INP", "CLS"] as const satisfies MetricName[];
-const OTHER_METRICS = ["FCP", "TTFB"] as const satisfies MetricName[];
 
 const LOW_DATA_VIEWS_THRESHOLD = 1000;
 

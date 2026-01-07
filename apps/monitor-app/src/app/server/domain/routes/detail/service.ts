@@ -9,6 +9,7 @@ import {
   fetchRouteViews,
 } from "@/app/server/lib/clickhouse/repositories/dashboard-routes-repository";
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
+import { CORE_WEB_VITALS } from "@/consts/metrics";
 
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type {
@@ -16,12 +17,9 @@ import type {
   GetRouteDetailQuery,
   GetRouteDetailResult,
   InsightItem,
-  MetricName,
   MetricSummary,
   StatusDistribution,
 } from "@/app/server/domain/routes/detail/types";
-
-const CORE_WEB_VITALS: MetricName[] = ["LCP", "INP", "CLS"];
 const LOW_VIEWS_THRESHOLD = 1000;
 
 function emptyStatusDistribution(): StatusDistribution {
