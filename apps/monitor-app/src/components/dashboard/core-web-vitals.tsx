@@ -1,34 +1,25 @@
-import { Info } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { MetricCard } from '@/components/dashboard/metric-card';
-import type { MetricName, MetricOverviewItem } from '@/app/server/domain/dashboard/overview/types';
+import { Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import type { MetricOverviewItem } from "@/app/server/domain/dashboard/overview/types";
+import { CORE_WEB_VITALS } from "@/consts/metrics";
 
 type CoreWebVitalsProps = {
   metricOverview: MetricOverviewItem[];
-}
+};
 
-const CORE_METRICS = ['LCP', 'INP', 'CLS'] as const satisfies MetricName[];
 export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
-
-  const coreMetrics = CORE_METRICS.map((name) => {
-    const data = metricOverview.find((m) => m.metricName === name);
-    return data || { 
-      metricName: name, 
-      quantiles: null, 
-      status: null, 
-      sampleSize: 0 
-    };
-  });
+  const coreMetrics = CORE_WEB_VITALS.map((name) => metricOverview.find((m) => m.metricName === name) ?? null);
 
   return (
     <TooltipProvider>
       <section>
-        <div className="flex items-center gap-2 mb-4">
-          <h2 className="text-lg font-medium text-foreground">Core Web Vitals</h2>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-foreground text-lg font-medium">Core Web Vitals</h2>
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" className="inline-flex outline-none">
-                <Info className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                <Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
                 <span className="sr-only">Metric information</span>
               </button>
             </TooltipTrigger>
@@ -41,11 +32,12 @@ export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
             </TooltipContent>
           </Tooltip>
         </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {coreMetrics.map((item) => (
-            <MetricCard key={item.metricName} metric={item} />
-          ))}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {CORE_WEB_VITALS.map((metricName, idx) => {
+            const item = coreMetrics[idx];
+            return <MetricCard key={metricName} metricName={metricName} quantiles={item?.quantiles ?? null} />;
+          })}
         </div>
       </section>
     </TooltipProvider>

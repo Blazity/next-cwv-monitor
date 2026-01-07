@@ -1,30 +1,50 @@
-'use client';
+"use client";
 
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
-  XAxis,
-  YAxis,
   CartesianGrid,
   ReferenceLine,
   ResponsiveContainer,
-  Tooltip as RechartsTooltip
-} from 'recharts';
+  Tooltip as RechartsTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
-import { Badge } from '@/components/badge';
-import { statusToBadge } from '@/consts/status-to-badge';
-import { formatMetricValue } from '@/lib/utils';
-import { getMetricThresholds } from '@/app/server/lib/cwv-thresholds';
-import type { DashboardOverview } from '@/app/server/domain/dashboard/overview/types';
-import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import { useMemo } from 'react';
+import { Badge } from "@/components/badge";
+import { statusToBadge } from "@/consts/status-to-badge";
+import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
+import { formatMetricValue } from "@/lib/utils";
+import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 
-type DailySeriesPoint = DashboardOverview['timeSeriesByMetric'][MetricName][number];
+type Percentile = "p50" | "p75" | "p90" | "p95" | "p99";
+type QuantileSummary = Record<Percentile, number>;
+
+type DailySeriesPoint = {
+  date: string;
+  sampleSize: number;
+  quantiles: QuantileSummary | null;
+};
+
+export type TimeSeriesOverlayPoint = {
+  date: string;
+  views: number;
+  conversions: number;
+  conversionRatePct: number | null;
+};
+
+export type TimeSeriesOverlay = {
+  label: string;
+  series: TimeSeriesOverlayPoint[];
+};
 
 type TimeSeriesChartProps = {
   data: DailySeriesPoint[];
   metric: MetricName;
+  percentile?: Percentile;
+  overlay?: TimeSeriesOverlay | null;
   height?: number;
 };
 
@@ -34,34 +54,53 @@ type ChartDataPoint = {
   samples: number;
   status: WebVitalRatingV1 | null;
   time: string;
+  overlayRatePct?: number | null;
+  overlayViews?: number;
+  overlayConversions?: number;
 };
 
-export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartProps) {
+export function TimeSeriesChart({ data, metric, percentile = "p75", overlay, height = 300 }: TimeSeriesChartProps) {
+  const overlayByDate = useMemo(() => {
+    if (!overlay) return null;
+    const map = new Map<string, TimeSeriesOverlayPoint>();
+    for (const point of overlay.series) {
+      map.set(point.date, point);
+    }
+    return map;
+  }, [overlay]);
+
   const chartData = useMemo(() => {
     return data.map((point): ChartDataPoint => {
-      const value = point.quantiles?.p75 ?? null;
+      const value = point.quantiles ? point.quantiles[percentile] : null;
+      const status = typeof value === "number" ? getRatingForValue(metric, value) : null;
+      const overlayPoint = overlayByDate?.get(point.date);
       const date = new Date(point.date);
 
       return {
         timestamp: point.date,
         value,
         samples: point.sampleSize,
-        status: point.status,
-        time: date.toLocaleString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric'
-        })
+        status,
+        time: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        overlayRatePct: overlayPoint?.conversionRatePct,
+        overlayViews: overlayPoint?.views,
+        overlayConversions: overlayPoint?.conversions,
       };
     });
-  }, [data]);
+  }, [data, metric, overlayByDate, percentile]);
 
   const thresholds = getMetricThresholds(metric);
 
   const maxValue = Math.max(
-    ...data.map((d) => d.quantiles?.p75 ?? null).filter((v): v is number => v !== null),
-    thresholds.needsImprovement * 1.1
+    ...data.map((d) => (d.quantiles ? d.quantiles[percentile] : null)).filter((v): v is number => v !== null),
+    thresholds.needsImprovement * 1.1,
   );
+
+  const overlayRates = overlay
+    ? overlay.series.map((p) => p.conversionRatePct ?? null).filter((v): v is number => v !== null)
+    : [];
+  const maxOverlayRate = Math.max(1, ...overlayRates);
+  const overlayDomainMax = Math.min(100, maxOverlayRate * 1.1);
 
   return (
     <div className="w-full" style={{ height }}>
@@ -72,6 +111,10 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
               <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
               <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
             </linearGradient>
+            <linearGradient id="overlayGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--chart-5)" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="var(--chart-5)" stopOpacity={0} />
+            </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis
@@ -80,7 +123,7 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: 'var(--muted-foreground)' }}
+            tick={{ fill: "var(--muted-foreground)" }}
             interval="preserveStartEnd"
             minTickGap={50}
           />
@@ -90,12 +133,25 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
             fontSize={11}
             tickLine={false}
             axisLine={false}
-            tick={{ fill: 'var(--muted-foreground)' }}
+            tick={{ fill: "var(--muted-foreground)" }}
             tickFormatter={(value) => formatMetricValue(metric, value)}
             domain={[0, maxValue]}
             width={60}
           />
-          {/* Good threshold */}
+          {overlay && (
+            <YAxis
+              yAxisId="overlay"
+              orientation="right"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickLine={false}
+              axisLine={false}
+              tick={{ fill: "var(--muted-foreground)" }}
+              tickFormatter={(value) => `${Number(value).toFixed(1)}%`}
+              domain={[0, overlayDomainMax]}
+              width={50}
+            />
+          )}
           <ReferenceLine
             yAxisId="metric"
             y={thresholds.good}
@@ -103,7 +159,6 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
             strokeDasharray="4 4"
             strokeOpacity={0.5}
           />
-          {/* Poor threshold */}
           <ReferenceLine
             yAxisId="metric"
             y={thresholds.needsImprovement}
@@ -114,7 +169,7 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
           <RechartsTooltip
             content={({ active, payload }) => {
               if (!active || payload.length === 0) return null;
-              const point = payload[0].payload as ChartDataPoint | undefined;
+              const point = payload[0]?.payload as ChartDataPoint | undefined;
               if (!point) return null;
 
               if (point.value === null) {
@@ -131,7 +186,9 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
                   <p className="text-muted-foreground mb-2 text-sm">{point.time}</p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-foreground text-sm">{metric}</span>
+                      <span className="text-foreground text-sm">
+                        {metric} ({percentile.toUpperCase()})
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="text-foreground font-mono text-sm font-medium">
                           {formatMetricValue(metric, point.value)}
@@ -139,7 +196,19 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
                         {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
                       </div>
                     </div>
-                    <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} tracked views</div>
+                    <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+                    {overlay && typeof point.overlayRatePct === "number" && (
+                      <div className="border-border mt-2 border-t pt-2">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-foreground text-sm">{overlay.label}</span>
+                          <span className="text-foreground font-mono text-sm">{point.overlayRatePct.toFixed(2)}%</span>
+                        </div>
+                        <div className="text-muted-foreground mt-1 text-xs">
+                          {point.overlayConversions?.toLocaleString()} events / {point.overlayViews?.toLocaleString()}{" "}
+                          tracked views
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -156,11 +225,29 @@ export function TimeSeriesChart({ data, metric, height = 300 }: TimeSeriesChartP
             dot={false}
             activeDot={{
               r: 4,
-              fill: 'var(--chart-1)',
-              stroke: 'var(--background)',
-              strokeWidth: 2
+              fill: "var(--chart-1)",
+              stroke: "var(--background)",
+              strokeWidth: 2,
             }}
           />
+          {overlay && (
+            <Area
+              yAxisId="overlay"
+              type="monotone"
+              dataKey="overlayRatePct"
+              stroke="var(--chart-5)"
+              strokeWidth={2}
+              fill="url(#overlayGradient)"
+              connectNulls={false}
+              dot={false}
+              activeDot={{
+                r: 4,
+                fill: "var(--chart-5)",
+                stroke: "var(--background)",
+                strokeWidth: 2,
+              }}
+            />
+          )}
         </AreaChart>
       </ResponsiveContainer>
     </div>

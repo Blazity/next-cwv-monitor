@@ -196,6 +196,92 @@ describe("routes-list-service (integration)", () => {
     expect(poor?.status).toBe("poor");
   });
 
+  it("falls back to CWV aggregates when $page_view events are missing", async () => {
+    const projectId = randomUUID();
+    await createProject({ id: projectId, slug: "routes-list-fallback", name: "Routes List Fallback" });
+
+    const day2 = new Date();
+    day2.setUTCHours(12, 0, 0, 0);
+    const day1 = new Date(day2);
+    day1.setUTCDate(day1.getUTCDate() - 1);
+
+    const rangeStart = new Date(day1);
+    rangeStart.setUTCHours(0, 0, 0, 0);
+    const rangeEnd = new Date(day2);
+    rangeEnd.setUTCHours(23, 59, 59, 999);
+
+    const routes = [
+      { route: "/good", lcp: 2000, viewsPerDay: 10, expectedStatus: "good" as const },
+      { route: "/needs", lcp: 3000, viewsPerDay: 5, expectedStatus: "needs-improvement" as const },
+      { route: "/poor", lcp: 5000, viewsPerDay: 2, expectedStatus: "poor" as const },
+    ];
+
+    const cwvEvents = [];
+
+    for (const { route, lcp, viewsPerDay } of routes) {
+      for (const recordedAt of [day1, day2]) {
+        for (let i = 0; i < viewsPerDay; i++) {
+          const sessionId = `cwv-${route}-${recordedAt.toISOString()}-${i}`;
+          cwvEvents.push({
+            project_id: projectId,
+            session_id: sessionId,
+            route,
+            path: route,
+            device_type: "desktop" as const,
+            metric_name: "LCP" as const,
+            metric_value: lcp,
+            rating: "good",
+            recorded_at: recordedAt,
+          });
+        }
+      }
+    }
+
+    await insertEvents(cwvEvents);
+    await optimizeAggregates(sql);
+
+    const service = new RoutesListService();
+    const result = await service.list({
+      projectId,
+      range: { start: rangeStart, end: rangeEnd },
+      deviceType: "desktop",
+      search: undefined,
+      metricName: "LCP",
+      percentile: "p75",
+      sort: { field: "views", direction: "desc" },
+      page: { limit: 10, offset: 0 },
+    });
+
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") {
+      throw new Error(`Expected kind=ok, got ${result.kind}`);
+    }
+
+    expect(result.data.totalRoutes).toBe(3);
+    expect(result.data.statusDistribution).toEqual({
+      good: 1,
+      "needs-improvement": 1,
+      poor: 1,
+    });
+
+    expect(result.data.items.map((r) => r.route)).toEqual(["/good", "/needs", "/poor"]);
+
+    const good = result.data.items.find((r) => r.route === "/good");
+    expect(good?.views).toBe(0);
+    expect(good?.metricSampleSize).toBe(20);
+    expect(good?.status).toBe("good");
+
+    const needs = result.data.items.find((r) => r.route === "/needs");
+    expect(needs?.views).toBe(0);
+    expect(needs?.metricSampleSize).toBe(10);
+    expect(needs?.status).toBe("needs-improvement");
+
+    const poor = result.data.items.find((r) => r.route === "/poor");
+    expect(poor?.views).toBe(0);
+    expect(poor?.metricSampleSize).toBe(4);
+    expect(poor?.status).toBe("poor");
+  });
+
   it("supports route search (case-insensitive substring)", async () => {
     const projectId = randomUUID();
     await createProject({ id: projectId, slug: "routes-list-search", name: "Routes List Search" });
