@@ -1,0 +1,21 @@
+# This overrides the base compose file to build images from source
+# instead of pulling from a registry.
+
+services:
+  migrations:
+    build:
+      context: ../
+      dockerfile: docker/migrations.Dockerfile
+    image: cwv-monitor-migrations:local
+
+  seed-demo:
+    build:
+      context: ../
+      dockerfile: docker/seed-demo.Dockerfile
+    image: cwv-monitor-seed:local
+
+  monitor-app:
+    build:
+      context: ../
+      dockerfile: docker/monitor-app.prod.Dockerfile
+    image: cwv-monitor:local

@@ -1,0 +1,106 @@
+x-clickhouse-env: &clickhouse-env
+  CLICKHOUSE_HOST: &clickhouse-host ${CLICKHOUSE_HOST:-clickhouse}
+  CLICKHOUSE_PORT: &clickhouse-port ${CLICKHOUSE_PORT:-8123}
+  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:-cwv_monitor}
+  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:-default}
+  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:?CLICKHOUSE_PASSWORD is required}
+
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-25.8}
+    restart: unless-stopped
+    environment:
+      <<: *clickhouse-env
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    expose:
+      - "8123"
+      - "9000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "clickhouse-client",
+          "--host",
+          "localhost",
+          "--query",
+          "SELECT 1",
+        ]
+      interval: 5s
+      retries: 10
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+
+  migrations:
+    image: ${IMAGE_REGISTRY:-ghcr.io/blazity}/cwv-monitor-migrations:${IMAGE_TAG:-latest}
+    environment:
+      <<: *clickhouse-env
+      CH_MIGRATIONS_HOST: *clickhouse-host
+      CH_MIGRATIONS_PORT: *clickhouse-port
+      CH_MIGRATIONS_USER: *clickhouse-user
+      CH_MIGRATIONS_PASSWORD: *clickhouse-password
+      CH_MIGRATIONS_DATABASE: *clickhouse-db
+      CH_MIGRATIONS_DIR: apps/monitor-app/clickhouse/migrations
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: "no"
+
+  seed-demo:
+    image: ${IMAGE_REGISTRY:-ghcr.io/blazity}/cwv-monitor-seed:${IMAGE_TAG:-latest}
+    profiles: ["demo"]
+    environment:
+      <<: *clickhouse-env
+      SEED_PROJECT_ID: ${SEED_PROJECT_ID:-00000000-0000-0000-0000-000000000000}
+      SEED_PROJECT_SLUG: ${SEED_PROJECT_SLUG:-demo-project}
+      SEED_PROJECT_NAME: ${SEED_PROJECT_NAME:-Next CWV Demo}
+      SEED_DAYS: ${SEED_DAYS:-14}
+      SEED_EVENTS_PER_COMBO: ${SEED_EVENTS_PER_COMBO:-3}
+      SEED_RESET: ${SEED_RESET:-false}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: "no"
+
+  monitor-app:
+    image: ${IMAGE_REGISTRY:-ghcr.io/blazity}/cwv-monitor:${IMAGE_TAG:-latest}
+    environment:
+      # ─────────────────────────────────────────────────────────────
+      # Application
+      # ─────────────────────────────────────────────────────────────
+      NODE_ENV: production
+      AUTH_BASE_URL: ${AUTH_BASE_URL:?AUTH_BASE_URL is required}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+      # ─────────────────────────────────────────────────────────────
+      # ClickHouse
+      # ─────────────────────────────────────────────────────────────
+      <<: *clickhouse-env
+
+      # ─────────────────────────────────────────────────────────────
+      # Authentication & Security
+      # ─────────────────────────────────────────────────────────────
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      MIN_PASSWORD_SCORE: ${MIN_PASSWORD_SCORE:-2}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      MAX_LOGIN_ATTEMPTS: ${MAX_LOGIN_ATTEMPTS:-5}
+
+      # ─────────────────────────────────────────────────────────────
+      # Initial User (created on first startup)
+      # ─────────────────────────────────────────────────────────────
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:?INITIAL_USER_EMAIL is required}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:?INITIAL_USER_PASSWORD is required}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-Admin}
+    ports:
+      - "${APP_PORT:-80}:3000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+volumes:
+  clickhouse-data:
+  clickhouse-logs:

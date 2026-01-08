@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { createClient } from "@clickhouse/client";
@@ -124,7 +123,7 @@ function formatDateTime64Utc(date) {
 
 function parseArgs(argv) {
   const args = new Set(argv);
-  const seedCustomEvents = args.has("--custom-events") || args.has("--custom-events-only");
+  const seedCustomEvents = !args.has("--no-custom-events");
   const seedCwvEvents = !args.has("--custom-events-only");
   return { seedCwvEvents, seedCustomEvents };
 }
