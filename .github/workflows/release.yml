@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    branches: [cwv-7-client-sdk-publishing]
 
 permissions:
   contents: write
@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 20
-          registry-url: '[https://registry.npmjs.org](https://registry.npmjs.org)'
+          registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
       - name: Install & Build
         run: |
