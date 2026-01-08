@@ -1,4 +1,6 @@
-import type { DateRange, GetRouteEventOverlayQuery, RoutesDeviceType } from '@/app/server/domain/routes/overlay/types';
+import type { GetRouteEventOverlayQuery } from "@/app/server/domain/routes/overlay/types";
+import { DateRange } from "@/app/server/domain/dashboard/overview/types";
+import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
 
 const DEFAULT_RANGE_DAYS = 7;
 
@@ -30,9 +32,7 @@ export function buildRouteEventOverlayQuery(input: BuildRouteEventOverlayQueryIn
     projectId: input.projectId,
     route: input.route,
     eventName: normalizeEventName(input.eventName),
-    deviceType: input.deviceType ?? 'all',
-    range: { start, end }
+    deviceType: input.deviceType ?? "all",
+    range: { start, end },
   };
 }
-
-

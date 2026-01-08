@@ -1,12 +1,5 @@
-import type { DeviceType } from '@/app/server/lib/device-types';
-
-export const ROUTES_DEVICE_TYPES = ['desktop', 'mobile', 'all'] as const;
-export type RoutesDeviceType = DeviceType | 'all';
-
-export type DateRange = {
-  start: Date;
-  end: Date;
-};
+import { DateRange } from "@/app/server/domain/dashboard/overview/types";
+import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
 
 export type GetRouteEventOverlayQuery = {
   projectId: string;
@@ -34,7 +27,5 @@ export type RouteEventOverlay = {
 };
 
 export type GetRouteEventOverlayResult =
-  | { kind: 'ok'; data: RouteEventOverlay }
-  | { kind: 'project-not-found'; projectId: string };
-
-
+  | { kind: "ok"; data: RouteEventOverlay }
+  | { kind: "project-not-found"; projectId: string };

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { MetricName } from '@/app/server/lib/clickhouse/repositories/dashboard-overview-repository';
 import { QuickStats } from '@/components/dashboard/quick-stats';
+import { MetricName } from '@/app/server/domain/dashboard/overview/types';
 
 const meta: Meta<typeof QuickStats> = {
   title: 'Dashboard/QuickStats',

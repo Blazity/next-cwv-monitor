@@ -1,12 +1,10 @@
+import { DateRange, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
 import type {
-  DateRange,
   ListRoutesQuery,
-  MetricName,
-  Percentile,
   RoutesDeviceType,
   RoutesSortField,
-  SortDirection
-} from '@/app/server/domain/routes/list/types';
+  SortDirection,
+} from "@/app/server/domain/routes/list/types";
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_LIMIT = 20;
@@ -41,20 +39,20 @@ function normalizeSearch(value?: string): string | undefined {
 }
 
 function normalizeLimit(value?: number): number {
-  const raw = typeof value === 'number' ? value : DEFAULT_LIMIT;
+  const raw = typeof value === "number" ? value : DEFAULT_LIMIT;
   if (!Number.isFinite(raw)) return DEFAULT_LIMIT;
   return Math.max(1, Math.min(MAX_LIMIT, Math.floor(raw)));
 }
 
 function normalizeOffset(value?: number): number {
-  const raw = typeof value === 'number' ? value : 0;
+  const raw = typeof value === "number" ? value : 0;
   if (!Number.isFinite(raw)) return 0;
   return Math.max(0, Math.floor(raw));
 }
 
 function normalizeSort(input?: SortInput): { field: RoutesSortField; direction: SortDirection } {
-  const field = input?.field ?? 'views';
-  const direction = input?.direction ?? 'desc';
+  const field = input?.field ?? "views";
+  const direction = input?.direction ?? "desc";
   return { field, direction };
 }
 
@@ -71,15 +69,14 @@ export function buildListRoutesQuery(input: BuildListRoutesQueryInput): ListRout
   return {
     projectId: input.projectId,
     range: { start, end },
-    deviceType: input.deviceType ?? 'all',
+    deviceType: input.deviceType ?? "all",
     search: normalizeSearch(input.search),
-    metricName: input.metricName ?? 'LCP',
-    percentile: input.percentile ?? 'p75',
+    metricName: input.metricName ?? "LCP",
+    percentile: input.percentile ?? "p75",
     sort: normalizeSort(input.sort),
     page: {
       limit: normalizeLimit(input.page?.limit),
-      offset: normalizeOffset(input.page?.offset)
-    }
+      offset: normalizeOffset(input.page?.offset),
+    },
   };
 }
-

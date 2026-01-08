@@ -16,17 +16,8 @@ import { Badge } from "@/components/badge";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { formatMetricValue } from "@/lib/utils";
-import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import type { DailySeriesPoint, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
-
-type Percentile = "p50" | "p75" | "p90" | "p95" | "p99";
-type QuantileSummary = Record<Percentile, number>;
-
-type DailySeriesPoint = {
-  date: string;
-  sampleSize: number;
-  quantiles: QuantileSummary | null;
-};
 
 export type TimeSeriesOverlayPoint = {
   date: string;
@@ -46,6 +37,7 @@ type TimeSeriesChartProps = {
   percentile?: Percentile;
   overlay?: TimeSeriesOverlay | null;
   height?: number;
+  dateRange: { start: Date; end: Date };
 };
 
 type ChartDataPoint = {
@@ -59,7 +51,14 @@ type ChartDataPoint = {
   overlayConversions?: number;
 };
 
-export function TimeSeriesChart({ data, metric, percentile = "p75", overlay, height = 300 }: TimeSeriesChartProps) {
+export function TimeSeriesChart({
+  data,
+  metric,
+  percentile = "p75",
+  overlay,
+  height = 300,
+  dateRange,
+}: TimeSeriesChartProps) {
   const overlayByDate = useMemo(() => {
     if (!overlay) return null;
     const map = new Map<string, TimeSeriesOverlayPoint>();
@@ -70,24 +69,40 @@ export function TimeSeriesChart({ data, metric, percentile = "p75", overlay, hei
   }, [overlay]);
 
   const chartData = useMemo(() => {
-    return data.map((point): ChartDataPoint => {
-      const value = point.quantiles ? point.quantiles[percentile] : null;
-      const status = typeof value === "number" ? getRatingForValue(metric, value) : null;
-      const overlayPoint = overlayByDate?.get(point.date);
-      const date = new Date(point.date);
+    const dataByDate = new Map(data.map((p) => [p.date, p]));
+    const points: ChartDataPoint[] = [];
 
-      return {
-        timestamp: point.date,
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    for (let i = 0; i < diffDays; i++) {
+      const currentTick = new Date(start);
+      currentTick.setDate(start.getDate() + i);
+      const isoDate = currentTick.toISOString().split("T")[0];
+  
+      const point = dataByDate.get(isoDate);
+      const overlayPoint = overlayByDate?.get(isoDate);
+      const value = point?.quantiles ? point.quantiles[percentile] : null;
+      points.push({
+        timestamp: isoDate,
         value,
-        samples: point.sampleSize,
-        status,
-        time: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        overlayRatePct: overlayPoint?.conversionRatePct,
-        overlayViews: overlayPoint?.views,
-        overlayConversions: overlayPoint?.conversions,
-      };
-    });
-  }, [data, metric, overlayByDate, percentile]);
+        samples: point?.sampleSize ?? 0,
+        status: typeof value === "number" ? getRatingForValue(metric, value) : null,
+        time: currentTick.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        overlayRatePct: overlayPoint?.conversionRatePct ?? null,
+        overlayViews: overlayPoint?.views ?? 0,
+        overlayConversions: overlayPoint?.conversions ?? 0,
+      });
+    }
+
+    return points;
+  }, [data, metric, overlayByDate, percentile, dateRange]);
 
   const thresholds = getMetricThresholds(metric);
 

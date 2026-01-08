@@ -38,8 +38,8 @@ describe('daily-aggregates-repository', () => {
     it('returns empty array when no data exists', async () => {
       const projectId = randomUUID();
       const overview = await getProjectMetricOverview(projectId, {
-        start: '2024-01-01',
-        end: '2024-12-31'
+        start: new Date('2024-01-01T00:00:00Z'),
+        end: new Date('2024-12-31T00:00:00Z')
       });
 
       expect(overview).toEqual([]);
