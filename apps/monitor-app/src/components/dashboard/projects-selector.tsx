@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
+import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
 
 type ProjectSelectorProps = {
   projects: ListProjectsResult;
@@ -38,13 +39,13 @@ export function ProjectSelector({ projects }: ProjectSelectorProps) {
         <div className="text-muted-foreground px-2 py-1.5 text-xs font-medium">Projects</div>
         {projects.map((project) => (
           <DropdownMenuItem key={project.id} asChild className="cursor-pointer">
-            <Link href={`/projects/${project.id}`} className="flex w-full cursor-pointer items-center justify-between">
+            <PersistParamsLink href={`/projects/${project.id}`} className="flex w-full cursor-pointer items-center justify-between">
               <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-medium">{project.name}</span>
                 <span className="text-muted-foreground truncate text-xs">{project.slug}</span>
               </div>
               {currentProject?.id === project.id && <Check className="text-primary h-4 w-4 shrink-0" />}
-            </Link>
+            </PersistParamsLink>
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
@@ -56,10 +57,10 @@ export function ProjectSelector({ projects }: ProjectSelectorProps) {
         </DropdownMenuItem>
         {currentProject && (
           <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href={`/projects/${currentProject.id}/settings`} className="flex items-center gap-2">
+            <PersistParamsLink href={`/projects/${currentProject.id}/settings`} className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               <span>Project settings</span>
-            </Link>
+            </PersistParamsLink>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

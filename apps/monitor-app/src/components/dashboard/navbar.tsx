@@ -13,6 +13,7 @@ import { getNavItems } from '@/components/dashboard/nav-items';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { UserDropdown } from '@/components/dashboard/user-dropdown';
 import { ADMIN_ROLES } from '@/lib/auth-shared';
+import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
 
 type NavbarProps = {
   projects: ListProjectsResult;
@@ -48,7 +49,7 @@ export function Navbar({ projects }: NavbarProps) {
                   ? pathname === item.href
                   : pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
-                  <Link
+                  <PersistParamsLink
                     key={item.href}
                     href={item.href}
                     className={cn(
@@ -60,7 +61,7 @@ export function Navbar({ projects }: NavbarProps) {
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
-                  </Link>
+                  </PersistParamsLink>
                 );
               })}
               {hasRoles(user.role, ADMIN_ROLES) && (

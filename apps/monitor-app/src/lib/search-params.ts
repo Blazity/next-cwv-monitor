@@ -1,4 +1,10 @@
-import { createSearchParamsCache, parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs/server";
+import {
+  createSearchParamsCache,
+  createSerializer,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs/server";
 import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES } from "@/app/server/domain/dashboard/overview/types";
 import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
 import type { RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
@@ -24,6 +30,8 @@ export const dashboardSearchParsers = {
 };
 
 export const dashboardSearchParamsCache = createSearchParamsCache(dashboardSearchParsers);
+
+export const serializeDashboardParams = createSerializer(dashboardSearchParsers);
 
 export const eventsSearchParamsCache = createSearchParamsCache({
   ...dashboardSearchParsers,
