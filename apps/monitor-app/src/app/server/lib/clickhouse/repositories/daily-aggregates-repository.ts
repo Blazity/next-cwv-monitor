@@ -1,11 +1,7 @@
+import { DailySeriesPoint, DateRange, QuantileSummary } from '@/app/server/domain/dashboard/overview/types';
 import { sql } from '@/app/server/lib/clickhouse/client';
 import type { DeviceType } from '@/app/server/lib/device-types';
 import { toQuantileSummary } from '@/app/server/lib/quantiles';
-
-type DateRange = {
-  start: Date | string;
-  end?: Date | string;
-};
 
 type AggregateQueryOptions = {
   deviceType?: DeviceType;
@@ -15,20 +11,6 @@ type MetricOverview = {
   metric: string;
   sampleSize: number;
   quantiles: QuantileSummary | null;
-};
-
-type QuantileSummary = {
-  p50: number;
-  p75: number;
-  p90: number;
-  p95: number;
-  p99: number;
-};
-
-type DailySeriesPoint = {
-  date: string;
-  quantiles: QuantileSummary | null;
-  sampleSize: number;
 };
 
 function resolveDateInput(input: Date | string): string {
@@ -41,7 +23,7 @@ export async function getProjectMetricOverview(
   options: AggregateQueryOptions = {}
 ): Promise<MetricOverview[]> {
   const start = resolveDateInput(range.start);
-  const end = resolveDateInput(range.end ?? new Date());
+  const end = resolveDateInput(range.end);
   const deviceType = options.deviceType;
 
   const query = sql<{ metric_name: string; quantiles: number[]; sample_size: string }>`
@@ -79,7 +61,7 @@ export async function getRouteDailySeries(
   options: AggregateQueryOptions = {}
 ): Promise<DailySeriesPoint[]> {
   const start = resolveDateInput(range.start);
-  const end = resolveDateInput(range.end ?? new Date());
+  const end = resolveDateInput(range.end);
   const deviceType = options.deviceType;
 
   const query = sql<{ event_date: string; quantiles: number[]; sample_size: string }>`

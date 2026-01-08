@@ -1,34 +1,9 @@
 import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import type { DeviceType } from '@/app/server/lib/device-types';
-
-export const ROUTES_DEVICE_TYPES = ['desktop', 'mobile', 'all'] as const;
-export type RoutesDeviceType = DeviceType | 'all';
-
-export const METRIC_NAMES = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'] as const;
-export type MetricName = (typeof METRIC_NAMES)[number];
-
-export type DateRange = {
-  start: Date;
-  end: Date;
-};
-
-export type QuantileSummary = {
-  p50: number;
-  p75: number;
-  p90: number;
-  p95: number;
-  p99: number;
-};
+import { DailySeriesPoint, DateRange, MetricName, QuantileSummary } from '@/app/server/domain/dashboard/overview/types';
+import { RoutesDeviceType } from '@/app/server/domain/routes/list/types';
 
 export type MetricSummary = {
   metricName: string;
-  sampleSize: number;
-  quantiles: QuantileSummary | null;
-  status: WebVitalRatingV1 | null;
-};
-
-export type DailySeriesPoint = {
-  date: string;
   sampleSize: number;
   quantiles: QuantileSummary | null;
   status: WebVitalRatingV1 | null;

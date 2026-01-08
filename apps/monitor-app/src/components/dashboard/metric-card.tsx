@@ -7,15 +7,8 @@ import { formatMetricValue } from "@/lib/utils";
 import PercentileChart from "@/components/dashboard/percentile-chart";
 import { Badge } from "@/components/badge";
 import { statusToBadge } from "@/consts/status-to-badge";
-import type { MetricName, Percentile } from "@/app/server/domain/routes/list/types";
-
-type QuantileSummary = {
-  p50: number;
-  p75: number;
-  p90: number;
-  p95: number;
-  p99: number;
-};
+import type { Percentile } from "@/app/server/domain/dashboard/overview/types";
+import { MetricName, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
 
 type MetricCardProps = {
   metricName: MetricName;

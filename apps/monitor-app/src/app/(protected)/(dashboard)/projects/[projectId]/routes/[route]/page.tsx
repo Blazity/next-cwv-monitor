@@ -109,6 +109,7 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
       selectedMetric={metric}
       selectedPercentile={percentile}
       selectedEvent={selectedEvent}
+      dateRange={dateRange}
       overlay={overlayResult?.kind === "ok" ? overlayResult.data : null}
     />
   );
