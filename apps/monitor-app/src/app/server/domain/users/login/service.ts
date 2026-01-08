@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { APIError } from "better-auth";
 import type { LoginData } from "@/app/server/domain/users/login/types";
 
-class ChangePasswordService {
+class UsersLoginService {
   async execute(data: LoginData) {
     try {
       const response = await auth.api.signInEmail({
@@ -21,4 +21,4 @@ class ChangePasswordService {
   }
 }
 
-export const usersLoginService = new ChangePasswordService();
+export const usersLoginService = new UsersLoginService();
