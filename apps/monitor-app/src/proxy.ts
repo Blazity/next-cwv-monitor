@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
     const session = await auth.api.getSession({
       headers: requestHeaders,
     });
-    
+
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       if (pathname !== "/") {
@@ -38,12 +38,16 @@ export async function proxy(request: NextRequest) {
           request: { headers: requestHeaders },
         });
       }
-  
+
       const changePasswordUrl = new URL("/change-password", request.url);
       if (pathname !== "/") {
         changePasswordUrl.searchParams.set("callbackUrl", fullPath);
       }
       return NextResponse.redirect(changePasswordUrl);
+    }
+
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/projects", request.url));
     }
 
     return NextResponse.next({
