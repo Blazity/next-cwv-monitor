@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Route } from 'lucide-react';
-import Link from 'next/link';
 import { RouteHelpTooltip } from '@/components/dashboard/route-help-tooltip';
 import { MetricName, WorstRouteItem } from '@/app/server/domain/dashboard/overview/types';
 import { Badge } from '@/components/badge';
 import { formatCompactNumber, formatMetricValue } from '@/lib/utils';
 import { statusToBadge } from '@/consts/status-to-badge';
+import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
 
 type WorstRoutesByMetricProps = {
   projectId: string;
@@ -22,19 +22,19 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
             <CardTitle className="text-foreground text-base font-medium sm:text-lg">Worst by {metricName}</CardTitle>
             <RouteHelpTooltip />
           </div>
-          <Link
+          <PersistParamsLink
             href={`/projects/${projectId}/routes`}
             className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
           >
             View all
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </PersistParamsLink>
         </div>
       </CardHeader>
       <CardContent className="px-3 sm:px-6">
         <div className="space-y-1 sm:space-y-2">
           {routes.map((route) => (
-            <Link
+            <PersistParamsLink
               key={route.route}
               href={`/projects/${projectId}/routes/${encodeURIComponent(route.route)}`}
               className="hover:bg-accent/50 group block rounded-lg p-2 transition-colors sm:p-3"
@@ -64,7 +64,7 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
                   <ArrowRight className="text-muted-foreground hidden h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
                 </div>
               </div>
-            </Link>
+            </PersistParamsLink>
           ))}
         </div>
       </CardContent>

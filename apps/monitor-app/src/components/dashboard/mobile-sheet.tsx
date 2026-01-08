@@ -10,6 +10,7 @@ import { useUser } from '@/app/hooks/use-session';
 import { NavItem } from '@/components/dashboard/nav-items';
 import { UserActionsMobile } from '@/components/dashboard/user-actions-mobile';
 import { ADMIN_ROLES } from '@/lib/auth-shared';
+import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
   const user = useUser();
@@ -42,7 +43,7 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 ? pathname === item.href
                 : pathname === item.href || pathname.startsWith(item.href + '/');
               return (
-                <Link
+                <PersistParamsLink
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
@@ -53,7 +54,7 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
-                </Link>
+                </PersistParamsLink>
               );
             })}
             {hasRoles(user.role, ADMIN_ROLES) && (
