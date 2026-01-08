@@ -41,19 +41,37 @@ import { ProjectWithViews } from "@/app/server/lib/clickhouse/schema";
 import { capitalizeFirstLetter, cn, formatDate } from "@/lib/utils";
 import { updateProjectAction } from "@/app/server/actions/project/update-project";
 import { useAction } from "next-safe-action/hooks";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const getSdkCode = (id: string) => `'use client';
+const getSdkCodes = (id: string) => ({
+  app: `import { CWVMonitor } from 'next-cwv-monitor/app-router';
 
-import { CWVMonitor } from 'cwv-monitor-sdk/app-router';
-
-export function Providers({ children }: { children: React.ReactNode }) {
+export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <CWVMonitor projectId="${id}" endpoint="https://your-monitor.example">
-      {children}
+    <html lang="en">
+      <body>
+        <CWVMonitor 
+          projectId="${id}" 
+          endpoint="https://your-monitor-api.com"
+          sampleRate={0.5} // Optional: track 50% of page views
+        >
+          {children}
+        </CWVMonitor>
+      </body>
+    </html>
+  );
+}`,
+  pages: `import type { AppProps } from 'next/app';
+import { CWVMonitor } from 'next-cwv-monitor/pages-router';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <CWVMonitor projectId="${id}" endpoint="https://your-monitor-api.com">
+      <Component {...pageProps} />
     </CWVMonitor>
   );
-}
-`;
+}`,
+});
 
 const handleCopy = async (text: string, setter: (v: boolean) => void) => {
   await navigator.clipboard.writeText(text);
@@ -68,9 +86,10 @@ const handlePreventPaste = (e: React.ClipboardEvent) => {
 
 export default function SettingsForm({ project }: { project: ProjectWithViews }) {
   const router = useRouter();
-  const sdkCode = getSdkCode(project.id);
+  const codes = getSdkCodes(project.id);
   const [copiedId, setCopiedId] = useState(false);
-  const [copiedSDK, setCopiedSDK] = useState(false);
+  const [copiedApp, setCopiedApp] = useState(false);
+  const [copiedPages, setCopiedPages] = useState(false);
 
   const { execute: executeReset } = useAction(resetProjectDataAction, {
     onSuccess: ({ data }) => {
@@ -78,13 +97,13 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
     },
     onError: ({ error }) => {
       toast.error(error.serverError || "Failed to reset project data");
-    }
+    },
   });
 
   const { execute: executeDelete } = useAction(deleteProjectAction, {
     onError: ({ error }) => {
       toast.error(error.serverError || "Failed to delete project");
-    }
+    },
   });
 
   return (
@@ -148,21 +167,43 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 px-6">
-          <div className="relative">
-            <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">{sdkCode}</pre>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleCopy(sdkCode, setCopiedSDK)}
-              className="absolute top-2 right-2 h-8 gap-1.5 bg-transparent"
-            >
-              {copiedSDK ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copiedSDK ? "Copied" : "Copy"}
-            </Button>
-          </div>
+          <Tabs defaultValue="app" className="w-full">
+            <TabsList>
+              <TabsTrigger value="app">App Router</TabsTrigger>
+              <TabsTrigger value="pages">Pages Router</TabsTrigger>
+            </TabsList>
+            <TabsContent value="app" className="relative">
+              <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">
+                {codes.app}
+              </pre>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopy(codes.app, setCopiedApp)}
+                className="absolute top-2 right-2 h-8 gap-1.5 bg-transparent"
+              >
+                {copiedApp ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedApp ? "Copied" : "Copy"}
+              </Button>
+            </TabsContent>
+            <TabsContent value="pages" className="relative">
+              <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">
+                {codes.pages}
+              </pre>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopy(codes.pages, setCopiedPages)}
+                className="absolute top-2 right-2 h-8 gap-1.5 bg-transparent"
+              >
+                {copiedPages ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copiedPages ? "Copied" : "Copy"}
+              </Button>
+            </TabsContent>
+          </Tabs>
           <p className="text-muted-foreground text-sm">
             Install the SDK with{" "}
-            <code className="bg-muted text-foreground rounded px-1.5 py-0.5">npm install cwv-monitor-sdk</code> and add
+            <code className="bg-muted text-foreground rounded px-1.5 py-0.5">npm install next-cwv-monitor</code> and add
             this to your app's entry point
           </p>
         </CardContent>
