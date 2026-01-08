@@ -28,6 +28,10 @@ jobs:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
+
+      - name: Update npm for Trusted Publishers
+        run: npm install -g npm@latest
+
       - name: Install & Build
         run: |
           pnpm install --frozen-lockfile
@@ -42,6 +46,8 @@ jobs:
         with:
           publish: pnpm release
           version: pnpm version-packages
+          commit: 'chore: release packages'
+          title: 'chore: release packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
