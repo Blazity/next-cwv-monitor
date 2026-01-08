@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    branches: [cwv-7-client-sdk-publishing]
+    branches: [main]
 
 permissions:
   contents: write
@@ -50,4 +50,4 @@ jobs:
           title: 'chore: release packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_PROVENANCE: false
+          NPM_CONFIG_PROVENANCE: true

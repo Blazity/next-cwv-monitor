@@ -28,8 +28,8 @@
     "directory": "packages/client-sdk"
   },
   "license": "MIT",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "sideEffects": false,
   "exports": {
