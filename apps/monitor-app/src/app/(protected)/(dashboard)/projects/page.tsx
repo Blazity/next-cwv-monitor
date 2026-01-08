@@ -2,15 +2,14 @@ import { projectsListService } from "@/app/server/domain/projects/list/service";
 import { ProjectList } from "@/components/projects/projects-list";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { getAuthorizedSession } from "@/lib/auth-utils";
+import { getAuthorizedSession, hasPermission } from "@/lib/auth-utils";
 import { FolderKanban, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default async function ProjectsPage() {
-  await getAuthorizedSession();
-
+  const session = await getAuthorizedSession();
+  const canCreate = await hasPermission({ project: ["create"] }, session.user.id);
   const projects = await projectsListService.listWithViews();
-
   const hasProjects = projects.length > 0;
 
   return (
@@ -19,7 +18,7 @@ export default async function ProjectsPage() {
         <div className="space-y-1">
           <h1 className="text-foreground text-2xl font-semibold">Projects</h1>
         </div>
-        {hasProjects && (
+        {canCreate && (
           <Button className="w-fit gap-2" asChild>
             <Link href="/projects/new">
               <Plus className="h-4 w-4" />

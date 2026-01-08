@@ -1,10 +1,11 @@
-import { auth, SessionData } from '@/lib/auth';
-import type { Route } from 'next';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { cache } from 'react';
+import { Permission } from "@/app/server/lib/safe-action";
+import { auth, SessionData } from "@/lib/auth";
+import type { Route } from "next";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { cache } from "react";
 
-const DEFAULT_CALLBACK_URL: Route = '/projects';
+const DEFAULT_CALLBACK_URL: Route = "/projects";
 
 export class UnauthorizedError extends Error {
   constructor() {
@@ -34,12 +35,39 @@ export const getAuthorizedSession = cache(async (): Promise<SessionData> => {
   return session;
 });
 
-export function getSafeCallbackUrl(value: string | string[] | undefined, fallback: Route = DEFAULT_CALLBACK_URL): Route {
+export const ensurePermission = cache(async (permission: Permission, userId: string) => {
+  const { success } = await auth.api.userHasPermission({
+    body: {
+      userId: userId,
+      permission,
+    },
+  });
+
+  if (!success) {
+    throw new ForbiddenError();
+  }
+
+  return true;
+});
+
+export const hasPermission = cache(async (permission: Permission, userId: string): Promise<boolean> => {
+  try {
+    await ensurePermission(permission, userId);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+export function getSafeCallbackUrl(
+  value: string | string[] | undefined,
+  fallback: Route = DEFAULT_CALLBACK_URL,
+): Route {
   const raw = Array.isArray(value) ? value[0] : value;
   if (!raw) return fallback;
-  if (!raw.startsWith('/')) return fallback;
-  if (raw.startsWith('//')) return fallback;
-  if (raw.includes('\\')) return fallback;
+  if (!raw.startsWith("/")) return fallback;
+  if (raw.startsWith("//")) return fallback;
+  if (raw.includes("\\")) return fallback;
   return raw as Route;
 }
 
@@ -78,5 +106,5 @@ export async function redirectToLogin(): Promise<never> {
   }
 
   const queryString = searchParams.toString();
-  redirect(queryString ? `/login?${queryString}` : '/login');
+  redirect(queryString ? `/login?${queryString}` : "/login");
 }

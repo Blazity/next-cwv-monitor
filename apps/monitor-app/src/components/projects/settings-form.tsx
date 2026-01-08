@@ -43,6 +43,15 @@ import { updateProjectAction } from "@/app/server/actions/project/update-project
 import { useAction } from "next-safe-action/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+type SettingsFormProps = {
+  project: ProjectWithViews;
+  permissions: {
+    canUpdate: boolean;
+    canReset: boolean;
+    canDelete: boolean;
+  };
+};
+
 const getSdkCodes = (id: string) => ({
   app: `import { CWVMonitor } from 'next-cwv-monitor/app-router';
 
@@ -84,7 +93,7 @@ const handlePreventPaste = (e: React.ClipboardEvent) => {
   e.preventDefault();
 };
 
-export default function SettingsForm({ project }: { project: ProjectWithViews }) {
+export default function SettingsForm({ project, permissions }: SettingsFormProps) {
   const router = useRouter();
   const codes = getSdkCodes(project.id);
   const [copiedId, setCopiedId] = useState(false);
@@ -135,7 +144,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
               <Eye className="size-4" /> {project.trackedViews.toLocaleString()} tracked views
             </div>
           </div>
-          <UpdateNameForm project={project} />
+          <UpdateNameForm project={project} isEnabled={permissions.canUpdate} />
         </CardContent>
       </Card>
 
@@ -225,6 +234,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             icon={RefreshCw}
             confirmText={project.name}
             onConfirm={() => executeReset({ projectId: project.id })}
+            isEnabled={permissions.canReset}
           />
           <DangerRow
             title="Delete project"
@@ -233,6 +243,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
             icon={Trash2}
             confirmText={project.name}
             onConfirm={() => executeDelete({ projectId: project.id })}
+            isEnabled={permissions.canDelete}
           />
         </CardContent>
       </Card>
@@ -240,7 +251,7 @@ export default function SettingsForm({ project }: { project: ProjectWithViews })
   );
 }
 
-function UpdateNameForm({ project }: { project: ProjectWithViews }) {
+function UpdateNameForm({ project, isEnabled }: { project: ProjectWithViews; isEnabled: boolean }) {
   const form = useForm<UpdateProjectNameInput>({
     resolver: arktypeResolver(updateProjectNameSchema),
     defaultValues: { name: project.name },
@@ -287,8 +298,8 @@ function UpdateNameForm({ project }: { project: ProjectWithViews }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <Label htmlFor="name">Project Name</Label>
       <div className="flex gap-2">
-        <Input {...register("name")} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" />
-        <Button type="submit" disabled={!isDirty || isPending}>
+        <Input {...register("name")} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" disabled={!isEnabled} />
+        <Button type="submit" disabled={!isDirty || isPending || !isEnabled}>
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Save
         </Button>
@@ -305,6 +316,7 @@ type DangerRowProps = {
   confirmText: string;
   label: string;
   icon: LucideIcon;
+  isEnabled: boolean;
 };
 
 type DangerActionProps = {
@@ -316,9 +328,10 @@ type DangerActionProps = {
   onConfirm: () => void;
   isPending: boolean;
   variant?: "destructive" | "outline";
+  isEnabled: boolean;
 };
 
-function DangerRow({ title, desc, onConfirm, confirmText, label, icon: Icon }: DangerRowProps) {
+function DangerRow({ title, desc, onConfirm, confirmText, label, icon, isEnabled }: DangerRowProps) {
   const [isPending, startTransition] = useTransition();
 
   return (
@@ -332,9 +345,10 @@ function DangerRow({ title, desc, onConfirm, confirmText, label, icon: Icon }: D
         description={desc}
         confirmText={confirmText}
         buttonLabel={label}
-        icon={Icon}
+        icon={icon}
         isPending={isPending}
         onConfirm={() => startTransition(onConfirm)}
+        isEnabled={isEnabled}
       />
     </div>
   );
@@ -349,6 +363,7 @@ function DangerAction({
   onConfirm,
   isPending,
   variant = "outline",
+  isEnabled,
 }: DangerActionProps) {
   const [confirmInput, setConfirmInput] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -394,7 +409,7 @@ function DangerAction({
       <AlertDialogTrigger asChild>
         <Button
           variant={variant}
-          disabled={isPending}
+          disabled={isPending || !isEnabled}
           className={cn(
             "gap-2",
             variant === "outline" &&
@@ -441,7 +456,7 @@ function DangerAction({
             <Button
               type="submit"
               variant="destructive"
-              disabled={isTimerRunning || !isInputMatch || isPending}
+              disabled={isTimerRunning || !isInputMatch || isPending || !isEnabled}
               className="min-w-[140px]"
             >
               {isPending ? (
