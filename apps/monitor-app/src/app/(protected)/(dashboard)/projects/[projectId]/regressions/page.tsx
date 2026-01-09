@@ -52,10 +52,7 @@ async function getCachedRegressionsList(
 export default async function RegressionsPage({
   params,
   searchParams,
-}: {
-  params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}: PageProps<"/projects/[projectId]/regressions">) {
   const { projectId } = await params;
   const { timeRange, deviceType, search, metric, sort, direction, page } = regressionsSearchParamsCache.parse(
     await searchParams,
