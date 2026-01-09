@@ -3,6 +3,7 @@ set -e
 
 
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/docker/docker-compose.yml}"
+COMPOSE_SSL_URL="${COMPOSE_SSL_URL:-https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/docker/docker-compose.ssl.yml}"
 DEFAULT_INSTALL_DIR="$HOME/cwv-monitor"
 
 RED='\033[0;31m'
@@ -42,19 +43,26 @@ mkdir -p "$INSTALL_DIR"
 ENV_FILE="$INSTALL_DIR/.env"
 
 echo ""
-echo -e "${BLUE}▶ Downloading docker-compose.yml...${NC}"
+echo -e "${BLUE}▶ Downloading configuration files...${NC}"
 echo "─────────────────────────────────────────────────────────────"
 
-if command -v curl &> /dev/null; then
-  curl -fsSL "$COMPOSE_URL" -o "$INSTALL_DIR/docker-compose.yml"
-elif command -v wget &> /dev/null; then
-  wget -q "$COMPOSE_URL" -O "$INSTALL_DIR/docker-compose.yml"
-else
-  echo -e "${RED}Error: curl or wget is required${NC}"
-  exit 1
-fi
+download_file() {
+  local url="$1"
+  local dest="$2"
+  if command -v curl &> /dev/null; then
+    curl -fsSL "$url" -o "$dest"
+  elif command -v wget &> /dev/null; then
+    wget -q "$url" -O "$dest"
+  else
+    echo -e "${RED}Error: curl or wget is required${NC}"
+    exit 1
+  fi
+}
 
+download_file "$COMPOSE_URL" "$INSTALL_DIR/docker-compose.yml"
 echo -e "${GREEN}✓ Downloaded docker-compose.yml${NC}"
+
+# Download SSL compose if needed (we'll check ENABLE_SSL_BOOL later after it's set)
 echo ""
 
 generate_secret() {
@@ -72,17 +80,59 @@ validate_email() {
 echo -e "${YELLOW}This wizard will help you configure CWV Monitor for production.${NC}"
 echo ""
 
+echo -e "${GREEN}▶ SSL Configuration${NC}"
+echo "─────────────────────────────────────────────────────────────"
+echo "Caddy can automatically obtain and renew SSL certificates."
+echo ""
+
+read -p "Enable automatic SSL with Caddy? (yes/no) [no]: " ENABLE_SSL
+ENABLE_SSL="${ENABLE_SSL:-no}"
+
+ENABLE_SSL_BOOL="false"
+if [ "$ENABLE_SSL" = "yes" ] || [ "$ENABLE_SSL" = "y" ]; then
+  ENABLE_SSL_BOOL="true"
+  
+  echo ""
+  echo -e "${YELLOW}Note: Your domain must be pointing to this server's IP address.${NC}"
+  echo ""
+  
+  while true; do
+    read -p "Domain name (e.g., monitor.example.com): " SSL_DOMAIN
+    if [ -n "$SSL_DOMAIN" ]; then
+      break
+    fi
+    echo -e "${RED}Domain is required for SSL.${NC}"
+  done
+  
+  read -p "Email for Let's Encrypt notifications (optional): " SSL_EMAIL
+  
+  # Set derived values for SSL mode
+  AUTH_BASE_URL="https://$SSL_DOMAIN"
+  APP_PORT="3000"  # Internal port, Caddy handles 80/443
+  TRUST_PROXY="true"
+  
+  echo ""
+  echo -e "${GREEN}✓ SSL will be configured for: $SSL_DOMAIN${NC}"
+fi
+
+echo ""
+
 echo -e "${GREEN}▶ Application Settings${NC}"
 echo "─────────────────────────────────────────────────────────────"
 
-read -p "Public URL where the app will be accessible [http://localhost]: " AUTH_BASE_URL
-AUTH_BASE_URL="${AUTH_BASE_URL:-http://localhost}"
+if [ "$ENABLE_SSL_BOOL" = "false" ]; then
+  read -p "Public URL where the app will be accessible [http://localhost]: " AUTH_BASE_URL
+  AUTH_BASE_URL="${AUTH_BASE_URL:-http://localhost}"
 
-read -p "Port to expose the app on [80]: " APP_PORT
-APP_PORT="${APP_PORT:-80}"
+  read -p "Port to expose the app on [80]: " APP_PORT
+  APP_PORT="${APP_PORT:-80}"
 
-read -p "Is the app behind a reverse proxy? (true/false) [false]: " TRUST_PROXY
-TRUST_PROXY="${TRUST_PROXY:-false}"
+  read -p "Is the app behind a reverse proxy? (true/false) [false]: " TRUST_PROXY
+  TRUST_PROXY="${TRUST_PROXY:-false}"
+else
+  echo -e "Public URL: ${GREEN}$AUTH_BASE_URL${NC} (set by SSL config)"
+  echo -e "Reverse proxy: ${GREEN}true${NC} (Caddy)"
+fi
 
 echo ""
 
@@ -189,6 +239,35 @@ fi
 
 echo ""
 
+if [ "$ENABLE_SSL_BOOL" = "true" ]; then
+  echo -e "${BLUE}▶ Configuring SSL...${NC}"
+  echo "─────────────────────────────────────────────────────────────"
+  
+  download_file "$COMPOSE_SSL_URL" "$INSTALL_DIR/docker-compose.ssl.yml"
+  echo -e "${GREEN}✓ Downloaded docker-compose.ssl.yml${NC}"
+  
+  CADDYFILE="$INSTALL_DIR/Caddyfile"
+  if [ -n "$SSL_EMAIL" ]; then
+    cat > "$CADDYFILE" << CADDYEOF
+{
+    email $SSL_EMAIL
+}
+
+$SSL_DOMAIN {
+    reverse_proxy monitor-app:3000
+}
+CADDYEOF
+  else
+    cat > "$CADDYFILE" << CADDYEOF
+$SSL_DOMAIN {
+    reverse_proxy monitor-app:3000
+}
+CADDYEOF
+  fi
+  echo -e "${GREEN}✓ Generated Caddyfile${NC}"
+  echo ""
+fi
+
 echo -e "${BLUE}▶ Writing configuration...${NC}"
 echo "─────────────────────────────────────────────────────────────"
 
@@ -262,26 +341,41 @@ echo -e "${NC}"
 
 echo "Files created in: $INSTALL_DIR"
 echo "  - docker-compose.yml"
+if [ "$ENABLE_SSL_BOOL" = "true" ]; then
+  echo "  - docker-compose.ssl.yml"
+  echo "  - Caddyfile"
+fi
 echo "  - .env"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo ""
 
+# Build the docker compose command based on options
+COMPOSE_CMD="docker compose"
+if [ "$ENABLE_SSL_BOOL" = "true" ]; then
+  COMPOSE_CMD="$COMPOSE_CMD -f docker-compose.yml -f docker-compose.ssl.yml"
+fi
+
 if [ "$INCLUDE_DEMO_PROFILE" = "true" ]; then
   echo "  1. Start the services with demo data:"
-  echo -e "     ${GREEN}cd $INSTALL_DIR && docker compose --profile demo up -d${NC}"
+  echo -e "     ${GREEN}cd $INSTALL_DIR && $COMPOSE_CMD --profile demo up -d${NC}"
   echo ""
   echo -e "     ${YELLOW}Note:${NC} The --profile demo flag seeds demo data on first startup."
   echo -e "     For subsequent starts without re-seeding, use:"
-  echo -e "     ${GREEN}docker compose up -d${NC}"
+  echo -e "     ${GREEN}$COMPOSE_CMD up -d${NC}"
 else
   echo "  1. Start the services:"
-  echo -e "     ${GREEN}cd $INSTALL_DIR && docker compose up -d${NC}"
+  echo -e "     ${GREEN}cd $INSTALL_DIR && $COMPOSE_CMD up -d${NC}"
 fi
 
 echo ""
 echo "  2. Access the dashboard:"
 echo -e "     ${GREEN}$AUTH_BASE_URL${NC}"
+if [ "$ENABLE_SSL_BOOL" = "true" ]; then
+  echo ""
+  echo -e "     ${YELLOW}Note:${NC} SSL certificates will be automatically obtained on first request."
+  echo -e "     Make sure your domain ${GREEN}$SSL_DOMAIN${NC} points to this server."
+fi
 echo ""
 echo "  3. Login with:"
 echo -e "     Email: ${GREEN}$INITIAL_USER_EMAIL${NC}"

@@ -1,0 +1,28 @@
+# SSL override with Caddy reverse proxy
+
+services:
+  caddy:
+    image: caddy:2.10.2
+    container_name: cwv-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - monitor-app
+
+  # Override monitor-app to not expose ports directly
+  # Caddy will proxy to it via the Docker network
+  monitor-app:
+    ports: []
+    expose:
+      - "3000"
+
+volumes:
+  caddy_data:
+  caddy_config:
