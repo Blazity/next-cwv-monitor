@@ -1,4 +1,4 @@
-import type { MetricName } from "@/app/server/domain/routes/list/types";
+import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
 
 export const METRIC_DETAILS = {
   LCP: "Largest Contentful Paint",
