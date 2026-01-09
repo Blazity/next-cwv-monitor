@@ -1,8 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { DemoShell } from '../../_components/demo-shell';
+import { DemoShell } from '../../../components/shared/demo-shell';
 import { BLOG_POSTS, getBlogPost } from '../_posts';
+import CustomEventButton from '@/src/components/app-router/custom-event-button';
 
 export function generateStaticParams() {
   // Keeps the demo predictable and gives you a nice set of slugs to click through.
@@ -27,6 +28,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <Link href="/blog" className="hover:underline">
                 Blog
               </Link>
+              <CustomEventButton eventName="Subscribe" name="subscribe">
+                Subscribe
+              </CustomEventButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">{post.slug}</span>
             </nav>
@@ -38,7 +42,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 </span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-300">{post.publishedAt}</span>
                 <span className="text-xs text-zinc-400 dark:text-zinc-600">•</span>
-                <span className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-mono text-zinc-700 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-950/80 dark:text-zinc-200">
+                <span className="rounded-full border border-zinc-200 bg-white/70 px-3 py-1 font-mono text-xs text-zinc-700 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-950/80 dark:text-zinc-200">
                   /blog/[slug]
                 </span>
               </div>
@@ -78,7 +82,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <div className="rounded-[2rem] border border-zinc-200 bg-white/70 p-5 shadow-sm backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/70">
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">More navigation</h3>
             <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-              Jump between slugs to ensure <span className="font-mono">path</span> changes while{" "}
+              Jump between slugs to ensure <span className="font-mono">path</span> changes while{' '}
               <span className="font-mono">route</span> stays parameterized.
             </p>
 
@@ -110,5 +114,3 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     </DemoShell>
   );
 }
-
-

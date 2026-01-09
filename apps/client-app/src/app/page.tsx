@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { DemoShell } from './_components/demo-shell';
+import { DemoShell } from '../components/shared/demo-shell';
+import CustomEventButton from '../components/app-router/custom-event-button';
 
 export default function Home() {
   return (
@@ -24,8 +25,8 @@ export default function Home() {
               A realistic playground for CWV tracking
             </h1>
             <p className="max-w-xl text-sm text-zinc-600 dark:text-zinc-300">
-              Navigate between <span className="font-mono">/blog/[slug]</span> pages to validate route normalization. The
-              hero image is intentionally large to surface LCP candidates.
+              Navigate between <span className="font-mono">/blog/[slug]</span> pages to validate route normalization.
+              The hero image is intentionally large to surface LCP candidates.
             </p>
           </div>
 
@@ -44,6 +45,8 @@ export default function Home() {
             >
               CWV docs
             </a>
+
+            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -57,6 +60,7 @@ export default function Home() {
                   <span className="font-mono">path</span> changes per slug
                 </li>
                 <li>Page views rotate session id</li>
+                <li>Click on custom event button sends custom event payload</li>
               </ul>
             </div>
 

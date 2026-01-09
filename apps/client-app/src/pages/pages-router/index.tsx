@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { DemoShell } from '../../app/_components/demo-shell';
+import { DemoShell } from '../../components/shared/demo-shell';
+import CustomEventButton from '@/src/components/pages-router/custom-event-button';
 
 export default function PagesRouterIndexPage() {
   return (
@@ -25,6 +26,8 @@ export default function PagesRouterIndexPage() {
             >
               Go to sub page
             </Link>
+
+            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
           </div>
         </div>
 
@@ -43,11 +46,14 @@ export default function PagesRouterIndexPage() {
           </ul>
 
           <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
-            Want to compare App Router behavior? Visit <Link href="/blog" className="underline">/blog</Link>.
+            Want to compare App Router behavior? Visit{' '}
+            <Link href="/blog" className="underline">
+              /blog
+            </Link>
+            .
           </div>
         </div>
       </section>
     </DemoShell>
   );
 }
-

@@ -88,8 +88,25 @@ jobs:
         run: pnpm --filter cwv-monitor-app test:integration
 
         # SDK can destroy client build, so let's verify it here too
-      - name: Check demo
+      - name: Check demo (Build)
         if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
         run: |
           cp apps/client-app/.env.ci apps/client-app/.env 2>/dev/null || true
           pnpm --filter cwv-monitor-client build
+
+      - name: Cache Playwright Binaries
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Install Playwright Browsers
+        if: (steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter cwv-monitor-client exec playwright install --with-deps
+
+      - name: Run E2E tests
+        if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
+        run: pnpm --filter cwv-monitor-client test
+        env:
+          CI: true

@@ -5,6 +5,7 @@ export type IngestQueueConfig = {
   projectId: string;
   abortTime?: number;
   sampleRate?: number;
+  useBeacon?: boolean;
 };
 
 export type FlushReason = 'manual' | 'debounce' | 'unload';
@@ -210,7 +211,7 @@ export class IngestQueue {
 
     const url = buildIngestUrl(cfg.endpoint);
 
-    if (reason === 'unload' && trySendBeacon(url, body)) {
+    if (reason === 'unload' && cfg.useBeacon !== false && trySendBeacon(url, body)) {
       this._isFlushing = false;
       if (this._pendingFlush || this._getQueuedCount() > 0) {
         this._scheduleDebouncedFlush();

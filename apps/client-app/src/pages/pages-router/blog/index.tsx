@@ -1,7 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { DemoShell } from '../../../app/_components/demo-shell';
+import { DemoShell } from '../../../components/shared/demo-shell';
 import { BLOG_POSTS } from '../../../app/blog/_posts';
+import CustomEventButton from '@/src/components/pages-router/custom-event-button';
 
 export default function PagesRouterBlogIndexPage() {
   return (
@@ -17,6 +18,9 @@ export default function PagesRouterBlogIndexPage() {
               <Link href="/pages-router" className="hover:underline">
                 Pages Router
               </Link>
+              <CustomEventButton eventName="Subscribe" name="subscribe">
+                Subscribe
+              </CustomEventButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">Blog</span>
             </div>
@@ -54,7 +58,9 @@ export default function PagesRouterBlogIndexPage() {
                   </span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-300">{post.publishedAt}</span>
                   <span className="text-xs text-zinc-400 dark:text-zinc-600">•</span>
-                  <span className="text-xs font-mono text-zinc-500 dark:text-zinc-300">/pages-router/blog/{post.slug}</span>
+                  <span className="font-mono text-xs text-zinc-500 dark:text-zinc-300">
+                    /pages-router/blog/{post.slug}
+                  </span>
                 </div>
 
                 <h2 className="text-lg font-semibold tracking-tight group-hover:underline">{post.title}</h2>
@@ -71,4 +77,3 @@ export default function PagesRouterBlogIndexPage() {
     </DemoShell>
   );
 }
-
