@@ -27,6 +27,20 @@ COPY --from=deps /app/package.json ./package.json
 
 COPY . .
 
+# Build-time env vars required by Next.js during static generation
+# These are placeholder values - real values are injected at runtime via docker-compose
+ENV LOG_LEVEL=info
+ENV BETTER_AUTH_SECRET=build-time-placeholder-will-be-replaced-at-runtime
+ENV AUTH_BASE_URL=http://localhost:3000
+ENV CLICKHOUSE_HOST=localhost
+ENV CLICKHOUSE_PORT=8123
+ENV CLICKHOUSE_DB=cwv_monitor
+ENV CLICKHOUSE_USER=default
+ENV CLICKHOUSE_PASSWORD=build-placeholder
+ENV INITIAL_USER_EMAIL=build@placeholder.local
+ENV INITIAL_USER_PASSWORD=placeholder123
+ENV INITIAL_USER_NAME=BuildPlaceholder
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build:prod; \
   elif [ -f package-lock.json ]; then npm run build:prod; \

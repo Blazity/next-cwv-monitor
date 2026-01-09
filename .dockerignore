@@ -1,0 +1,55 @@
+# Dependencies - installed fresh in container
+node_modules
+**/node_modules
+
+# Build outputs - built fresh in container
+.next
+**/.next
+out
+**/out
+dist
+**/dist
+.turbo
+**/.turbo
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+coverage
+**/.coverage
+.nyc_output
+
+# Storybook build
+storybook-static
+
+# Docker files (don't need to copy docker config into image)
+docker
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local development
+.cache
+*.local
+
+

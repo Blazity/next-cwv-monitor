@@ -3,7 +3,6 @@
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +13,6 @@ import { changePasswordSchema } from "@/app/server/domain/users/change-password/
 import { toast } from "sonner";
 
 export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
-  const router = useRouter();
-
   const { form, action, handleSubmitWithAction } = useHookFormAction(
     changePasswordAction,
     arktypeResolver(changePasswordSchema),
@@ -23,8 +20,7 @@ export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
       actionProps: {
         onSuccess: async () => {
           toast.success("Password updated successfully");
-          router.push(callbackUrl);
-          router.refresh();
+          globalThis.location.replace(callbackUrl);
         },
         onError: ({ error }) => {
           if (error.serverError) {
@@ -53,7 +49,7 @@ export function ChangePasswordForm({ callbackUrl }: { callbackUrl: Route }) {
     formState: { errors },
   } = form;
   const isLoading = action.isPending || form.formState.isSubmitting;
-  return ( 
+  return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>Set New Password</CardTitle>

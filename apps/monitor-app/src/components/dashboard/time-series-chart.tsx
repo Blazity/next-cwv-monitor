@@ -3,10 +3,11 @@
 import { useMemo } from "react";
 import {
   Area,
-  AreaChart,
   CartesianGrid,
+  ComposedChart,
   ReferenceLine,
   ResponsiveContainer,
+  Scatter,
   Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
@@ -49,6 +50,7 @@ type ChartDataPoint = {
   overlayRatePct?: number | null;
   overlayViews?: number;
   overlayConversions?: number;
+  hoverTarget?: number;
 };
 
 export function TimeSeriesChart({
@@ -82,7 +84,7 @@ export function TimeSeriesChart({
       const currentTick = new Date(start);
       currentTick.setDate(start.getDate() + i);
       const isoDate = currentTick.toISOString().split("T")[0];
-  
+
       const point = dataByDate.get(isoDate);
       const overlayPoint = overlayByDate?.get(isoDate);
       const value = point?.quantiles ? point.quantiles[percentile] : null;
@@ -98,6 +100,8 @@ export function TimeSeriesChart({
         overlayRatePct: overlayPoint?.conversionRatePct ?? null,
         overlayViews: overlayPoint?.views ?? 0,
         overlayConversions: overlayPoint?.conversions ?? 0,
+        // For null values, add a hover target so users can still trigger tooltip
+        hoverTarget: value === null ? 0 : undefined,
       });
     }
 
@@ -120,7 +124,7 @@ export function TimeSeriesChart({
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="metricGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
@@ -263,7 +267,9 @@ export function TimeSeriesChart({
               }}
             />
           )}
-        </AreaChart>
+          {/* Invisible scatter points for days with no data, enabling tooltip on hover */}
+          <Scatter yAxisId="metric" dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );

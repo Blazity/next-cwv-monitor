@@ -1,23 +1,23 @@
-version: "3.9"
+# Development Docker Compose
 
 x-clickhouse-env: &clickhouse-env
-  CLICKHOUSE_HOST: &clickhouse-host ${CLICKHOUSE_HOST:-clickhouse}
-  CLICKHOUSE_PORT: &clickhouse-port ${CLICKHOUSE_PORT:-8123}
-  CLICKHOUSE_DB: &clickhouse-db ${CLICKHOUSE_DB:-cwv_monitor}
-  CLICKHOUSE_USER: &clickhouse-user ${CLICKHOUSE_USER:-default}
-  CLICKHOUSE_PASSWORD: &clickhouse-password ${CLICKHOUSE_PASSWORD:-secret}
-  CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+  CLICKHOUSE_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+  CLICKHOUSE_PORT: ${CLICKHOUSE_PORT:-8123}
+  CLICKHOUSE_DB: ${CLICKHOUSE_DB:-cwv_monitor}
+  CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-secret}
 
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:25.8
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-25.8}
     container_name: cwv-clickhouse-dev
     restart: unless-stopped
     environment:
       <<: *clickhouse-env
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
     ports:
-      - "8123:8123" # HTTP API
-      - "9000:9000" # Native TCP
+      - "8123:8123"
+      - "9000:9000"
     healthcheck:
       test:
         [
@@ -36,18 +36,18 @@ services:
 
   migrations:
     image: node:20-alpine
-    container_name: cwv-clickhouse-migrations-dev
+    container_name: cwv-migrations-dev
     working_dir: /workspace
     volumes:
-      - ../../:/workspace
+      - ../:/workspace
     environment:
       CI: "true"
       <<: *clickhouse-env
-      CH_MIGRATIONS_HOST: *clickhouse-host
-      CH_MIGRATIONS_PORT: *clickhouse-port
-      CH_MIGRATIONS_USER: *clickhouse-user
-      CH_MIGRATIONS_PASSWORD: *clickhouse-password
-      CH_MIGRATIONS_DATABASE: *clickhouse-db
+      CH_MIGRATIONS_HOST: ${CLICKHOUSE_HOST:-clickhouse}
+      CH_MIGRATIONS_PORT: ${CLICKHOUSE_PORT:-8123}
+      CH_MIGRATIONS_USER: ${CLICKHOUSE_USER:-default}
+      CH_MIGRATIONS_PASSWORD: ${CLICKHOUSE_PASSWORD:-secret}
+      CH_MIGRATIONS_DATABASE: ${CLICKHOUSE_DB:-cwv_monitor}
       CH_MIGRATIONS_DIR: ${CH_MIGRATIONS_DIR:-clickhouse/migrations}
     command: >
       sh -c "corepack enable pnpm && pnpm install --filter cwv-monitor-app && pnpm --filter cwv-monitor-app clickhouse:migrate"
@@ -58,36 +58,39 @@ services:
 
   seed-demo:
     image: node:20-alpine
-    container_name: cwv-monitor-seed-dev
+    container_name: cwv-seed-dev
     working_dir: /workspace
     volumes:
-      - ../../:/workspace
+      - ../:/workspace
     environment:
       CI: "true"
       <<: *clickhouse-env
     command: >
       sh -c "corepack enable pnpm && pnpm install --filter cwv-monitor-app && pnpm --filter cwv-monitor-app seed:demo"
     depends_on:
-      clickhouse:
-        condition: service_healthy
       migrations:
         condition: service_completed_successfully
     restart: "no"
 
   monitor-app:
     build:
-      context: ../../
-      dockerfile: docker/monitor/dockerfiles/monitor-app.dev.Dockerfile
-    container_name: cwv-monitor-app-dev
+      context: ../
+      dockerfile: docker/monitor-app.dev.Dockerfile
+    container_name: cwv-monitor-dev
     environment:
       NODE_ENV: development
       <<: *clickhouse-env
       TRUST_PROXY: ${TRUST_PROXY:-false}
       AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-not-for-production}
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-dev@localhost}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-devpassword}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-Developer}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     volumes:
-      - ../../:/app
+      - ../:/app
       - monitor-app-dev-node-modules:/app/node_modules
     depends_on:
       clickhouse:

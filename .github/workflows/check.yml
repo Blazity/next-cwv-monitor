@@ -19,10 +19,14 @@ jobs:
           fetch-depth: 0
 
       - name: Verify commits behind
+        continue-on-error: true
         run: |
           git fetch
           COMMITS_BEHIND=$(git rev-list --left-only --count origin/$GITHUB_BASE_REF...origin/$GITHUB_HEAD_REF)
-          if [ $COMMITS_BEHIND -gt 0 ]; then echo "source branch is $COMMITS_BEHIND commit(s) behind target branch" && exit 1; fi
+          if [ $COMMITS_BEHIND -gt 0 ]; then
+            echo "::warning::Source branch is $COMMITS_BEHIND commit(s) behind target branch - consider rebasing"
+            exit 1
+          fi
 
       - name: Install Node.js
         uses: actions/setup-node@v4

@@ -47,14 +47,14 @@ To develop client-sdk you can run
 ## Client SDK usage (Next.js)
 
 Use the router-specific entrypoint for best performance and smallest bundle:
-(`cwv-monitor-sdk` root import is intentionally not exported.)
+(`next-cwv-monitor` root import is intentionally not exported.)
 
 ### App Router (`app/`)
 
 ```tsx
 'use client';
 
-import { CWVMonitor } from 'cwv-monitor-sdk/app-router';
+import { CWVMonitor } from 'next-cwv-monitor/app-router';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -68,7 +68,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 ### Pages Router (`pages/`)
 
 ```tsx
-import { CWVMonitor } from 'cwv-monitor-sdk/pages-router';
+import { CWVMonitor } from 'next-cwv-monitor/pages-router';
 
 export default function App({ Component, pageProps }: any) {
   return (

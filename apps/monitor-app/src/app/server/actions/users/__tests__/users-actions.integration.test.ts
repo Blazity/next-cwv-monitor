@@ -256,7 +256,8 @@ describe('users server actions (integration)', () => {
       });
       expect(users.users).toHaveLength(1);
       expect(users.users[0]?.role).toBe('member');
-      expect(users.users[0]?.isPasswordTemporary).toBe(true);
+      const createdUser = users.users[0] as (typeof users.users)[number] | undefined;
+      expect((createdUser as unknown as { isPasswordTemporary?: boolean } | undefined)?.isPasswordTemporary).toBe(true);
     });
 
     it('rejects invalid payloads before calling auth', async () => {

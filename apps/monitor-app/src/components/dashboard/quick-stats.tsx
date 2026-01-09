@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Route, TrendingDown, TrendingUp } from 'lucide-react';
-import Link from 'next/link';
 import { MetricName, QuickStatsData, StatusDistribution } from '@/app/server/domain/dashboard/overview/types';
 import { type Route as NextRoute } from 'next';
+import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
 
 type QuickStatsProps = {
   projectId: string;
@@ -105,7 +105,7 @@ function ActionLink({
   label: string;
 }) {
   return (
-    <Link
+    <PersistParamsLink
       href={href}
       className="hover:bg-accent/50 group flex items-center justify-between rounded-md p-2 transition-colors"
     >
@@ -114,6 +114,6 @@ function ActionLink({
         <span className="text-foreground text-sm">{label}</span>
       </div>
       <ArrowRight className="text-muted-foreground h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-    </Link>
+    </PersistParamsLink>
   );
 }

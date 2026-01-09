@@ -6,8 +6,8 @@
     "dev:client": "pnpm --parallel --filter next-cwv-monitor --filter cwv-monitor-client dev",
     "build:prod": "pnpm --filter cwv-monitor-app run build",
     "build:demo": "pnpm --filter next-cwv-monitor run build && pnpm --filter cwv-monitor-app run build && pnpm --filter cwv-monitor-client run build",
-    "docker:dev": "cd docker/monitor && docker compose -f docker-compose.dev.yml up --build",
-    "docker:dev:teardown": "cd docker/monitor && docker compose -f docker-compose.dev.yml down --volumes --remove-orphans",
+    "docker:dev": "cd docker && docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:teardown": "cd docker && docker compose -f docker-compose.dev.yml down --volumes --remove-orphans",
     "change": "changeset",
     "version-packages": "changeset version",
     "release": "pnpm --filter next-cwv-monitor run build && changeset publish"
