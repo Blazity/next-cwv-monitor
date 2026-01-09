@@ -72,8 +72,8 @@ jobs:
       - name: Check sdk
         if: steps.changes.outputs.sdk_changed == 'true'
         run: |
-          pnpm --filter cwv-monitor-sdk build
-          pnpm --filter cwv-monitor-sdk check-size
+          pnpm --filter next-cwv-monitor build
+          pnpm --filter next-cwv-monitor check-size
 
       - name: Check monitor
         if: steps.changes.outputs.monitor_changed == 'true'

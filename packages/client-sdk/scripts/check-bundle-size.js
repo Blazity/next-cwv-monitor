@@ -62,7 +62,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 
   const summary = `
 ### 📦 SDK Bundle Size Report
-Build artifacts for \`cwv-monitor-sdk\` were analyzed.
+Build artifacts for \`next-cwv-monitor\` were analyzed.
 
 | Status | Artifact | Gzipped Size | Budget |
 | :--- | :--- | :--- | :--- |

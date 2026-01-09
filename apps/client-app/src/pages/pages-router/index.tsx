@@ -9,7 +9,7 @@ export default function PagesRouterIndexPage() {
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Pages Router demo</h1>
           <p className="mt-3 max-w-xl text-sm text-zinc-600 dark:text-zinc-300">
             These routes are rendered from <span className="font-mono">src/pages</span> and use the SDK entrypoint{' '}
-            <span className="font-mono">cwv-monitor-sdk/pages-router</span>.
+            <span className="font-mono">next-cwv-monitor/pages-router</span>.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
