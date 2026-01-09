@@ -5,7 +5,7 @@ import UsersStats from '@/components/users/users-stats';
 import { auth } from '@/lib/auth';
 import { ADMIN_ROLES } from '@/lib/auth-shared';
 import { getAuthorizedSession } from '@/lib/auth-utils';
-import { hasRoles } from '@/lib/utils';
+import { hasAnyRoleOf } from '@/lib/utils';
 import { cacheTag } from 'next/cache';
 import { headers } from 'next/headers';
 
@@ -17,7 +17,7 @@ const fetchCachedUsers = async (headers: HeadersInit) => {
 
 export default async function UsersPage() {
   const session = await getAuthorizedSession();
-  if (!hasRoles(session.user.role, ADMIN_ROLES)) {
+  if (!hasAnyRoleOf(session.user.role, ADMIN_ROLES)) {
     return <NoPermission title="No permission" description="You don't have permission to manage users." />;
   }
   const data = await fetchCachedUsers(await headers());

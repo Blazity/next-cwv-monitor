@@ -1,7 +1,6 @@
 import { createSafeActionClient } from "next-safe-action";
 import {
   ensurePermission,
-  ForbiddenError,
   getAuthorizedSession,
   redirectToLogin,
   UnauthorizedError,
@@ -55,7 +54,7 @@ export type Permission = Extract<UserHasPermissionBody, { permission: unknown }>
 export const permissionActionClient = (permission: Permission) =>
   authActionClient.use(async ({ next, ctx }) => {
     const userId = ctx.session.user.id;
-    ensurePermission(permission, userId);
+    await ensurePermission(permission, userId);
 
     return next({ ctx });
   });

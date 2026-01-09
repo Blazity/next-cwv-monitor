@@ -70,11 +70,12 @@ export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
 
   return { start, end };
 }
-// User have to have ALL roles
-export function hasRoles(value: string | undefined | null, roles: AuthRole[]) {
+
+// User has to have any of the roles
+export function hasAnyRoleOf(value: string | undefined | null, roles: AuthRole[]) {
   if (!value) return false;
   const userRoles = value.split(",");
-  return roles.every((role) => userRoles.includes(role));
+  return roles.some((role) => userRoles.includes(role));
 }
 
 export function* chunkGenerator<T>({ array }: { array: T[] }) {
