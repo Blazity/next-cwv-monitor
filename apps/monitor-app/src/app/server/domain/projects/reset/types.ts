@@ -1,9 +1,6 @@
-import { type as arkType } from "arktype";
-import { projectIdSchema } from "@/app/server/domain/projects/schema";
+import { projectBase } from "@/app/server/domain/projects/schema";
 
-export const resetProjectSchema = arkType({
-  projectId: projectIdSchema,
-});
+export const resetProjectSchema = projectBase.pick("projectId");
 
 export type ResetProjectInput = typeof resetProjectSchema.infer;
 export type ResetProjectResult = { kind: "ok" } | { kind: "error"; message: string };

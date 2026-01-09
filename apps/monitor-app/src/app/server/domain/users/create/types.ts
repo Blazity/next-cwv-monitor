@@ -1,3 +1,4 @@
+import { authConfig, emailSchema, nameSchema } from "@/app/server/domain/users/types";
 import { auth } from "@/lib/auth";
 import { AUTH_ROLES, AuthRole } from "@/lib/auth-shared";
 import { type as arkType } from "arktype";
@@ -8,14 +9,7 @@ export type CreateUserBody = Omit<BetterAuthCreateUserBody, "role"> & {
 };
 
 export const createUserSchema = arkType({
-  name: arkType("string >= 1")
-    .describe("not empty")
-    .configure({ actual: () => "" }),
-  email: arkType("string.email")
-    .describe("a valid email address")
-    .configure({ actual: () => "" }),
-  role: arkType
-    .enumerated(...AUTH_ROLES)
-    .describe("member's role")
-    .configure({ message: (ctx) => `${ctx.propString || "(root)"}: ${ctx.actual} isn't ${ctx.expected}` }),
+  name: nameSchema,
+  email: emailSchema,
+  role: arkType.enumerated(...AUTH_ROLES).configure(authConfig),
 });

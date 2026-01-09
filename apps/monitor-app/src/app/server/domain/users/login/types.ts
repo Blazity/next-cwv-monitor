@@ -1,10 +1,9 @@
+import { emailSchema, passwordSchema } from "@/app/server/domain/users/types";
 import { type as arkType } from "arktype";
 
 export const loginSchema = arkType({
-  email: arkType("string.email")
-    .describe("a valid email address")
-    .configure({ actual: () => "" }),
-  password: arkType("string >= 1").configure({ actual: () => "" }),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export type LoginData = typeof loginSchema.infer;
