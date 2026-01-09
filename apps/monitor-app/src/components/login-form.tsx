@@ -1,61 +1,47 @@
-'use client';
+"use client";
 
-import { useForm } from 'react-hook-form';
-import { arktypeResolver } from '@hookform/resolvers/arktype';
-import { Activity, AlertCircle } from 'lucide-react';
-import { type as arkType } from 'arktype';
-import { authClient } from '@/lib/auth-client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
-const loginSchema = arkType({
-  email: arkType('string.email')
-    .describe('a valid email address')
-    .configure({ actual: () => '' }),
-  password: arkType('string >= 1').configure({ actual: () => '' })
-});
-
-type LoginFormData = typeof loginSchema.infer;
+import { arktypeResolver } from "@hookform/resolvers/arktype";
+import { Activity, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Route } from "next";
+import { toast } from "sonner";
+import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
+import { loginAction } from "@/app/server/actions/users/login";
+import { loginSchema } from "@/app/server/domain/users/login/types";
 
 type LoginFormProps = {
-  callbackUrl: string;
+  callbackUrl: Route;
 };
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    clearErrors,
-    formState: { errors, isSubmitting }
-  } = useForm<LoginFormData>({
-    resolver: arktypeResolver(loginSchema),
-    mode: 'onBlur',
-    reValidateMode: 'onSubmit',
-    defaultValues: {
-      email: '',
-      password: ''
+  const { form, action, handleSubmitWithAction } = useHookFormAction(
+    loginAction,
+    arktypeResolver(loginSchema),
+    {
+      actionProps: {
+        onSuccess: () => {
+          toast.success("Logged in. Redirecting...");
+          globalThis.location.replace(callbackUrl);
+        },
+        onError: ({ error }) => {
+          const message = error.serverError || "Login failed";
+          form.setError("root", { type: "server", message });
+        },
+      },
+      formProps: {
+        mode: "onBlur",
+        defaultValues: { email: "", password: "" },
+      },
     }
-  });
+  );
 
+  const { register, formState: { errors }, clearErrors } = form;
+  
+  const isLoading = action.isPending || form.formState.isSubmitting;
   const errorMessage = errors.root?.message || errors.email?.message || errors.password?.message;
-
-  const onSubmit = async (data: LoginFormData) => {
-    const { error } = await authClient.signIn.email({
-      email: data.email,
-      password: data.password,
-      callbackURL: callbackUrl
-    });
-
-    if (error) {
-      setError('root', {
-        type: 'server',
-        message: error.message || 'Login failed'
-      });
-    }
-  };
 
   return (
     <div className="bg-background flex min-h-screen w-full items-center justify-center p-4">
@@ -73,7 +59,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmitWithAction}>
             <CardContent className="space-y-4">
               {errorMessage && (
                 <div className="text-destructive bg-destructive/10 border-destructive/20 animate-in fade-in zoom-in-95 flex items-start gap-2 rounded-md border p-3 text-sm duration-200">
@@ -89,12 +75,12 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  disabled={isSubmitting}
-                  {...register('email', {
+                  disabled={isLoading}
+                  {...register("email", {
                     onChange: () => {
-                      clearErrors('email');
-                      clearErrors('root');
-                    }
+                      clearErrors("email");
+                      clearErrors("root");
+                    },
                   })}
                 />
               </div>
@@ -106,20 +92,20 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
                   type="password"
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  disabled={isSubmitting}
-                  {...register('password', {
+                  disabled={isLoading}
+                  {...register("password", {
                     onChange: () => {
-                      clearErrors('password');
-                      clearErrors('root');
-                    }
+                      clearErrors("password");
+                      clearErrors("root");
+                    },
                   })}
                 />
               </div>
             </CardContent>
 
             <CardFooter>
-              <Button type="submit" className="my-4 mt-4 mb-0 w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Signing in...' : 'Sign in'}
+              <Button type="submit" className="my-4 mt-4 mb-0 w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
             </CardFooter>
           </form>

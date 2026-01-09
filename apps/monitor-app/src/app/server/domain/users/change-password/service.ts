@@ -19,4 +19,4 @@ class ChangePasswordService {
   }
 }
 
-export const changePasswordService = new ChangePasswordService();
+export const usersChangePasswordService = new ChangePasswordService();
