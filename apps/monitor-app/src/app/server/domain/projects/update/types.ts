@@ -1,17 +1,10 @@
-import { type as arkType } from "arktype";
-import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
-import { nameSchema, projectIdSchema, slugSchema } from "@/app/server/domain/projects/schema";
+import { projectBase } from "@/app/server/domain/projects/schema";
 
-export const updateProjectNameSchema = arkType({
-  name: nameSchema,
-});
+export const updateProjectNameSchema = projectBase.pick("name");
 
-export const updateProjectSchema = arkType({
-  projectId: projectIdSchema,
-  "slug?": slugSchema,
-  "name?": nameSchema,
-  "eventSettings?": eventDisplaySettingsSchema.out,
-});
+export const updateProjectSchema = projectBase
+  .pick("projectId")
+  .and(projectBase.pick("name", "slug", "eventSettings").partial());
 
 export type UpdateProjectInput = typeof updateProjectSchema.infer;
 export type UpdateProjectNameInput = typeof updateProjectNameSchema.infer;

@@ -1,10 +1,6 @@
-import { type as arkType } from "arktype";
-import { nameSchema, slugSchema } from "@/app/server/domain/projects/schema";
+import { projectBase } from "@/app/server/domain/projects/schema";
 
-export const createProjectSchema = arkType({
-  name: nameSchema,
-  slug: slugSchema,
-});
+export const createProjectSchema = projectBase.pick("name", "slug");
 
 export type CreateProjectInput = typeof createProjectSchema.infer;
 export type CreateProjectResult =
