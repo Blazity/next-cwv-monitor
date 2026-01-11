@@ -7,8 +7,8 @@ apps/
   monitor-app        # Next.js dashboard & API
 
 packages/
-  client-sdk         # Browser SDK for CWV collection
-  contracts          # Shared ingest payload schemas
+  client-sdk              # Browser SDK for CWV collection
+  cwv-monitor-contracts   # Shared ingest payload schemas
 ```
 
 ## 2. System Diagram

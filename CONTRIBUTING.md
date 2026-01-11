@@ -4,13 +4,6 @@ Thanks for helping us improve next-cwv-monitor! This guide covers development se
 
 > 📐 New to the codebase? Start with [`ARCHITECTURE.md`](./ARCHITECTURE.md) for a system design overview.
 
-## Principles
-
-- Keep changes small and focused; split refactors from behavior changes.
-- Validate at the edges; services stay transport-agnostic; repositories own SQL.
-- Use explicit types at boundaries (`unknown` for untrusted input), DTOs, and tagged-union results for expected outcomes.
-- Keep imports stable (absolute `@/…` in `apps/monitor-app`); avoid deep relatives.
-
 ## Repository map
 
 - `apps/monitor-app` — Monitor UI + API (Next.js). Layered domain/services/repos; ClickHouse-backed.
@@ -53,36 +46,17 @@ Key highlights (see [`CODE_STYLE.md`](./CODE_STYLE.md) for the full guide):
   pnpm --filter next-cwv-monitor lint
   pnpm --filter next-cwv-monitor test
   pnpm --filter next-cwv-monitor build
-  # Optional: pnpm --filter next-cwv-monitor check-size
   ```
 - **Monitor app** (`apps/monitor-app`):
   ```bash
   pnpm --filter cwv-monitor-app lint
   pnpm --filter cwv-monitor-app build
-  pnpm --filter cwv-monitor-app test:integration   # needs ClickHouse running
-  pnpm --filter cwv-monitor-app storybook          # optional, :6006
+  pnpm --filter cwv-monitor-app test:integration
   ```
-- **Demo client** (`apps/client-app`):
-  ```bash
-  pnpm --filter cwv-monitor-client lint
-  pnpm --filter cwv-monitor-client build
-  ```
-
-CI only runs builds/tests for changed areas and will fail if your branch is behind `main`, so keep it rebased:
-
-```bash
-git fetch origin
-git rebase origin/main
-```
 
 ## Commit messages
 
-Use Conventional Commits; add scope when helpful:
-
-- `feat(monitor-app): add device filter to overview`
-- `fix(client-sdk): debounce route changes`
-- `chore(ci): fail early when branch is behind`
-- `docs: clarify local setup`
+Use Conventional Commits
 
 ## Pull requests
 
@@ -90,8 +64,3 @@ Use Conventional Commits; add scope when helpful:
 - Include what/why, tests run, and any migration/env changes. Add screenshots for UI.
 - Update docs when behavior or configuration changes (`README.md`, `CODE_STYLE.md`, package READMEs).
 - Ensure schema/SQL changes have migrations and (ideally) integration tests.
-- Request review once checks pass; respond to feedback promptly.
-
-## Getting help
-
-If unsure, open a GitHub issue or discussion with context (problem, proposed approach, affected areas). Early drafts are welcome.

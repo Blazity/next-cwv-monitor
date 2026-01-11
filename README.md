@@ -5,12 +5,12 @@
 </p>
 
 <p align="center">
-  <a href="#"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
-  <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
-  <a href="#"><img src="https://img.shields.io/badge/SDK_gzip-<5_kB-blue" alt="SDK bundle size"></a>
-  <a href="#"><img src="https://img.shields.io/badge/SDK-Next.js_13+-black.svg" alt="SDK: Next.js 13+"></a>
-  <a href="#"><img src="https://img.shields.io/badge/Monitor-Next.js_16-black.svg" alt="Monitor: Next.js 16"></a>
-  <a href="#"><img src="https://img.shields.io/badge/ClickHouse-25.8-yellow.svg" alt="ClickHouse"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="./CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+  <a href="./packages/client-sdk"><img src="https://img.shields.io/badge/SDK_gzip-<5_kB-blue" alt="SDK bundle size"></a>
+  <img src="https://img.shields.io/badge/SDK-Next.js_13+-black.svg" alt="SDK: Next.js 13+">
+  <img src="https://img.shields.io/badge/Monitor-Next.js_16-black.svg" alt="Monitor: Next.js 16">
+  <img src="https://img.shields.io/badge/ClickHouse-25.8-yellow.svg" alt="ClickHouse">
 </p>
 
 <p align="center">
@@ -27,12 +27,11 @@ Google's Core Web Vitals directly impact your **SEO rankings** and **user experi
 
 **next-cwv-monitor** is a **free, self-hosted alternative** purpose-built for Next.js developers:
 
-- 📍 **Route-aware** — See metrics for `/blog/[slug]` not just `/blog/hello-world`
-- 🔗 **Custom events tracking** — Connect CWV to conversions, purchases, signups
-- 🏠 **Self-hosted** — Your data stays on your infrastructure
-- 🔒 **Privacy-friendly** — No cookies, no personal data collected, GDPR-compliant by design
-- ⚡ **Lightweight SDK** — <5 kB gzipped, tree-shakeable, router-specific entrypoints
-- 🎛️ **Multi-project** — Monitor all your Next.js apps from one dashboard
+- 🏠 **Self-hosted** — Your data stays on your infrastructure, no vendor lock-in
+- 📊 **Real User Monitoring** — Capture LCP, INP, CLS, TTFB, and FCP from actual visitors
+- 🎯 **Custom Events** — Correlate CWV with conversions, purchases, signups
+- ⚡ **Lightweight SDK** — <5 kB gzipped, zero impact on your app's performance
+- 🔒 **Privacy-first** — No cookies, no personal data, GDPR-compliant by design
 
 ## 🚀 Quick Start
 
@@ -65,18 +64,18 @@ That's it! Your app will start sending CWV metrics 🎉
 
 ## ✨ Features
 
-| Feature                     | Description                                                  |
-| --------------------------- | ------------------------------------------------------------ |
-| 📊 **Real User Monitoring** | Capture LCP, INP, CLS, TTFB, and FCP from real users         |
-| 🛤️ **Route Granularity**    | Automatically normalizes dynamic routes (`/blog/[slug]`)     |
-| 📱 **Device Segmentation**  | Filter metrics by desktop vs. mobile                         |
-| 📈 **Percentile Analysis**  | View p50, p75, p90, p95, p99 distributions                   |
-| 🎯 **Custom Events**        | Track business events and correlate with web vitals          |
-| 👁️ **Page Views**           | Automatic tracking for conversion analysis                   |
-| 🔐 **Multi-tenant Auth**    | Role-based access control with Better Auth                   |
-| 🚀 **ClickHouse Backend**   | Blazing fast analytics on billions of events                 |
-| 🔄 **App & Pages Router**   | Full support for both Next.js routing paradigms              |
-| 📡 **Smart Batching**       | Efficient event delivery with automatic flush on idle/unload |
+- 📊 **Real User Monitoring** — Capture LCP, INP, CLS, TTFB, and FCP from actual visitors
+- 🛤️ **Next.js Router Integration** — Automatic route detection and normalization (`/blog/[slug]`)
+- 📱 **Device Segmentation** — Filter metrics by desktop vs. mobile
+- 📈 **Percentile Analysis** — View p50, p75, p90, p95, p99 distributions
+- 🎯 **Custom Events** — Track business events and correlate with web vitals
+- 👁️ **Page Views** — Automatic tracking for conversion analysis
+- 🎛️ **Multi-project** — Monitor all your Next.js apps from one dashboard
+- 🔐 **Multi-tenant Auth** — Role-based access control with Better Auth
+- 🔄 **App & Pages Router** — Full support for both Next.js routing paradigms
+- ⚡ **Lightweight SDK** — <5 kB gzipped, tree-shakeable, router-specific entrypoints
+- 📡 **Smart Batching** — Efficient event delivery with automatic flush on idle/unload
+- 🚀 **ClickHouse Backend** — Blazing fast analytics on billions of events
 
 ## 📸 Screenshots
 
