@@ -83,9 +83,9 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-false}
       AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-not-for-production}
-      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-dev@localhost}
-      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-devpassword}
-      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-Developer}
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-user@example.com}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-password}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-User}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
     ports:
       - "${APP_PORT:-3000}:3000"
