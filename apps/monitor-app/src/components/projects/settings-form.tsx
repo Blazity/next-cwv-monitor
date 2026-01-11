@@ -38,7 +38,7 @@ import { deleteProjectAction } from "@/app/server/actions/project/delete-project
 import { resetProjectDataAction } from "@/app/server/actions/project/reset-project";
 import { UpdateProjectNameInput, updateProjectNameSchema } from "@/app/server/domain/projects/update/types";
 import { ProjectWithViews } from "@/app/server/lib/clickhouse/schema";
-import { capitalizeFirstLetter, cn, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { updateProjectAction } from "@/app/server/actions/project/update-project";
 import { useAction } from "next-safe-action/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -304,7 +304,7 @@ function UpdateNameForm({ project, isEnabled }: { project: ProjectWithViews; isE
           Save
         </Button>
       </div>
-      {errors.name?.message && <p className="text-destructive text-xs">{capitalizeFirstLetter(errors.name.message)}</p>}
+      {errors.name?.message && <p className="text-destructive text-xs">{errors.name.message}</p>}
     </form>
   );
 }

@@ -104,6 +104,38 @@ export function capitalize(text?: string, removeUnderscore?: boolean) {
     .join(" ");
 }
 
+export const normalizeHostname = (input: string): string => {
+  if (!input) return "";
+
+  let host = input.trim().toLowerCase();
+
+  host = host.replace(/^([a-z0-9+.-]+:)?\/\//, "");
+
+  const pathIndex = host.search(/[/?#]/);
+  if (pathIndex !== -1) host = host.slice(0, pathIndex);
+
+  const atIndex = host.lastIndexOf("@");
+  if (atIndex !== -1) host = host.slice(atIndex + 1);
+
+  if (host.startsWith("[")) {
+    const closingBracket = host.indexOf("]");
+    if (closingBracket !== -1) host = host.slice(0, closingBracket + 1);
+  } else {
+    const colonIndex = host.indexOf(":");
+    if (colonIndex !== -1) host = host.slice(0, colonIndex);
+  }
+
+  if (/[^\u0020-\u007E]/.test(host)) {
+    try {
+      return new URL(`http://${host}`).hostname;
+    } catch {
+      return host;
+    }
+  }
+
+  return host;
+};
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",

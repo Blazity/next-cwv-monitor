@@ -2,23 +2,16 @@
 
 import Link from "next/link";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProjectAction } from "@/app/server/actions/project/create-project";
 import { createProjectSchema } from "@/app/server/domain/projects/create/types";
-import { capitalizeFirstLetter } from "@/lib/utils";
-import { toast } from "sonner";
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replaceAll(/\s+/g, "-")
-    .replaceAll(/-+/g, "-");
+import { normalizeHostname } from "@/lib/utils"
+import { useWatch } from "react-hook-form";
 
 export function NewProjectForm() {
 
@@ -45,11 +38,15 @@ export function NewProjectForm() {
 
   const {
     register,
-    setValue,
     clearErrors,
-    formState: { errors, dirtyFields },
+    control,
+    formState: { errors },
   } = form;
 
+  const slugValue = useWatch({ control, name: "slug" });
+  const normalizedPreview = normalizeHostname(slugValue);
+  const showPreview = slugValue && normalizedPreview && slugValue !== normalizedPreview;
+  
   const isPending = action.isPending;
 
   return (
@@ -57,35 +54,38 @@ export function NewProjectForm() {
       <div className="space-y-2">
         <Label htmlFor="project-name">Project name</Label>
         <Input
-          {...register("name", {
-            onChange: (e) => {
-              clearErrors("name");
-              if (!dirtyFields.slug) {
-                setValue("slug", slugify(e.target.value), { shouldValidate: true });
-              }
-            },
-          })}
+          {...register("name", { onChange: () => clearErrors("name") })}
           id="project-name"
           placeholder="My Awesome App"
           disabled={isPending}
         />
         <p className="text-muted-foreground text-xs">A friendly name to identify your project.</p>
         {errors.name?.message && (
-          <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.name.message)}</p>
+          <p className="text-destructive text-sm">{errors.name.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="project-domain">Slug</Label>
+        <Label htmlFor="project-domain">Project domain</Label>
         <Input
           {...register("slug", { onChange: () => clearErrors("slug") })}
           id="project-domain"
-          placeholder="my-awesome-app"
+          placeholder="example.com"
           disabled={isPending}
         />
-        <p className="text-muted-foreground text-xs">This will be used in your dashboard URL and API identifiers.</p>
+        <p className="text-muted-foreground text-xs">The authorized domain for Web Vitals data collection. Requests from other origins will be blocked.</p>
+        {showPreview && (
+          <div className="flex items-start gap-2 mt-2 p-2 rounded-md bg-blue-50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/50">
+            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="text-xs text-blue-700 dark:text-blue-300">
+              <p className="font-medium">Standardized as:</p>
+              <code className="font-mono break-all">{normalizedPreview}</code>
+              <p className="mt-1 opacity-80">We'll strip protocols, paths, and normalize special characters.</p>
+            </div>
+          </div>
+        )}
         {errors.slug?.message && (
-          <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>
+          <p className="text-destructive text-sm">{errors.slug.message}</p>
         )}
       </div>
 
