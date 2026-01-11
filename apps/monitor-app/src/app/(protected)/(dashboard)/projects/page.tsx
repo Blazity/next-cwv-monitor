@@ -42,14 +42,16 @@ export default async function ProjectsPage() {
               applications.
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
-            <Button className="gap-2" asChild>
-              <Link href="/projects/new">
-                <Plus className="h-4 w-4" />
-                Create your first project
-              </Link>
-            </Button>
-          </EmptyContent>
+          {canCreate ? (
+            <EmptyContent>
+              <Button className="gap-2" asChild>
+                <Link href="/projects/new">
+                  <Plus className="h-4 w-4" />
+                  Create your first project
+                </Link>
+              </Button>
+            </EmptyContent>
+          ) : null}
         </Empty>
       )}
     </div>

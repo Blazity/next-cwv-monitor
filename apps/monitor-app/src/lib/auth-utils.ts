@@ -1,4 +1,4 @@
-import { Permission } from "@/app/server/lib/safe-action";
+import type { Permission } from "@/app/server/lib/safe-action";
 import { auth, SessionData } from "@/lib/auth";
 import type { Route } from "next";
 import { headers } from "next/headers";
