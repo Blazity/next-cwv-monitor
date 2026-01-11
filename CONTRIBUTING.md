@@ -1,8 +1,10 @@
-# Contributing to next-cwv-monitor
+# Contributing
 
-Thanks for helping improve our self-hosted Core Web Vitals monitor. This guide explains how we work, how to run the project, name commits, and open PRs in line with `CODE_STYLE.md`.
+Thanks for helping us improve next-cwv-monitor! This guide covers development setup, coding standards, and how to submit changes.
 
-## Principles (read this first)
+> 📐 New to the codebase? Start with [`ARCHITECTURE.md`](./ARCHITECTURE.md) for a system design overview.
+
+## Principles
 
 - Keep changes small and focused; split refactors from behavior changes.
 - Validate at the edges; services stay transport-agnostic; repositories own SQL.
@@ -19,55 +21,34 @@ Thanks for helping improve our self-hosted Core Web Vitals monitor. This guide e
 ## Requirements
 
 - Node.js ≥ 20
-- pnpm ≥ 10.1
-- Docker + Docker Compose (recommended for full stack)
+- pnpm > 10.1
+- Docker + Docker Compose
 
-## Workflow options
-
-### A) Full stack via Docker (recommended)
+## Development setup
 
 ```bash
+cp apps/monitor-app/.env.example apps/monitor-app/.env
 pnpm install
 pnpm docker:dev
 ```
 
-- Brings up ClickHouse and the apps, runs migrations, and seeds demo data automatically.
+- Brings up ClickHouse and the monitor app, runs migrations, and seeds demo data automatically.
 - Monitor: http://localhost:3000
-- Demo client: http://localhost:3001
+- Login with credentials from your `.env` file (defaults: `user@example.com` / `password`)
 
-### B) Local dev without Docker (per-package)
+## Coding conventions
 
-1. Environment:
+Key highlights (see [`CODE_STYLE.md`](./CODE_STYLE.md) for the full guide):
 
-- Copy `apps/monitor-app/.env.example` → `apps/monitor-app/.env` and fill values.
-- (Optional) Copy `apps/client-app/.env.example` or `.env.ci` → `apps/client-app/.env`.
-
-2. Run apps individually:
-
-```bash
-pnpm --filter cwv-monitor-app dev      # monitor app only
-pnpm --filter cwv-monitor-client dev   # demo app only
-pnpm --filter next-cwv-monitor dev      # SDK watch build
-```
-
-3. ClickHouse when not using `docker:dev`:
-
-```bash
-pnpm --filter cwv-monitor-app clickhouse:migrate
-pnpm --filter cwv-monitor-app seed:demo   # optional demo data
-```
-
-## Coding conventions (from `CODE_STYLE.md`, highlights)
-
-- API routes own HTTP concerns (parse, validate, status codes, responses).
-- Services enforce invariants/orchestration; no `NextRequest/NextResponse`.
-- Repositories own SQL and DB conversions; always scope by `project_id`; prefer bounded time filters.
-- Commands (`*Command`) for mutations/side-effects; queries (`*Query`) for reads.
+- **API routes** own HTTP concerns (parse, validate, status codes, responses).
+- **Services** enforce invariants/orchestration; no `NextRequest/NextResponse`.
+- **Repositories** own SQL and DB conversions; always scope by `project_id`; prefer bounded time filters. See [`SCHEMA.md`](./apps/monitor-app/clickhouse/SCHEMA.md) for database structure.
+- **Commands** (`*Command`) for mutations/side-effects; **queries** (`*Query`) for reads.
 - Keep domain DTOs stable; use `Date` in domain, convert at repository boundaries.
 
 ## Testing & checks
 
-- **SDK** (`packages/client-sdk`):
+- **SDK** (`packages/client-sdk`) — see [`SDK README`](./packages/client-sdk/README.md) for API details:
   ```bash
   pnpm --filter next-cwv-monitor lint
   pnpm --filter next-cwv-monitor test
@@ -114,12 +95,3 @@ Use Conventional Commits; add scope when helpful:
 ## Getting help
 
 If unsure, open a GitHub issue or discussion with context (problem, proposed approach, affected areas). Early drafts are welcome.
-
-## Resources
-
-| Doc                                                                                | Description                      |
-| ---------------------------------------------------------------------------------- | -------------------------------- |
-| [`CODE_STYLE.md`](./CODE_STYLE.md)                                                 | Architecture & coding guidelines |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md)                                             | System design deep dive          |
-| [`packages/client-sdk/README.md`](./packages/client-sdk/README.md)                 | SDK usage                        |
-| [`apps/monitor-app/clickhouse/SCHEMA.md`](./apps/monitor-app/clickhouse/SCHEMA.md) | Database schema                  |

@@ -1,7 +1,5 @@
 # Architecture
 
-System design overview for Next CWV Monitor - a self-hosted Core Web Vitals monitoring platform for Next.js.
-
 ## 1. Project Structure
 
 ```
@@ -65,12 +63,12 @@ The main dashboard for viewing Core Web Vitals, managing projects, and administe
 
 ### 3.2. Client SDK (`packages/client-sdk`)
 
-Lightweight browser SDK that collects CWV metrics (LCP, FID, CLS, INP, TTFB, FCP), `$page_view` events, and custom business events.
+Lightweight browser SDK that collects CWV metrics (LCP, INP, CLS, TTFB, FCP), `$page_view` events, and custom business events.
 
 - **Stack:** TypeScript, web-vitals, React hooks
 - **Entrypoints:** `next-cwv-monitor/app-router` and `next-cwv-monitor/pages-router`
 - **Privacy:** In-memory session ID per page view — no cookies or localStorage
-- **Batching:** Flushes on queue ≥10, 50ms idle, or page unload (sendBeacon)
+- **Batching:** Flushes on 50ms idle or page unload/visibility change (sendBeacon)
 
 ### 3.3. Contracts (`packages/cwv-monitor-contracts`)
 
@@ -107,18 +105,3 @@ See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for full configuration options and enviro
 - **Rate limiting:** IP-based on ingest endpoint
 - **Sessions:** Stored in ClickHouse with TTL expiration
 - **SDK privacy:** Ephemeral session IDs only — no PII collected
-
-## 7. Development
-
-**Local setup:** See [Quick Start](./README.md#-quick-start)
-
-```bash
-pnpm install
-pnpm docker:dev
-```
-
-**Testing:** Vitest + React Testing Library
-
-**Code quality:** ESLint, Prettier, TypeScript strict mode
-
-**Storybook:** `apps/monitor-app/src/stories/`
