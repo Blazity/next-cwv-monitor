@@ -77,13 +77,15 @@ services:
       context: ../
       dockerfile: docker/monitor-app.dev.Dockerfile
     container_name: cwv-monitor-dev
-    env_file:
-      - ../apps/monitor-app/.env
     environment:
       NODE_ENV: development
       <<: *clickhouse-env
       TRUST_PROXY: ${TRUST_PROXY:-false}
       AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-not-for-production}
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-dev@localhost}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-devpassword}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-Developer}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
     ports:
       - "${APP_PORT:-3000}:3000"
