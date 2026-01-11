@@ -28,7 +28,7 @@
     "directory": "packages/client-sdk"
   },
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": false,
   "type": "module",
   "sideEffects": false,
