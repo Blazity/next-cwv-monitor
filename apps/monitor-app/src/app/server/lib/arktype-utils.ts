@@ -4,7 +4,8 @@ export type ArkMessageContext = Pick<ArkError, "propString" | "expected" | "actu
 
 export const createConfig = (labels: Record<string, string>) => ({
   message: (ctx: ArkMessageContext) => {
-    const label = labels[ctx.propString] ?? ctx.propString;
+    const prop = ctx.propString || "(root)";
+    const label = labels[prop] ?? prop;
     return `${label} must ${ctx.expected}`;
   },
 });
