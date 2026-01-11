@@ -1,88 +1,215 @@
-# next-cwv-monitor
+<p align="center">
+  <img src="./app-diagram.png" height="140" alt="Next CWV Monitor">
+</p>
 
-A self-hosted Core Web Vitals monitoring platform for Next.js applications. Provides real-user monitoring (RUM) with route-level granularity and business metric correlation, positioned as a free alternative to Vercel Analytics with deeper Next.js integration.
+<h1 align="center">next-cwv-monitor</h1>
 
-# Requirements
+<p align="center">
+  Self-hosted Core Web Vitals monitoring for Next.js: collect performance data from real users, correlate metrics with conversion events, and see data in real-time. Free & open source.
+</p>
 
-- Nodejs v20>=
-- Pnpm v10.1>=
-- Docker, Docker compose,
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome"></a>
+  <a href="#"><img src="https://img.shields.io/badge/SDK_gzip-<5_kB-blue" alt="SDK bundle size"></a>
+  <a href="#"><img src="https://img.shields.io/badge/SDK-Next.js_13+-black.svg" alt="SDK: Next.js 13+"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Monitor-Next.js_16-black.svg" alt="Monitor: Next.js 16"></a>
+  <a href="#"><img src="https://img.shields.io/badge/ClickHouse-25.8-yellow.svg" alt="ClickHouse"></a>
+</p>
 
-## Nice to have (for contributors)
+<p align="center">
+  <a href="#-quick-start">Quick Start</a> •
+  <a href="#-features">Features</a> •
+  <a href="#-installation">Installation</a> •
+  <a href="#-documentation">Docs</a> •
+  <a href="#-faq">FAQ</a> •
+  <a href="#-contributing">Contributing</a>
+</p>
 
-- Eslint vscode extension [LINK](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- Prettier Legacy (It supports flat config) [LINK](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+---
 
-# Quick structure description
+## 🎯 Overview
 
-```
-├─ docker
-   ├─ demo - Runs demo nextjs app and monitor app
-   └─ monitor - Runs only monitor app
-├─ apps
-|  ├─ client-app - Demo application writen within nextjs 16
-|  └─ monitor-app - Monitoring application, includes dashboard + REST API
-└─ packages
-   └─ client-sdk - Communication layer between client and monitor, written with react
-```
+Google's Core Web Vitals directly impact your **SEO rankings** and **user experience**. Yet existing monitoring solutions are either expensive, lack deep Next.js integration, or don't provide route-level insights.
 
-![App diagram](app-diagram.png)
+**next-cwv-monitor** is a **free, self-hosted alternative** purpose-built for Next.js developers:
 
-# How to run develop mode
+- 📍 **Route-aware** — See metrics for `/blog/[slug]` not just `/blog/hello-world`
+- 🔗 **Custom events tracking** — Connect CWV to conversions, purchases, signups
+- 🏠 **Self-hosted** — Your data stays on your infrastructure
+- 🔒 **Privacy-friendly** — No cookies, no personal data collected, GDPR-compliant by design
+- ⚡ **Lightweight SDK** — <5 kB gzipped, tree-shakeable, router-specific entrypoints
+- 🎛️ **Multi-project** — Monitor all your Next.js apps from one dashboard
 
-To develop client-sdk you can run
+> 📐 For a deep dive into system design, data flow, and technical decisions, see [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
-- With one terminal - `pnpm dev`
-- Multi terminal
-  - monitor app - `cd apps/monitor-app && pnpm dev`
-  - client app - `cd apps/client-app && pnpm dev` (runs on http://localhost:3001 by default)
-  - client sdk - `cd packages/client-sdk && pnpm build`
+## 🚀 Quick Start
 
-# SDK Features
+**Self-hosting?** Follow the [Deployment Guide](./DEPLOYMENT.md) to run on your infrastructure.
 
-- A custom sendBeacon method that was created using the native fetch API. Thanks to this, the application supports cases where a server-side error occurs and allows you to ensure that the data has been sent.
-- Hook-based custom event tracking (`useTrackCustomEvent`) for correlating product events with CWV.
-- Next.js route detection (App Router + Pages Router) with dynamic route normalization (e.g. `/blog/hello-world` → `/blog/[slug]`).
+**Contributing?** See [Contributing Guide](./CONTRIBUTING.md) for local development setup.
 
-## Client SDK usage (Next.js)
+Once your dashboard is running, create a project to get your `projectId`.
 
-Use the router-specific entrypoint for best performance and smallest bundle:
-(`next-cwv-monitor` root import is intentionally not exported.)
-
-### App Router (`app/`)
+Add the SDK to the Next.js app you want to monitor:
 
 ```tsx
-'use client';
-
-import { CWVMonitor } from 'next-cwv-monitor/app-router';
+// app/providers.tsx — wrap your root layout with this provider
+"use client";
+import { CWVMonitor } from "next-cwv-monitor/app-router";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <CWVMonitor projectId="YOUR_PROJECT_UUID" endpoint="https://your-monitor.example">
+    <CWVMonitor
+      projectId="YOUR_PROJECT_UUID" // From the dashboard
+      endpoint="http://localhost:3000"
+    >
       {children}
     </CWVMonitor>
   );
 }
 ```
 
-### Pages Router (`pages/`)
+> 💡 Using Pages Router? Import from `next-cwv-monitor/pages-router` instead and wrap your `_app.tsx`. See [SDK docs](./packages/client-sdk/README.md) for details.
 
-```tsx
-import { CWVMonitor } from 'next-cwv-monitor/pages-router';
+That's it! Your app will start sending CWV metrics 🎉
 
-export default function App({ Component, pageProps }: any) {
-  return (
-    <CWVMonitor projectId="YOUR_PROJECT_UUID" endpoint="https://your-monitor.example">
-      <Component {...pageProps} />
-    </CWVMonitor>
-  );
-}
+## ✨ Features
+
+| Feature                     | Description                                                  |
+| --------------------------- | ------------------------------------------------------------ |
+| 📊 **Real User Monitoring** | Capture LCP, FID, CLS, INP, TTFB, and FCP from real users    |
+| 🛤️ **Route Granularity**    | Automatically normalizes dynamic routes (`/blog/[slug]`)     |
+| 📱 **Device Segmentation**  | Filter metrics by desktop vs. mobile                         |
+| 📈 **Percentile Analysis**  | View p50, p75, p90, p95, p99 distributions                   |
+| 🎯 **Custom Events**        | Track business events and correlate with web vitals          |
+| 👁️ **Page Views**           | Automatic tracking for conversion analysis                   |
+| 🔐 **Multi-tenant Auth**    | Role-based access control with Better Auth                   |
+| 🚀 **ClickHouse Backend**   | Blazing fast analytics on billions of events                 |
+| 🔄 **App & Pages Router**   | Full support for both Next.js routing paradigms              |
+| 📡 **Smart Batching**       | Efficient event delivery with automatic flush on idle/unload |
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="./docs/screenshots/dashboard-overview.png" alt="Dashboard Overview" width="800">
+  <br>
+  <em>Dashboard overview showing CWV metrics across all routes</em>
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/route-detail.png" alt="Route Detail View" width="800">
+  <br>
+  <em>Drill down into individual routes with percentile distributions</em>
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/custom-events.png" alt="Custom Events" width="800">
+  <br>
+  <em>Track custom business events correlated with Core Web Vitals</em>
+</p>
+
+## 📦 Installation
+
+### Requirements
+
+- Node.js v20 or higher
+- pnpm v10.1 or higher
+- Docker & Docker Compose
+
+### Docker (Recommended)
+
+```bash
+git clone https://github.com/blazity/next-cwv-monitor.git
+cd next-cwv-monitor
+pnpm install
+pnpm docker:dev
 ```
 
-## ClickHouse Schema
+This starts ClickHouse + Monitor App with automatic migrations.
 
-For details about the multi-tenant ClickHouse schema (tables, columns, and engine choices), see `apps/monitor-app/clickhouse/SCHEMA.md`.
+### Local Development
 
-## Code style & architecture conventions
+```bash
+pnpm install
+pnpm docker:dev
+```
 
-For general coding guidelines, see `CODE_STYLE.md`.
+| Service           | URL                   |
+| ----------------- | --------------------- |
+| Monitor Dashboard | http://localhost:3000 |
+| Demo Client App   | http://localhost:3001 |
+
+### Production Deployment
+
+Run the interactive setup wizard:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/setup.sh | bash
+```
+
+The wizard downloads Docker Compose files, guides you through configuration (including optional SSL), and generates secure secrets automatically.
+
+> 📖 For complete deployment guides, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+## ⚙️ Configuration
+
+- **Monitor App** — Environment variables and deployment options are documented in [`DEPLOYMENT.md`](./DEPLOYMENT.md)
+- **Client SDK** — Usage and API reference in [`packages/client-sdk/README.md`](./packages/client-sdk/README.md)
+
+## ❓ FAQ
+
+<details open>
+<summary><strong>Why self-host CWV monitoring?</strong></summary>
+
+Self-hosting gives you **full data ownership**, no per-seat pricing, custom event correlation with business metrics, and the flexibility to run on your own infrastructure with no external dependencies.
+
+</details>
+
+<details open>
+<summary><strong>What's the performance impact of the SDK?</strong></summary>
+
+The SDK is designed to be lightweight with tree-shakeable router-specific entrypoints. Events are batched and sent asynchronously using sendBeacon for reliable delivery without blocking navigation.
+
+</details>
+
+<details open>
+<summary><strong>How long is data retained?</strong></summary>
+
+Default retention: **Raw events** — 90 days, **Daily aggregates** — 365 days. Older data is automatically cleaned up by ClickHouse TTL.
+
+</details>
+
+## 🤝 Contributing
+
+We love contributions! Here's how to get started:
+
+```bash
+git clone https://github.com/blazity/next-cwv-monitor.git
+cd next-cwv-monitor
+pnpm install
+pnpm docker:dev
+```
+
+For detailed guidelines, development setup, and coding standards, see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+
+## 📚 Documentation
+
+| Document                                                                           | Description                         |
+| ---------------------------------------------------------------------------------- | ----------------------------------- |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md)                                             | How to contribute & dev setup       |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md)                                             | System design & technical overview  |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md)                                                 | Production deployment guides        |
+| [`CODE_STYLE.md`](./CODE_STYLE.md)                                                 | Coding conventions & best practices |
+| [`packages/client-sdk/README.md`](./packages/client-sdk/README.md)                 | SDK usage & API reference           |
+| [`apps/monitor-app/clickhouse/SCHEMA.md`](./apps/monitor-app/clickhouse/SCHEMA.md) | ClickHouse schema documentation     |
+
+## 📄 License
+
+This project is [MIT licensed](./LICENSE).
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ by <a href="https://github.com/blazity">Blazity</a></sub>
+</p>
