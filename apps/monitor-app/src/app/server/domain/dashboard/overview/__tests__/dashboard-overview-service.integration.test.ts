@@ -37,7 +37,7 @@ describe('dashboard-overview-service (integration)', () => {
     const service = new DashboardOverviewService();
     const result = await service.getOverview({
       projectId: randomUUID(),
-      range: { start: new Date('2025-01-01T00:00:00Z'), end: new Date('2025-01-02T00:00:00Z') },
+      range: { start: new Date('2026-01-01T00:00:00Z'), end: new Date('2026-01-02T00:00:00Z') },
       selectedMetric: 'LCP',
       deviceType: 'all',
       topRoutesLimit: 5
@@ -50,14 +50,17 @@ describe('dashboard-overview-service (integration)', () => {
   });
 
   it('returns overview with worst routes, statuses, and status distribution (range + device filters applied)', async () => {
+    const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
+
     const projectId = randomUUID();
     await createProject({ id: projectId, slug: 'overview-int', name: 'Overview Integration' });
 
-    const rangeStart = new Date('2025-01-09T00:00:00Z');
-    const day1 = new Date('2025-01-10T12:00:00Z');
-    const day2 = new Date('2025-01-11T12:00:00Z');
-    const rangeEnd = new Date('2025-01-11T23:59:59Z');
-    const outsideRangeDay = new Date('2024-12-01T12:00:00Z');
+    const now = new Date();
+    const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7, 0, 0, 0));
+    const day1 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6, 12, 0, 0));
+    const day2 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 5, 12, 0, 0));
+    const rangeEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 5, 23, 59, 59));
+    const outsideRangeDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 20, 12, 0, 0));
 
     const routes = [
       { route: '/good', value: 2000, expectedStatus: 'good' as const },
@@ -186,8 +189,8 @@ describe('dashboard-overview-service (integration)', () => {
 
     // LCP time series is per-day for selected metric (LCP), ordered by date.
     expect(data.timeSeriesByMetric.LCP).toHaveLength(2);
-    expect(data.timeSeriesByMetric.LCP[0].date).toBe('2025-01-10');
-    expect(data.timeSeriesByMetric.LCP[1].date).toBe('2025-01-11');
+    expect(data.timeSeriesByMetric.LCP[0].date).toBe(dateOnly(day1));
+    expect(data.timeSeriesByMetric.LCP[1].date).toBe(dateOnly(day2));
     expect(data.timeSeriesByMetric.LCP[0].sampleSize).toBe(30); // 3 routes * 10 events for day1
     expect(data.timeSeriesByMetric.LCP[1].sampleSize).toBe(30); // 3 routes * 10 events for day2
 
@@ -197,7 +200,7 @@ describe('dashboard-overview-service (integration)', () => {
     // CLS events were only added for day2, so we should have at least one data point
     const clsSeries = data.timeSeriesByMetric.CLS;
     if (clsSeries.length > 0) {
-      const clsDay2 = clsSeries.find((point) => point.date === '2025-01-11');
+      const clsDay2 = clsSeries.find((point) => point.date === dateOnly(day2));
       expect(clsDay2).toBeDefined();
       if (clsDay2) {
         expect(clsDay2.sampleSize).toBeGreaterThan(0);

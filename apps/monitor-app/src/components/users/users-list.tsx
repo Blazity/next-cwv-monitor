@@ -32,7 +32,7 @@ import { toggleAccountStatusAction } from "@/app/server/actions/users/toggle-use
 import { UserWithRole } from "better-auth/plugins";
 import { checkBanReason } from "@/app/server/lib/ban-reasons";
 import { toast } from "sonner";
-import { cn, formatDate, hasRoles } from "@/lib/utils";
+import { cn, formatDate, hasAnyRoleOf } from "@/lib/utils";
 import { useAction } from "next-safe-action/hooks";
 import { resetPasswordAction } from "@/app/server/actions/users/reset-password";
 import { CredentialsDialog } from "@/components/users/credentials-dialog";
@@ -150,7 +150,7 @@ export default function UsersList({ users }: Props) {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-foreground truncate text-sm font-medium">{user.name}</span>
-                      {hasRoles(user.role, ADMIN_ROLES) && (
+                      {hasAnyRoleOf(user.role, ADMIN_ROLES) && (
                         <Badge variant="secondary" className="text-xs">
                           Admin
                         </Badge>
@@ -184,7 +184,7 @@ export default function UsersList({ users }: Props) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => setUserToReset(user)}
-                        disabled={!!user.banned || hasRoles(user.role, ["admin"])}
+                        disabled={!!user.banned || hasAnyRoleOf(user.role, ["admin"])}
                       >
                         <Key className="mr-2 h-4 w-4" />
                         Reset Password
@@ -210,7 +210,7 @@ export default function UsersList({ users }: Props) {
                         onClick={() => handleToggleRole(user)}
                         disabled={currentUser.email === user.email || !!user.banned}
                       >
-                        {hasRoles(user.role, ADMIN_ROLES) ? (
+                        {hasAnyRoleOf(user.role, ADMIN_ROLES) ? (
                           <>
                             <ShieldOff className="mr-2 h-4 w-4" />
                             Remove Admin
@@ -227,7 +227,7 @@ export default function UsersList({ users }: Props) {
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            disabled={currentUser.email === user.email || isDisabled || hasRoles(user.role, ADMIN_ROLES)}
+                            disabled={currentUser.email === user.email || isDisabled || hasAnyRoleOf(user.role, ADMIN_ROLES)}
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />

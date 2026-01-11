@@ -84,11 +84,63 @@ export async function runClickHouseMigrations(dynamicOverrides: Record<string, s
 }
 
 export async function optimizeAggregates(
-  sqlClient: (strings: TemplateStringsArray, ...values: unknown[]) => { command: () => PromiseLike<unknown> }
+  // Using a broad type here because the ClickHouse SQL tag is both callable and thenable.
+  // For test stability we need to run both commands and small SELECT probes.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sqlClient: any
 ): Promise<void> {
-  // The MV inserts happen asynchronously, wait briefly for them to complete
-  await wait(100);
-  // Force ClickHouse to merge all parts in the aggregates table
+  const deadlineMs = Date.now() + 10_000;
+
+  const readEventsCount = async (): Promise<number> => {
+    const rows = (await sqlClient<{ cnt: string }>`
+      SELECT toString(count()) AS cnt
+      FROM cwv_events
+    `) as Array<{ cnt?: string | number }>;
+    const raw = rows[0]?.cnt;
+    return typeof raw === "number" ? raw : Number(raw ?? 0);
+  };
+
+  const readAggregatesCount = async (): Promise<number> => {
+    const rows = (await sqlClient<{ cnt: string }>`
+      SELECT toString(count()) AS cnt
+      FROM cwv_daily_aggregates
+    `) as Array<{ cnt?: string | number }>;
+    const raw = rows[0]?.cnt;
+    return typeof raw === "number" ? raw : Number(raw ?? 0);
+  };
+
+  // Inserts can be async depending on client/settings; wait until events are visible.
+  while (Date.now() < deadlineMs) {
+    const eventsCount = await readEventsCount();
+    if (eventsCount === 0) {
+      await wait(50);
+      continue;
+    }
+    break;
+  }
+
+  // If there are still no events, there is nothing to materialize.
+  const finalEventsCount = await readEventsCount();
+  if (finalEventsCount === 0) {
+    await sqlClient`OPTIMIZE TABLE cwv_daily_aggregates FINAL`.command();
+    return;
+  }
+
+  // Wait for the materialized view to populate daily aggregates.
+  while (Date.now() < deadlineMs) {
+    const aggregatesCount = await readAggregatesCount();
+    if (aggregatesCount > 0) break;
+    await wait(50);
+  }
+
+  const finalAggregatesCount = await readAggregatesCount();
+  if (finalAggregatesCount === 0) {
+    throw new Error(
+      `Timed out waiting for mv_cwv_daily_aggregates to populate: cwv_events=${finalEventsCount}, cwv_daily_aggregates=${finalAggregatesCount}`,
+    );
+  }
+
+  // Force ClickHouse to merge all parts in the aggregates table.
   await sqlClient`OPTIMIZE TABLE cwv_daily_aggregates FINAL`.command();
 }
 

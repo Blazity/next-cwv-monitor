@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { ADMIN_ROLES } from "@/lib/auth-shared";
-import { hasRoles } from "@/lib/utils";
+import { hasAnyRoleOf } from "@/lib/utils";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 
@@ -10,7 +10,7 @@ class UsersDeleteService {
       query: { filterField: "id", filterOperator: "eq", filterValue: userId },
       headers: await headers(),
     });
-    if (hasRoles(user.users[0].role, ADMIN_ROLES)) {
+    if (hasAnyRoleOf(user.users[0].role, ADMIN_ROLES)) {
       throw new Error("You can't remove admin");
     }
 

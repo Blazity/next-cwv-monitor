@@ -12,7 +12,8 @@ import {
 import type { SessionData } from '@/lib/auth';
 import { signOut } from '@/app/server/actions/sign-out';
 import Link from 'next/link';
-import { hasRoles } from '@/lib/utils';
+import { hasAnyRoleOf } from '@/lib/utils';
+import { ADMIN_ROLES } from '@/lib/auth-shared';
 
 type SessionUser = SessionData['user'];
 
@@ -36,7 +37,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
           <p className="text-muted-foreground text-xs">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
-        {hasRoles(user.role, ['admin']) && (
+        {hasAnyRoleOf(user.role, ADMIN_ROLES) && (
           <>
             <DropdownMenuItem asChild className="text-muted-foreground">
               <Link href="/users">

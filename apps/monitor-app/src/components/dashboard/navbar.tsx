@@ -4,7 +4,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { Activity, Users } from 'lucide-react';
 import { useParams, usePathname } from 'next/navigation';
-import { cn, hasRoles } from '@/lib/utils';
+import { cn, hasAnyRoleOf } from '@/lib/utils';
 import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
 import { useUser } from '@/app/hooks/use-session';
 import { ProjectSelector } from '@/components/dashboard/projects-selector';
@@ -64,7 +64,7 @@ export function Navbar({ projects }: NavbarProps) {
                   </PersistParamsLink>
                 );
               })}
-              {hasRoles(user.role, ADMIN_ROLES) && (
+              {hasAnyRoleOf(user.role, ADMIN_ROLES) && (
                 <Link
                   href="/users"
                   className={cn(
