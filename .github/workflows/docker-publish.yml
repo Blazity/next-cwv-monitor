@@ -2,7 +2,7 @@ name: Build and Push Docker Images
 
 on:
   push:
-    tags: ["v*"]
+    tags: ["monitor-app-v*"]
   workflow_dispatch:
     inputs:
       tag:
@@ -50,8 +50,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.name }}
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=match,pattern=monitor-app-v(\d+\.\d+\.\d+),group=1
+            type=match,pattern=monitor-app-v(\d+\.\d+),group=1
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
