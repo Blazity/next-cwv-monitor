@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["cwv-monitor-contracts", "cwv-monitor-client"]
+  "ignore": ["cwv-monitor-client"]
 }
