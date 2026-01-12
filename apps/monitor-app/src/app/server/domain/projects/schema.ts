@@ -28,7 +28,7 @@ export const nameSchema = arkType("string > 0").configure({
   expected: () => "not be empty",
 });
 
-export const slugSchema = corsModule.root.pipe(normalizeHostname).configure({
+export const slugSchema = arkType("string>0").pipe(normalizeHostname).to(corsModule.root).configure({
   ...projectConfig,
   expected: () => "a valid hostname, wildcard (e.g., *.domain.com), or IP address",
 });

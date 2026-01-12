@@ -18,7 +18,7 @@ function toPositiveInt(raw, fallback) {
 }
 
 const DEMO_PROJECT_ID = process.env.SEED_PROJECT_ID ?? "00000000-0000-0000-0000-000000000000";
-const DEMO_PROJECT_SLUG = process.env.SEED_PROJECT_SLUG ?? "demo-project";
+const DEMO_PROJECT_SLUG = process.env.SEED_PROJECT_SLUG ?? "localhost";
 const DEMO_PROJECT_NAME = process.env.SEED_PROJECT_NAME ?? "Next CWV Demo";
 const DAYS_TO_GENERATE = toPositiveInt(process.env.SEED_DAYS, 14);
 const EVENTS_PER_COMBO = toPositiveInt(process.env.SEED_EVENTS_PER_COMBO, 3);
@@ -375,7 +375,7 @@ async function seedCustomEventsData(client) {
   const existingCount = typeof rawCount === "string" ? Number.parseInt(rawCount, 10) : Number(rawCount);
 
   if (existingCount > 0 && RESET_BEFORE_SEED) {
-    console.log(`Resetting existing custom_events for project ${PROJECT_SLUG} (${existingCount} rows) before seeding`);
+    console.log(`Resetting existing custom_events for project ${PROJECT_NAME} (${existingCount} rows) before seeding`);
     await client.command({
       query: "ALTER TABLE custom_events DELETE WHERE project_id = {projectId:UUID}",
       query_params: { projectId: PROJECT_ID },
@@ -386,7 +386,7 @@ async function seedCustomEventsData(client) {
   const remaining = RESET_BEFORE_SEED ? TARGET_EVENTS : Math.max(TARGET_EVENTS - finalExistingCount, 0);
   if (remaining === 0) {
     console.log(
-      `custom_events already has ${existingCount} rows for project ${PROJECT_SLUG}; target ${TARGET_EVENTS}. Nothing to do.`,
+      `custom_events already has ${existingCount} rows for project ${PROJECT_NAME}; target ${TARGET_EVENTS}. Nothing to do.`,
     );
     return;
   }
@@ -407,7 +407,7 @@ async function seedCustomEventsData(client) {
   }
 
   console.log(
-    `Seeded ${events.length} custom_events over the last ${DAYS_RANGE} days for project ${PROJECT_SLUG} (${PROJECT_ID}).`,
+    `Seeded ${events.length} custom_events over the last ${DAYS_RANGE} days for project ${PROJECT_NAME} (${PROJECT_ID}).`,
   );
 }
 
@@ -463,11 +463,11 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
         }
 
         console.log(
-          `Demo data already present for project ${DEMO_PROJECT_SLUG} (${existingEvents} events). Skipping seeding.`,
+          `Demo data already present for project ${DEMO_PROJECT_NAME} (${existingEvents} events). Skipping seeding.`,
         );
       } else {
         if (existingEvents > 0 && RESET_BEFORE_SEED) {
-          console.log(`Resetting existing demo data for project ${DEMO_PROJECT_SLUG} (${existingEvents} events)`);
+          console.log(`Resetting existing demo data for project ${DEMO_PROJECT_NAME} (${existingEvents} events)`);
           await deleteExistingData(client);
         }
 
@@ -492,7 +492,7 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
         }
 
         console.log(
-          `Seeded ${cwvEvents.length} events and ${pageViewEvents.length} page_view events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_SLUG} (${DEMO_PROJECT_ID}).`,
+          `Seeded ${cwvEvents.length} events and ${pageViewEvents.length} page_view events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_NAME} (${DEMO_PROJECT_ID}).`,
         );
       }
     }

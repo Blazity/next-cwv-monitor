@@ -75,9 +75,9 @@ export function NewProjectForm() {
         />
         <p className="text-muted-foreground text-xs">The authorized domain for Web Vitals data collection. Requests from other origins will be blocked.</p>
         {showPreview && (
-          <div className="flex items-start gap-2 mt-2 p-2 rounded-md bg-blue-50 border border-blue-100 dark:bg-blue-950/20 dark:border-blue-900/50">
-            <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <div className="text-xs text-blue-700 dark:text-blue-300">
+          <div className="flex items-start gap-2 mt-2 p-2 rounded-md border bg-status-needs-improvement/15">
+            <AlertCircle className="h-4 w-4 text-status-needs-improvement mt-0.5" />
+            <div className="text-xs text-status-needs-improvement">
               <p className="font-medium">Standardized as:</p>
               <code className="font-mono break-all">{normalizedPreview}</code>
               <p className="mt-1 opacity-80">We'll strip protocols, paths, and normalize special characters.</p>
