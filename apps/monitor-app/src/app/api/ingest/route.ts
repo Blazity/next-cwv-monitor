@@ -13,8 +13,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 } as const;
 
-export async function OPTIONS(req: NextRequest) {
-  const origin = req.headers.get("origin");
+export async function OPTIONS(req?: NextRequest) {
+  const origin = req?.headers.get("origin");
   return new Response(null, {
     status: 204,
     headers: cors(origin),

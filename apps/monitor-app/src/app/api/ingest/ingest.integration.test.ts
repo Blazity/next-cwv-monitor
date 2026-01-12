@@ -22,6 +22,7 @@ function buildRequest(body: Record<string, unknown> | string, headers: Record<st
     body: typeof body === 'string' ? body : JSON.stringify(body),
     headers: {
       'content-type': 'application/json',
+      'origin': 'http://localhost',
       'x-forwarded-for': headers['x-forwarded-for'] ?? '203.0.113.14',
       'user-agent': headers['user-agent'] ?? 'Mozilla/5.0 Vitest',
       ...headers
@@ -95,7 +96,7 @@ describe('POST /api/ingest integration', () => {
   it('ingests events and persists them in ClickHouse', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'test-project',
+      slug: 'localhost',
       name: 'Test Project'
     };
     await createProject(project);
@@ -133,7 +134,7 @@ describe('POST /api/ingest integration', () => {
   it('ingests custom events and persists them in ClickHouse', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'custom-events-project',
+      slug: 'localhost',
       name: 'Custom Events Project'
     };
     await createProject(project);
@@ -186,7 +187,7 @@ describe('POST /api/ingest integration', () => {
   it('ingests multiple events in a single batch', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'batch-project',
+      slug: 'localhost',
       name: 'Batch Project'
     };
     await createProject(project);
@@ -215,7 +216,7 @@ describe('POST /api/ingest integration', () => {
   it('fills defaults for optional fields when missing', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'defaults-project',
+      slug: 'localhost',
       name: 'Defaults Project'
     };
     await createProject(project);
@@ -284,7 +285,7 @@ describe('POST /api/ingest integration', () => {
   it('enforces per-IP rate limits', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'rate-limited',
+      slug: 'localhost',
       name: 'Rate Limited'
     };
     await createProject(project);
@@ -318,7 +319,7 @@ describe('POST /api/ingest integration', () => {
   it('ignores rate limits when client IP is null', async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: 'no-ip',
+      slug: 'localhost',
       name: 'No IP'
     };
     await createProject(project);
