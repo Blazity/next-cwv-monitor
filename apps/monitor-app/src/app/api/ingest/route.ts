@@ -13,11 +13,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type",
 } as const;
 
-export async function OPTIONS(req?: NextRequest) {
-  const origin = req?.headers.get("origin");
+export async function OPTIONS(req: NextRequest) {
+  const origin = req.headers.get("origin");
   return new Response(null, {
     status: 204,
-    headers: cors(origin),
+    headers: cors(origin || "null"),
   });
 }
 
@@ -52,18 +52,18 @@ export async function POST(req: NextRequest) {
   const userAgentHeader = req.headers.get("user-agent") ?? undefined;
   const result = await handleIngest(ip, rawBody, origin, userAgentHeader);
 
-  const responseOrigin = result.status === 403 ? "*" : origin;
+  const corsOrigin = result.status === 403 ? "null" : origin;
 
   if (result.status === 204) {
     return new Response(null, {
       status: 204,
-      headers: cors(responseOrigin, result.headers),
+      headers: cors(corsOrigin, result.headers),
     });
   }
 
   return NextResponse.json(result.body ?? {}, {
     status: result.status,
-    headers: cors(responseOrigin, result.headers),
+    headers: cors(corsOrigin, result.headers),
   });
 }
 
@@ -125,12 +125,14 @@ async function handleIngest(
   return { status: 204 };
 }
 
-function cors(origin: string | null = "*", init?: HeadersInit) {
+function cors(origin: string | null, init?: HeadersInit) {
   const headers = new Headers(init);
   for (const [key, value] of Object.entries(corsHeaders)) {
     headers.set(key, value);
   }
-  headers.set("Access-Control-Allow-Origin", origin || "*");
+
+  headers.set("Access-Control-Allow-Origin", origin || "null");
+  headers.set("Vary", "Origin");
   return headers;
 }
 

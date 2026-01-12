@@ -36,15 +36,22 @@ export class IngestService {
     const requestDomain = command.origin
       ?.toLowerCase()
       .replace(/^https?:\/\//, "")
-      .split(":")[0];
+      .split(":")[0]
+      .split("/")[0];
 
     const authorizedDomain = project.slug.toLowerCase();
 
-    const isAuthorized =
-      authorizedDomain === "*" ||
-      (authorizedDomain.startsWith("*.")
-        ? requestDomain?.endsWith(authorizedDomain.replace("*.", ""))
-        : requestDomain === authorizedDomain);
+    let isAuthorized = false;
+
+    if (authorizedDomain === "*") {
+      isAuthorized = true;
+    } else if (authorizedDomain.startsWith("*.")) {
+      const baseDomain = authorizedDomain.slice(2);
+
+      isAuthorized = requestDomain === baseDomain || (requestDomain?.endsWith(`.${baseDomain}`) ?? false);
+    } else {
+      isAuthorized = requestDomain === authorizedDomain;
+    }
 
     if (!isAuthorized) {
       logger.warn({ requestDomain, authorized: authorizedDomain }, "ingest.domain_mismatch");
