@@ -63,7 +63,7 @@ describe("routes-list-service (integration)", () => {
 
   it("lists routes with views, metric value, and status distribution (range + device filters applied)", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: "routes-list-int", name: "Routes List Integration" });
+    await createProject({ id: projectId, domain: "routes-list-int", name: "Routes List Integration" });
 
     const day2 = new Date();
     day2.setUTCHours(12, 0, 0, 0);
@@ -198,7 +198,7 @@ describe("routes-list-service (integration)", () => {
 
   it("falls back to CWV aggregates when $page_view events are missing", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: "routes-list-fallback", name: "Routes List Fallback" });
+    await createProject({ id: projectId, domain: "routes-list-fallback", name: "Routes List Fallback" });
 
     const day2 = new Date();
     day2.setUTCHours(12, 0, 0, 0);
@@ -284,7 +284,7 @@ describe("routes-list-service (integration)", () => {
 
   it("supports route search (case-insensitive substring)", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: "routes-list-search", name: "Routes List Search" });
+    await createProject({ id: projectId, domain: "routes-list-search", name: "Routes List Search" });
 
     const recordedAt = new Date();
     const rangeStart = new Date(recordedAt);

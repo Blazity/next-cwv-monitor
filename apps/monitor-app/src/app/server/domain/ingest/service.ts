@@ -39,7 +39,7 @@ export class IngestService {
       .split(":")[0]
       .split("/")[0];
 
-    const authorizedDomain = project.slug.toLowerCase();
+    const authorizedDomain = project.domain.toLowerCase();
 
     let isAuthorized = false;
 

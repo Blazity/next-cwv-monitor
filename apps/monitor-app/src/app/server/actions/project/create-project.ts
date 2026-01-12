@@ -15,7 +15,7 @@ export const createProjectAction = permissionActionClient({ project: ["create"] 
     if (result.kind === "already-exists") {
       return {
         success: false,
-        errors: { slug: ["This domain is already taken."] },
+        errors: { domain: ["This domain is already taken."] },
         message: "Domain conflict.",
       };
     }

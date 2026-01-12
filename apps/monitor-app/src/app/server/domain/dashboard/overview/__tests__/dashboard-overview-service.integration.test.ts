@@ -1,26 +1,26 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-import type { StartedTestContainer } from 'testcontainers';
-import { describe, beforeAll, afterAll, beforeEach, it, expect } from 'vitest';
+import type { StartedTestContainer } from "testcontainers";
+import { describe, beforeAll, afterAll, beforeEach, it, expect } from "vitest";
 
-import { optimizeAggregates, setupClickHouseContainer } from '@/test/clickhouse-test-utils';
-import type { DashboardOverview } from '@/app/server/domain/dashboard/overview/types';
+import { optimizeAggregates, setupClickHouseContainer } from "@/test/clickhouse-test-utils";
+import type { DashboardOverview } from "@/app/server/domain/dashboard/overview/types";
 
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let insertEvents: typeof import('@/app/server/lib/clickhouse/repositories/events-repository').insertEvents;
-let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
-let DashboardOverviewService: typeof import('@/app/server/domain/dashboard/overview/service').DashboardOverviewService;
+let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
+let insertEvents: typeof import("@/app/server/lib/clickhouse/repositories/events-repository").insertEvents;
+let createProject: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").createProject;
+let DashboardOverviewService: typeof import("@/app/server/domain/dashboard/overview/service").DashboardOverviewService;
 
-describe('dashboard-overview-service (integration)', () => {
+describe("dashboard-overview-service (integration)", () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ insertEvents } = await import('@/app/server/lib/clickhouse/repositories/events-repository'));
-    ({ createProject } = await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
-    ({ DashboardOverviewService } = await import('@/app/server/domain/dashboard/overview/service'));
+    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
+    ({ insertEvents } = await import("@/app/server/lib/clickhouse/repositories/events-repository"));
+    ({ createProject } = await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
+    ({ DashboardOverviewService } = await import("@/app/server/domain/dashboard/overview/service"));
   }, 120_000);
 
   afterAll(async () => {
@@ -33,39 +33,41 @@ describe('dashboard-overview-service (integration)', () => {
     await sql`TRUNCATE TABLE cwv_daily_aggregates`.command();
   });
 
-  it('returns project-not-found when project does not exist', async () => {
+  it("returns project-not-found when project does not exist", async () => {
     const service = new DashboardOverviewService();
     const result = await service.getOverview({
       projectId: randomUUID(),
-      range: { start: new Date('2026-01-01T00:00:00Z'), end: new Date('2026-01-02T00:00:00Z') },
-      selectedMetric: 'LCP',
-      deviceType: 'all',
-      topRoutesLimit: 5
+      range: { start: new Date("2026-01-01T00:00:00Z"), end: new Date("2026-01-02T00:00:00Z") },
+      selectedMetric: "LCP",
+      deviceType: "all",
+      topRoutesLimit: 5,
     });
 
     expect(result).toEqual({
-      kind: 'project-not-found',
-      projectId: expect.any(String)
+      kind: "project-not-found",
+      projectId: expect.any(String),
     });
   });
 
-  it('returns overview with worst routes, statuses, and status distribution (range + device filters applied)', async () => {
+  it("returns overview with worst routes, statuses, and status distribution (range + device filters applied)", async () => {
     const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
 
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: 'overview-int', name: 'Overview Integration' });
+    await createProject({ id: projectId, domain: "overview-int", name: "Overview Integration" });
 
     const now = new Date();
     const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7, 0, 0, 0));
     const day1 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 6, 12, 0, 0));
     const day2 = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 5, 12, 0, 0));
     const rangeEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 5, 23, 59, 59));
-    const outsideRangeDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 20, 12, 0, 0));
+    const outsideRangeDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 20, 12, 0, 0),
+    );
 
     const routes = [
-      { route: '/good', value: 2000, expectedStatus: 'good' as const },
-      { route: '/needs', value: 3000, expectedStatus: 'needs-improvement' as const },
-      { route: '/poor', value: 5000, expectedStatus: 'poor' as const }
+      { route: "/good", value: 2000, expectedStatus: "good" as const },
+      { route: "/needs", value: 3000, expectedStatus: "needs-improvement" as const },
+      { route: "/poor", value: 5000, expectedStatus: "poor" as const },
     ];
 
     const events = [];
@@ -79,11 +81,11 @@ describe('dashboard-overview-service (integration)', () => {
             session_id: `desktop-${route}-${recordedAt.toISOString()}-${i}`,
             route,
             path: route,
-            device_type: 'desktop' as const,
-            metric_name: 'LCP' as const,
+            device_type: "desktop" as const,
+            metric_name: "LCP" as const,
             metric_value: value,
-            rating: 'good',
-            recorded_at: recordedAt
+            rating: "good",
+            recorded_at: recordedAt,
           });
         }
       }
@@ -95,11 +97,11 @@ describe('dashboard-overview-service (integration)', () => {
           session_id: `cls-${route}-${i}`,
           route,
           path: route,
-          device_type: 'desktop' as const,
-          metric_name: 'CLS' as const,
+          device_type: "desktop" as const,
+          metric_name: "CLS" as const,
           metric_value: 0.05,
-          rating: 'good',
-          recorded_at: day2
+          rating: "good",
+          recorded_at: day2,
         });
       }
     }
@@ -110,13 +112,13 @@ describe('dashboard-overview-service (integration)', () => {
         events.push({
           project_id: projectId,
           session_id: `mobile-/good-${recordedAt.toISOString()}-${i}`,
-          route: '/good',
-          path: '/good',
-          device_type: 'mobile' as const,
-          metric_name: 'LCP' as const,
+          route: "/good",
+          path: "/good",
+          device_type: "mobile" as const,
+          metric_name: "LCP" as const,
           metric_value: 7000,
-          rating: 'good',
-          recorded_at: recordedAt
+          rating: "good",
+          recorded_at: recordedAt,
         });
       }
     }
@@ -126,13 +128,13 @@ describe('dashboard-overview-service (integration)', () => {
       events.push({
         project_id: projectId,
         session_id: `old-/good-${i}`,
-        route: '/good',
-        path: '/good',
-        device_type: 'desktop' as const,
-        metric_name: 'LCP' as const,
+        route: "/good",
+        path: "/good",
+        device_type: "desktop" as const,
+        metric_name: "LCP" as const,
         metric_value: 9000,
-        rating: 'good',
-        recorded_at: outsideRangeDay
+        rating: "good",
+        recorded_at: outsideRangeDay,
       });
     }
 
@@ -143,49 +145,49 @@ describe('dashboard-overview-service (integration)', () => {
     const result = await service.getOverview({
       projectId,
       range: { start: rangeStart, end: rangeEnd },
-      selectedMetric: 'LCP',
-      deviceType: 'desktop',
-      topRoutesLimit: 10
+      selectedMetric: "LCP",
+      deviceType: "desktop",
+      topRoutesLimit: 10,
     });
 
-    expect(result.kind).toBe('ok');
-    if (result.kind !== 'ok') {
+    expect(result.kind).toBe("ok");
+    if (result.kind !== "ok") {
       throw new Error(`Expected kind=ok, got ${result.kind}`);
     }
     const data: DashboardOverview = result.data;
 
     // Metric overview includes both metrics and assigns status based on P75.
-    const lcp = data.metricOverview.find((m) => m.metricName === 'LCP');
-    const cls = data.metricOverview.find((m) => m.metricName === 'CLS');
+    const lcp = data.metricOverview.find((m) => m.metricName === "LCP");
+    const cls = data.metricOverview.find((m) => m.metricName === "CLS");
 
     expect(lcp).toBeDefined();
     if (!lcp) {
-      throw new Error('Expected LCP metric in metricOverview');
+      throw new Error("Expected LCP metric in metricOverview");
     }
     expect(lcp.sampleSize).toBe(60); // 3 routes * 2 days * 10 events, desktop only, in-range only
-    expect(lcp.status).toBe('poor');
+    expect(lcp.status).toBe("poor");
     expect(lcp.quantiles).toMatchObject({
       p50: expect.any(Number),
       p75: expect.any(Number),
       p90: expect.any(Number),
       p95: expect.any(Number),
-      p99: expect.any(Number)
+      p99: expect.any(Number),
     });
 
     expect(cls).toBeDefined();
     if (!cls) {
-      throw new Error('Expected CLS metric in metricOverview');
+      throw new Error("Expected CLS metric in metricOverview");
     }
     expect(cls.sampleSize).toBe(15); // 3 routes * 5 events (desktop), in-range
-    expect(cls.status).toBe('good');
+    expect(cls.status).toBe("good");
 
     // timeSeriesByMetric should contain time series for all metrics
     expect(data.timeSeriesByMetric).toBeDefined();
-    expect(data.timeSeriesByMetric).toHaveProperty('LCP');
-    expect(data.timeSeriesByMetric).toHaveProperty('INP');
-    expect(data.timeSeriesByMetric).toHaveProperty('CLS');
-    expect(data.timeSeriesByMetric).toHaveProperty('FCP');
-    expect(data.timeSeriesByMetric).toHaveProperty('TTFB');
+    expect(data.timeSeriesByMetric).toHaveProperty("LCP");
+    expect(data.timeSeriesByMetric).toHaveProperty("INP");
+    expect(data.timeSeriesByMetric).toHaveProperty("CLS");
+    expect(data.timeSeriesByMetric).toHaveProperty("FCP");
+    expect(data.timeSeriesByMetric).toHaveProperty("TTFB");
 
     // LCP time series is per-day for selected metric (LCP), ordered by date.
     expect(data.timeSeriesByMetric.LCP).toHaveLength(2);
@@ -213,7 +215,7 @@ describe('dashboard-overview-service (integration)', () => {
     expect(Array.isArray(data.timeSeriesByMetric.TTFB)).toBe(true);
 
     // Worst routes should be sorted by p75 desc and include per-route status.
-    expect(data.worstRoutes.map((r) => r.route)).toEqual(['/poor', '/needs', '/good']);
+    expect(data.worstRoutes.map((r) => r.route)).toEqual(["/poor", "/needs", "/good"]);
     for (const expected of routes) {
       const row = data.worstRoutes.find((r) => r.route === expected.route);
       expect(row).toBeDefined();
@@ -228,8 +230,8 @@ describe('dashboard-overview-service (integration)', () => {
     // Status distribution counts routes by their P75 rating for the selected metric.
     expect(data.statusDistribution).toEqual({
       good: 1,
-      'needs-improvement': 1,
-      poor: 1
+      "needs-improvement": 1,
+      poor: 1,
     });
   });
 });

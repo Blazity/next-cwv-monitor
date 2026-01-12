@@ -4,7 +4,7 @@ export const updateProjectNameSchema = projectBase.pick("name");
 
 export const updateProjectSchema = projectBase
   .pick("projectId")
-  .and(projectBase.pick("name", "slug", "eventSettings").partial());
+  .and(projectBase.pick("name", "domain", "eventSettings").partial());
 
 export type UpdateProjectInput = typeof updateProjectSchema.infer;
 export type UpdateProjectNameInput = typeof updateProjectNameSchema.infer;

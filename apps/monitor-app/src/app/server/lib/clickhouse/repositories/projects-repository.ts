@@ -18,10 +18,10 @@ export async function createProject(project: InsertableProjectRow): Promise<void
   const updatedAtSeconds = Math.floor(updatedAt.getTime() / 1000);
 
   await sql`
-    INSERT INTO projects (id, slug, name, created_at, updated_at)
+    INSERT INTO projects (id, domain, name, created_at, updated_at)
     VALUES (
       ${project.id},
-      ${project.slug},
+      ${project.domain},
       ${project.name},
       toDateTime(${createdAtSeconds}),
       toDateTime(${updatedAtSeconds})
@@ -33,7 +33,7 @@ export async function getProjectById(id: string): Promise<ProjectRow | null> {
   // TODO: We should consider don't we need top-level method that will use `use cache` with specific tag
   // Now we are not caching projects that doesn't change very often
   const rows = await sql<ProjectRow>`
-    SELECT id, slug, name, events_display_settings, created_at, updated_at
+    SELECT id, domain, name, events_display_settings, created_at, updated_at
     FROM projects FINAL
     WHERE id = ${id}
     ORDER BY updated_at DESC
@@ -62,11 +62,11 @@ export async function getProjectWithViewsById(id: string): Promise<ProjectWithVi
   return rows[0] ?? null;
 }
 
-export async function getProjectBySlug(slug: string): Promise<ProjectRow | null> {
+export async function getProjectByDomain(domain: string): Promise<ProjectRow | null> {
   const rows = await sql<ProjectRow>`
-    SELECT id, slug, name, created_at, updated_at
+    SELECT id, domain, name, created_at, updated_at
     FROM projects FINAL
-    WHERE slug = ${slug}
+    WHERE domain = ${domain}
     ORDER BY updated_at DESC
     LIMIT 1
   `;
@@ -76,7 +76,7 @@ export async function getProjectBySlug(slug: string): Promise<ProjectRow | null>
 
 export async function listProjects(): Promise<ProjectRow[]> {
   return sql<ProjectRow>`
-    SELECT id, slug, name, created_at, updated_at
+    SELECT id, domain, name, created_at, updated_at
     FROM projects FINAL
     ORDER BY created_at DESC
   `;
@@ -101,7 +101,7 @@ export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
 }
 
 export async function updateProject(project: UpdatableProjectRow): Promise<void> {
-  const { id, name, slug, created_at, events_display_settings } = project;
+  const { id, name, domain, created_at, events_display_settings } = project;
   const createdAt = coerceClickHouseDateTime(created_at);
   const createdAtSeconds = Math.floor(createdAt.getTime() / 1000);
   const updatedAtSeconds = Math.floor(Date.now() / 1000);
@@ -115,7 +115,7 @@ export async function updateProject(project: UpdatableProjectRow): Promise<void>
     INSERT INTO projects (
       id, 
       name, 
-      slug, 
+      domain, 
       events_display_settings, 
       created_at, 
       updated_at
@@ -123,7 +123,7 @@ export async function updateProject(project: UpdatableProjectRow): Promise<void>
     VALUES (
       ${id}, 
       ${name}, 
-      ${slug}, 
+      ${domain}, 
       ${eventsDisplaySettingsValue},
       toDateTime(${createdAtSeconds}), 
       toDateTime(${updatedAtSeconds})

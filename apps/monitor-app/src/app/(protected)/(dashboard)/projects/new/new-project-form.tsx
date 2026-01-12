@@ -10,11 +10,10 @@ import { Label } from "@/components/ui/label";
 import { createProjectAction } from "@/app/server/actions/project/create-project";
 import { createProjectSchema } from "@/app/server/domain/projects/create/types";
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-import { normalizeHostname } from "@/lib/utils"
+import { normalizeHostname } from "@/lib/utils";
 import { useWatch } from "react-hook-form";
 
 export function NewProjectForm() {
-
   const { form, action, handleSubmitWithAction } = useHookFormAction(
     createProjectAction,
     arktypeResolver(createProjectSchema),
@@ -31,9 +30,9 @@ export function NewProjectForm() {
       },
       formProps: {
         mode: "onBlur",
-        defaultValues: { name: "", slug: "" },
+        defaultValues: { name: "", domain: "" },
       },
-    }
+    },
   );
 
   const {
@@ -43,10 +42,10 @@ export function NewProjectForm() {
     formState: { errors },
   } = form;
 
-  const slugValue = useWatch({ control, name: "slug" });
-  const normalizedPreview = normalizeHostname(slugValue);
-  const showPreview = slugValue && normalizedPreview && slugValue !== normalizedPreview;
-  
+  const domainValue = useWatch({ control, name: "domain" });
+  const normalizedPreview = normalizeHostname(domainValue);
+  const showPreview = domainValue && normalizedPreview && domainValue !== normalizedPreview;
+
   const isPending = action.isPending;
 
   return (
@@ -60,33 +59,31 @@ export function NewProjectForm() {
           disabled={isPending}
         />
         <p className="text-muted-foreground text-xs">A friendly name to identify your project.</p>
-        {errors.name?.message && (
-          <p className="text-destructive text-sm">{errors.name.message}</p>
-        )}
+        {errors.name?.message && <p className="text-destructive text-sm">{errors.name.message}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="project-domain">Project domain</Label>
         <Input
-          {...register("slug", { onChange: () => clearErrors("slug") })}
+          {...register("domain", { onChange: () => clearErrors("domain") })}
           id="project-domain"
           placeholder="example.com"
           disabled={isPending}
         />
-        <p className="text-muted-foreground text-xs">The authorized domain for Web Vitals data collection. Requests from other origins will be blocked.</p>
+        <p className="text-muted-foreground text-xs">
+          The authorized domain for Web Vitals data collection. Requests from other origins will be blocked.
+        </p>
         {showPreview && (
-          <div className="flex items-start gap-2 mt-2 p-2 rounded-md border bg-status-needs-improvement/15">
-            <AlertCircle className="h-4 w-4 text-status-needs-improvement mt-0.5" />
-            <div className="text-xs text-status-needs-improvement">
+          <div className="bg-status-needs-improvement/15 mt-2 flex items-start gap-2 rounded-md border p-2">
+            <AlertCircle className="text-status-needs-improvement mt-0.5 h-4 w-4" />
+            <div className="text-status-needs-improvement text-xs">
               <p className="font-medium">Standardized as:</p>
               <code className="font-mono break-all">{normalizedPreview}</code>
               <p className="mt-1 opacity-80">We'll strip protocols, paths, and normalize special characters.</p>
             </div>
           </div>
         )}
-        {errors.slug?.message && (
-          <p className="text-destructive text-sm">{errors.slug.message}</p>
-        )}
+        {errors.domain?.message && <p className="text-destructive text-sm">{errors.domain.message}</p>}
       </div>
 
       <div className="flex items-center gap-3 pt-2">

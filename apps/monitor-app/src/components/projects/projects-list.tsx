@@ -1,9 +1,9 @@
-import Link from 'next/link';
-import { FolderKanban, Globe, Calendar, Eye, Settings } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import type { ProjectWithViews } from '@/app/server/lib/clickhouse/schema';
-import { formatDate } from '@/lib/utils';
+import Link from "next/link";
+import { FolderKanban, Globe, Calendar, Eye, Settings } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import type { ProjectWithViews } from "@/app/server/lib/clickhouse/schema";
+import { formatDate } from "@/lib/utils";
 
 const formatViews = (count: number) => {
   if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
@@ -14,10 +14,7 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {initialProjects.map((project) => (
-        <Card
-          key={project.id}
-          className="bg-card border-border hover:border-primary/50 relative transition-all"
-        >
+        <Card key={project.id} className="bg-card border-border hover:border-primary/50 relative transition-all">
           <Link href={`/projects/${project.id}`} className="absolute inset-0 z-0">
             <span className="sr-only">View {project.name}</span>
           </Link>
@@ -32,7 +29,7 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
                   <CardTitle className="truncate text-base font-medium">{project.name}</CardTitle>
                   <CardDescription className="mt-0.5 flex items-center gap-1">
                     <Globe className="h-3 w-3" />
-                    <span className="truncate">{project.slug}</span>
+                    <span className="truncate">{project.domain}</span>
                   </CardDescription>
                 </div>
               </div>
@@ -52,16 +49,8 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
                 </div>
               </div>
 
-              <Link 
-                href={`/projects/${project.id}/settings`}
-                className="relative z-10"
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  asChild
-                >
+              <Link href={`/projects/${project.id}/settings`} className="relative z-10">
+                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                   <div>
                     <Settings className="h-4 w-4" />
                   </div>

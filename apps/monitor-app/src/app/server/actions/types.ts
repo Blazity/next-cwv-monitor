@@ -3,5 +3,5 @@ export type ActionResponse<TErrors = Record<string, string[]>> =
 
 export type AlterProjectErrors = {
     name?: string[];
-    slug?: string[];
+    domain?: string[];
 }

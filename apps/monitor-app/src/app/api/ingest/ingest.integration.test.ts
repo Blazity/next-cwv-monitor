@@ -100,7 +100,7 @@ describe("POST /api/ingest integration", () => {
   it("ingests events and persists them in ClickHouse", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "Test Project",
     };
     await createProject(project);
@@ -138,7 +138,7 @@ describe("POST /api/ingest integration", () => {
   it("ingests custom events and persists them in ClickHouse", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "Custom Events Project",
     };
     await createProject(project);
@@ -191,7 +191,7 @@ describe("POST /api/ingest integration", () => {
   it("ingests multiple events in a single batch", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "Batch Project",
     };
     await createProject(project);
@@ -220,7 +220,7 @@ describe("POST /api/ingest integration", () => {
   it("fills defaults for optional fields when missing", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "Defaults Project",
     };
     await createProject(project);
@@ -289,7 +289,7 @@ describe("POST /api/ingest integration", () => {
   it("enforces per-IP rate limits", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "Rate Limited",
     };
     await createProject(project);
@@ -323,7 +323,7 @@ describe("POST /api/ingest integration", () => {
   it("ignores rate limits when client IP is null", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "localhost",
+      domain: "localhost",
       name: "No IP",
     };
     await createProject(project);
@@ -447,10 +447,10 @@ describe("POST /api/ingest integration", () => {
     expect(res.headers.get('vary')).toBe('Origin');
   });
 
-  it("authorizes subdomains using wildcard slugs", async () => {
+  it("authorizes subdomains using wildcard domains", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "*.test.com",
+      domain: "*.test.com",
       name: "Wildcard Project",
     };
     await createProject(project);
@@ -468,7 +468,7 @@ describe("POST /api/ingest integration", () => {
   it("rejects subdomains if wildcard is not present", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "test.com",
+      domain: "test.com",
       name: "Wildcard Project",
     };
     await createProject(project);
@@ -488,7 +488,7 @@ describe("POST /api/ingest integration", () => {
   it("rejects mismatching domains", async () => {
     const project: InsertableProjectRow = {
       id: randomUUID(),
-      slug: "example.com",
+      domain: "example.com",
       name: "Wildcard Project",
     };
     await createProject(project);

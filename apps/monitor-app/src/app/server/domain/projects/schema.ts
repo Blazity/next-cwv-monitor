@@ -5,7 +5,7 @@ import { type as arkType, scope } from "arktype";
 
 const projectLabels: Record<string, string> = {
   name: "Project name",
-  slug: "Project domain",
+  domain: "Project domain",
   projectId: "Project ID",
 };
 
@@ -28,16 +28,19 @@ export const nameSchema = arkType("string > 0").configure({
   expected: () => "not be empty",
 });
 
-export const slugSchema = arkType("string>0").pipe(normalizeHostname).to(corsModule.root).configure({
-  ...projectConfig,
-  expected: () => "a valid hostname, wildcard (e.g., *.domain.com), or IP address",
-});
+export const domainSchema = arkType("string>0")
+  .pipe(normalizeHostname)
+  .to(corsModule.root)
+  .configure({
+    ...projectConfig,
+    expected: () => "a valid hostname, wildcard (e.g., *.domain.com), or IP address",
+  });
 
 export const projectIdSchema = arkType("string.uuid").configure(projectConfig);
 
 export const projectBase = arkType({
   projectId: projectIdSchema,
   name: nameSchema,
-  slug: slugSchema,
+  domain: domainSchema,
   eventSettings: eventDisplaySettingsSchema.out,
 });
