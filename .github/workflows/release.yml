@@ -26,8 +26,8 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'pnpm'
+          registry-url: "https://registry.npmjs.org"
+          cache: "pnpm"
 
       - name: Update npm for Trusted Publishers
         run: npm install -g npm@latest
@@ -46,8 +46,33 @@ jobs:
         with:
           publish: pnpm release
           version: pnpm version-packages
-          commit: 'chore: release packages'
-          title: 'chore: release packages'
+          commit: "chore: release packages"
+          title: "chore: release packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      - name: Create SDK Git Tag
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          SDK_VERSION=$(echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | select(.name == "next-cwv-monitor") | .version')
+          if [ -n "$SDK_VERSION" ]; then
+            echo "Creating tag next-cwv-monitor-v${SDK_VERSION}"
+            git tag "next-cwv-monitor-v${SDK_VERSION}"
+            git push origin "next-cwv-monitor-v${SDK_VERSION}"
+          fi
+
+      - name: Create Monitor App Git Tag
+        run: |
+          git fetch --tags
+
+          # Create tag for monitor-app if it doesn't exist for current version
+          # This runs on every push to main, not just when SDK is published
+          APP_VERSION=$(jq -r '.version' apps/monitor-app/package.json)
+          if ! git tag -l "monitor-app-v${APP_VERSION}" | grep -q .; then
+            echo "Creating tag monitor-app-v${APP_VERSION}"
+            git tag "monitor-app-v${APP_VERSION}"
+            git push origin "monitor-app-v${APP_VERSION}"
+          else
+            echo "Tag monitor-app-v${APP_VERSION} already exists, skipping"
+          fi

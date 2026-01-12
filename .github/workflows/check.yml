@@ -96,6 +96,7 @@ jobs:
 
       - name: Cache Playwright Binaries
         id: playwright-cache
+        if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
         uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
@@ -103,7 +104,11 @@ jobs:
 
       - name: Install Playwright Browsers
         if: (steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true') && steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter cwv-monitor-client exec playwright install --with-deps
+        run: pnpm --filter cwv-monitor-client exec playwright install
+
+      - name: Install Playwright System Dependencies
+        if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
+        run: pnpm --filter cwv-monitor-client exec playwright install-deps
 
       - name: Run E2E tests
         if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
