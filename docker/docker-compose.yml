@@ -40,7 +40,7 @@ services:
       CH_MIGRATIONS_USER: *clickhouse-user
       CH_MIGRATIONS_PASSWORD: *clickhouse-password
       CH_MIGRATIONS_DATABASE: *clickhouse-db
-      CH_MIGRATIONS_DIR: apps/monitor-app/clickhouse/migrations
+      CH_MIGRATIONS_DIR: clickhouse/migrations
     depends_on:
       clickhouse:
         condition: service_healthy
