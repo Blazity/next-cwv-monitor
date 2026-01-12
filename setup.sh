@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+# Wrap in main() so bash reads entire script before executing
+# This prevents issues when piping: cat script | bash
+main() {
 
+SETUP_SCRIPT_URL="https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/setup.sh"
 COMPOSE_URL="${COMPOSE_URL:-https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/docker/docker-compose.yml}"
 COMPOSE_SSL_URL="${COMPOSE_SSL_URL:-https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/docker/docker-compose.ssl.yml}"
 DEFAULT_INSTALL_DIR="$HOME/cwv-monitor"
@@ -13,16 +17,32 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Read from terminal even when script is piped
-# This allows: bash <(curl -fsSL URL)
-if [ -t 0 ]; then
-  # Already connected to terminal
-  :
-elif [ -e /dev/tty ]; then
-  exec < /dev/tty
-else
-  echo -e "${RED}Error: This script requires an interactive terminal.${NC}"
-  echo "Please run: bash <(curl -fsSL URL)"
+# This allows: curl ... | bash  OR  bash <(curl ...)
+show_tty_error() {
+  echo -e "${RED}Error: Cannot access terminal for interactive input.${NC}"
+  echo ""
+  echo "Try one of these instead:"
+  echo "  1. Download and run locally:"
+  echo "     curl -fsSL $SETUP_SCRIPT_URL -o setup.sh && bash setup.sh"
+  echo ""
+  echo "  2. Use process substitution:"
+  echo "     bash <(curl -fsSL $SETUP_SCRIPT_URL)"
   exit 1
+}
+
+if [ -t 0 ]; then
+  # stdin is already a terminal
+  :
+else
+  # Try to open /dev/tty and verify it's actually a usable terminal
+  # The -t test ensures the fd is connected to a real terminal, not just a file
+  if { exec 3</dev/tty; } 2>/dev/null && [ -t 3 ]; then
+    exec 0<&3   # Redirect stdin from fd 3
+    exec 3<&-   # Close fd 3
+  else
+    exec 3<&- 2>/dev/null  # Clean up fd 3 if it was opened
+    show_tty_error
+  fi
 fi
 
 echo -e "${BLUE}"
@@ -383,3 +403,7 @@ echo ""
 echo -e "${RED}⚠ IMPORTANT:${NC} Keep the .env file secure. It contains secrets!"
 echo ""
 
+}
+
+# Call main function - this ensures bash reads the entire script before executing
+main "$@"
