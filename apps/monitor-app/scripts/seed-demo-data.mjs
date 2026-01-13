@@ -18,7 +18,7 @@ function toPositiveInt(raw, fallback) {
 }
 
 const DEMO_PROJECT_ID = process.env.SEED_PROJECT_ID ?? "00000000-0000-0000-0000-000000000000";
-const DEMO_PROJECT_SLUG = process.env.SEED_PROJECT_SLUG ?? "localhost";
+const DEMO_PROJECT_DOMAIN = process.env.SEED_PROJECT_DOMAIN ?? "localhost";
 const DEMO_PROJECT_NAME = process.env.SEED_PROJECT_NAME ?? "Next CWV Demo";
 const DAYS_TO_GENERATE = toPositiveInt(process.env.SEED_DAYS, 14);
 const EVENTS_PER_COMBO = toPositiveInt(process.env.SEED_EVENTS_PER_COMBO, 3);
@@ -185,7 +185,7 @@ function extractRows(jsonResult) {
   return [];
 }
 
-async function ensureProject(client, { projectId, projectSlug, projectName }) {
+async function ensureProject(client, { projectId, projectDomain, projectName }) {
   const existing = await client.query({
     query: "SELECT id FROM projects WHERE id = {id:UUID} LIMIT 1",
     query_params: { id: projectId },
@@ -201,7 +201,7 @@ async function ensureProject(client, { projectId, projectSlug, projectName }) {
     values: [
       {
         id: projectId,
-        slug: projectSlug,
+        domain: projectDomain,
         name: projectName,
         created_at: toDateTimeSeconds(new Date()),
         updated_at: toDateTimeSeconds(new Date()),
@@ -287,7 +287,7 @@ async function seedCustomEventsData(client) {
   const { subDays } = await import("date-fns");
 
   const PROJECT_ID = process.env.CUSTOM_EVENTS_PROJECT_ID ?? DEMO_PROJECT_ID;
-  const PROJECT_SLUG = process.env.CUSTOM_EVENTS_PROJECT_SLUG ?? DEMO_PROJECT_SLUG;
+  const PROJECT_DOMAIN = process.env.CUSTOM_EVENTS_PROJECT_DOMAIN ?? DEMO_PROJECT_DOMAIN;
   const PROJECT_NAME = process.env.CUSTOM_EVENTS_PROJECT_NAME ?? DEMO_PROJECT_NAME;
 
   const TARGET_EVENTS = toPositiveInt(process.env.CUSTOM_EVENTS_COUNT, 1_000_000);
@@ -361,7 +361,7 @@ async function seedCustomEventsData(client) {
 
   await ensureProject(client, {
     projectId: PROJECT_ID,
-    projectSlug: PROJECT_SLUG,
+    projectDomain: PROJECT_DOMAIN,
     projectName: PROJECT_NAME,
   });
 
@@ -439,7 +439,7 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
     if (seedCwvEvents) {
       await ensureProject(client, {
         projectId: DEMO_PROJECT_ID,
-        projectSlug: DEMO_PROJECT_SLUG,
+        projectDomain: DEMO_PROJECT_DOMAIN,
         projectName: DEMO_PROJECT_NAME,
       });
 
