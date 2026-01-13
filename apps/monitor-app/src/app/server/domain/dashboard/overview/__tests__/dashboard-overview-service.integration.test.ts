@@ -53,7 +53,7 @@ describe("dashboard-overview-service (integration)", () => {
     const dateOnly = (d: Date) => d.toISOString().slice(0, 10);
 
     const projectId = randomUUID();
-    await createProject({ id: projectId, domain: "overview-int", name: "Overview Integration" });
+    await createProject({ id: projectId, domain: "overview-int.com", name: "Overview Integration" });
 
     const now = new Date();
     const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 7, 0, 0, 0));

@@ -36,7 +36,7 @@ describe("ProjectsUpdateService (integration)", () => {
   it("returns error if project does not exist", async () => {
     const result = await service.execute({
       id: randomUUID(),
-      domain: "missing",
+      domain: "missing.com",
       name: "New Name",
     });
 
@@ -100,7 +100,7 @@ describe("ProjectsUpdateService (integration)", () => {
 
   it("successfully updates events_display_settings (custom event display settings)", async () => {
     const projectId = randomUUID();
-    await projectsRepo.createProject({ id: projectId, domain: "test", name: "Test" });
+    await projectsRepo.createProject({ id: projectId, domain: "test.com", name: "Test" });
 
     const result = await service.execute({
       id: projectId,
@@ -119,7 +119,7 @@ describe("ProjectsUpdateService (integration)", () => {
 
   it("handles database errors gracefully during update", async () => {
     const projectId = randomUUID();
-    await projectsRepo.createProject({ id: projectId, domain: "test", name: "Test" });
+    await projectsRepo.createProject({ id: projectId, domain: "test.com", name: "Test" });
 
     const repoSpy = vi.spyOn(projectsRepo, "getProjectById").mockRejectedValue(new Error("ClickHouse Timeout"));
 

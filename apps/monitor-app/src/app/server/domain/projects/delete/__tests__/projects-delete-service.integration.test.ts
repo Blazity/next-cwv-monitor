@@ -39,7 +39,7 @@ describe("ProjectsDeleteService (integration)", () => {
   it("successfully deletes a project and all related telemetry data", async () => {
     const projectId = randomUUID();
 
-    await projectsRepo.createProject({ id: projectId, domain: "test-project", name: "Test Project" });
+    await projectsRepo.createProject({ id: projectId, domain: "test-project.com", name: "Test Project" });
 
     await sqlClient`
       INSERT INTO cwv_events (project_id, session_id, route, metric_name, metric_value, recorded_at)
@@ -96,8 +96,8 @@ describe("ProjectsDeleteService (integration)", () => {
     const targetId = randomUUID();
     const otherId = randomUUID();
 
-    await projectsRepo.createProject({ id: targetId, domain: "target", name: "Target" });
-    await projectsRepo.createProject({ id: otherId, domain: "other", name: "Other" });
+    await projectsRepo.createProject({ id: targetId, domain: "target.com", name: "Target" });
+    await projectsRepo.createProject({ id: otherId, domain: "other.com", name: "Other" });
 
     await service.execute(targetId);
 

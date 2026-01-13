@@ -82,7 +82,7 @@ describe("ProjectsCreateService (integration)", () => {
 
     const result = await service.execute({
       name: "Error Project",
-      domain: "error-project",
+      domain: "error-project.com",
     });
 
     expect(result).toEqual({

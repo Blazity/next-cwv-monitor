@@ -30,7 +30,7 @@ describe("custom-events-repository integration", () => {
     ({ createProject } = await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
 
     projectId = randomUUID();
-    await createProject({ id: projectId, domain: "test", name: "Test" });
+    await createProject({ id: projectId, domain: "test.com", name: "Test" });
   }, 120_000);
 
   afterAll(async () => await container.stop());

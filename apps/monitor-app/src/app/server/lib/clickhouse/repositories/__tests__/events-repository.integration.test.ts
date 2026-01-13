@@ -33,7 +33,7 @@ describe("events-repository", () => {
   describe("insertEvents", () => {
     it("inserts a single event", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "single-event", name: "Single Event" });
+      await createProject({ id: projectId, domain: "single-event.com", name: "Single Event" });
 
       const event = {
         project_id: projectId,
@@ -57,7 +57,7 @@ describe("events-repository", () => {
 
     it("inserts multiple events in a batch", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "batch-events", name: "Batch Events" });
+      await createProject({ id: projectId, domain: "batch-events.com", name: "Batch Events" });
 
       const events = [
         {
@@ -104,7 +104,7 @@ describe("events-repository", () => {
 
     it("sets default timestamps when not provided", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "default-ts", name: "Default Timestamps" });
+      await createProject({ id: projectId, domain: "default-ts.com", name: "Default Timestamps" });
 
       await insertEvents([
         {
@@ -128,7 +128,7 @@ describe("events-repository", () => {
   describe("fetchEvents", () => {
     it("fetches events for a project", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "fetch-test", name: "Fetch Test" });
+      await createProject({ id: projectId, domain: "fetch-test.com", name: "Fetch Test" });
 
       await insertEvents([
         {
@@ -160,7 +160,7 @@ describe("events-repository", () => {
 
     it("filters events by route", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "route-filter", name: "Route Filter" });
+      await createProject({ id: projectId, domain: "route-filter.com", name: "Route Filter" });
 
       await insertEvents([
         {
@@ -192,7 +192,7 @@ describe("events-repository", () => {
 
     it("filters events by time range (start)", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "time-filter", name: "Time Filter" });
+      await createProject({ id: projectId, domain: "time-filter.com", name: "Time Filter" });
 
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -235,7 +235,7 @@ describe("events-repository", () => {
 
     it("filters events by time range (end)", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "end-filter", name: "End Filter" });
+      await createProject({ id: projectId, domain: "end-filter.com", name: "End Filter" });
 
       const now = new Date();
       const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -278,7 +278,7 @@ describe("events-repository", () => {
 
     it("respects limit parameter", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "limit-test", name: "Limit Test" });
+      await createProject({ id: projectId, domain: "limit-test.com", name: "Limit Test" });
 
       const events = Array.from({ length: 10 }).map((_, i) => ({
         project_id: projectId,
@@ -304,7 +304,7 @@ describe("events-repository", () => {
 
     it("orders events by recorded_at descending", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "order-test", name: "Order Test" });
+      await createProject({ id: projectId, domain: "order-test.com", name: "Order Test" });
 
       const now = new Date();
       const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);

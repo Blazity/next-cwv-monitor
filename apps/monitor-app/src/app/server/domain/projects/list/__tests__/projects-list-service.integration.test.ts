@@ -78,7 +78,7 @@ describe("projects-list-service (integration)", () => {
     for (let i = 0; i < 5; i++) {
       await createProject({
         id: randomUUID(),
-        domain: `project-${i}`,
+        domain: `project-${i}.com`,
         name: `Project ${i}`,
       });
     }
@@ -93,8 +93,8 @@ describe("projects-list-service (integration)", () => {
     const projectId1 = randomUUID();
     const projectId2 = randomUUID();
 
-    await createProject({ id: projectId1, domain: "p1", name: "Project 1" });
-    await createProject({ id: projectId2, domain: "p2", name: "Project 2" });
+    await createProject({ id: projectId1, domain: "p1.com", name: "Project 1" });
+    await createProject({ id: projectId2, domain: "p2.com", name: "Project 2" });
 
     await sql`
       INSERT INTO cwv_daily_aggregates 
@@ -118,7 +118,7 @@ describe("projects-list-service (integration)", () => {
   });
 
   it("returns 0 tracked views for projects with no aggregate data (LEFT JOIN)", async () => {
-    await createProject({ id: randomUUID(), domain: "empty", name: "Empty Project" });
+    await createProject({ id: randomUUID(), domain: "empty.com", name: "Empty Project" });
 
     const result = await projectsListService.listWithViews();
 

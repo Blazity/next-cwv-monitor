@@ -63,7 +63,7 @@ describe("route-detail-service (integration)", () => {
 
   it("returns route-not-found when route has no views and no metrics", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, domain: "route-detail-missing", name: "Route Detail Missing" });
+    await createProject({ id: projectId, domain: "route-detail-missing.com", name: "Route Detail Missing" });
 
     const now = new Date();
     const rangeStart = new Date(now);
@@ -85,7 +85,7 @@ describe("route-detail-service (integration)", () => {
 
   it("returns route detail with metrics, series, distribution and insights", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, domain: "route-detail-int", name: "Route Detail Integration" });
+    await createProject({ id: projectId, domain: "route-detail-int.com", name: "Route Detail Integration" });
 
     const route = "/checkout";
 

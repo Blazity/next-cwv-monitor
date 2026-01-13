@@ -47,7 +47,7 @@ describe("daily-aggregates-repository", () => {
 
     it("returns aggregated metrics from materialized view", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "agg-test", name: "Aggregation Test" });
+      await createProject({ id: projectId, domain: "agg-test.com", name: "Aggregation Test" });
 
       const events = Array.from({ length: 10 }).map((_, i) => ({
         project_id: projectId,
@@ -78,7 +78,7 @@ describe("daily-aggregates-repository", () => {
 
     it("returns multiple metrics when they exist", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "multi-metric", name: "Multi Metric" });
+      await createProject({ id: projectId, domain: "multi-metric.com", name: "Multi Metric" });
 
       await insertEvents([
         {
@@ -128,7 +128,7 @@ describe("daily-aggregates-repository", () => {
 
     it("filters aggregates by device type", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "device-filter", name: "Device Filter" });
+      await createProject({ id: projectId, domain: "device-filter.com", name: "Device Filter" });
 
       const desktopEvents = Array.from({ length: 5 }).map((_, i) => ({
         project_id: projectId,
@@ -176,7 +176,7 @@ describe("daily-aggregates-repository", () => {
 
     it("returns quantile summary with all percentiles", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "quantiles-test", name: "Quantiles Test" });
+      await createProject({ id: projectId, domain: "quantiles-test.com", name: "Quantiles Test" });
 
       const events = Array.from({ length: 100 }).map((_, i) => ({
         project_id: projectId,
@@ -218,7 +218,7 @@ describe("daily-aggregates-repository", () => {
   describe("getRouteDailySeries", () => {
     it("returns daily series for a specific route and metric", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "daily-series", name: "Daily Series" });
+      await createProject({ id: projectId, domain: "daily-series.com", name: "Daily Series" });
 
       const events = Array.from({ length: 5 }).map((_, i) => ({
         project_id: projectId,
@@ -246,7 +246,7 @@ describe("daily-aggregates-repository", () => {
 
     it("returns empty array for non-existent route", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "no-route", name: "No Route" });
+      await createProject({ id: projectId, domain: "no-route.com", name: "No Route" });
 
       const series = await getRouteDailySeries(projectId, "/non-existent", "LCP", {
         start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -258,7 +258,7 @@ describe("daily-aggregates-repository", () => {
 
     it("filters daily series by device type", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "series-device", name: "Series Device" });
+      await createProject({ id: projectId, domain: "series-device.com", name: "Series Device" });
 
       await insertEvents([
         ...Array.from({ length: 4 }).map((_, i) => ({
@@ -308,7 +308,7 @@ describe("daily-aggregates-repository", () => {
 
     it("returns series ordered by date ascending", async () => {
       const projectId = randomUUID();
-      await createProject({ id: projectId, domain: "date-order", name: "Date Order" });
+      await createProject({ id: projectId, domain: "date-order.com", name: "Date Order" });
 
       // Insert multiple events for a single day to ensure aggregation works
       const events = Array.from({ length: 5 }).map((_, i) => ({

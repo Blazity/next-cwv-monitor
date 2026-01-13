@@ -63,7 +63,7 @@ describe("regressions-list-service (integration)", () => {
 
   it("lists regressions with previous/current P75, summary stats, and tracked views (range + device filters applied)", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, domain: "regressions-int", name: "Regressions Integration" });
+    await createProject({ id: projectId, domain: "regressions-int.com", name: "Regressions Integration" });
 
     const day4 = new Date();
     day4.setUTCHours(12, 0, 0, 0);
@@ -183,7 +183,7 @@ describe("regressions-list-service (integration)", () => {
 
   it("supports metric + route search filters", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, domain: "regressions-search", name: "Regressions Search" });
+    await createProject({ id: projectId, domain: "regressions-search.com", name: "Regressions Search" });
 
     const day2 = new Date();
     day2.setUTCHours(12, 0, 0, 0);
