@@ -7,17 +7,12 @@ import { logger } from "@/app/server/lib/logger";
 import { ipRateLimiter } from "@/app/server/lib/rate-limit";
 import { buildIngestCommand } from "@/app/server/domain/ingest/mappers";
 import { IngestService } from "@/app/server/domain/ingest/service";
-
-const corsHeaders = {
-  "Access-Control-Allow-Methods": "POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-} as const;
+import { getCorsHeaders } from "@/app/server/lib/cors";
 
 export async function OPTIONS(req: NextRequest) {
-  const origin = req.headers.get("origin");
   return new Response(null, {
     status: 204,
-    headers: cors(origin || "null"),
+    headers: getCorsHeaders(req, { methods: ["POST", "OPTIONS"] }),
   });
 }
 
@@ -44,7 +39,7 @@ export async function POST(req: NextRequest) {
       { message: "Invalid JSON payload" },
       {
         status: 400,
-        headers: cors(origin),
+        headers: getCorsHeaders(req),
       },
     );
   }
@@ -52,21 +47,25 @@ export async function POST(req: NextRequest) {
   const userAgentHeader = req.headers.get("user-agent") ?? undefined;
   const result = await handleIngest(ip, rawBody, origin, userAgentHeader);
 
-  const corsOrigin = result.status === 403 ? "null" : origin;
+  const corsOptions = result.status === 403 ? { allowedOrigins: ["null"] } : {};
+  const responseHeaders = getCorsHeaders(req, corsOptions);
+
+  if (result.headers) {
+    for (const [k, v] of Object.entries(result.headers)) responseHeaders.set(k, v);
+  }
 
   if (result.status === 204) {
     return new Response(null, {
       status: 204,
-      headers: cors(corsOrigin, result.headers),
+      headers: responseHeaders,
     });
   }
 
   return NextResponse.json(result.body ?? {}, {
     status: result.status,
-    headers: cors(corsOrigin, result.headers),
+    headers: responseHeaders,
   });
 }
-
 async function handleIngest(
   ip: string | null,
   payload: unknown,
@@ -123,17 +122,6 @@ async function handleIngest(
   }
 
   return { status: 204 };
-}
-
-function cors(origin: string | null, init?: HeadersInit) {
-  const headers = new Headers(init);
-  for (const [key, value] of Object.entries(corsHeaders)) {
-    headers.set(key, value);
-  }
-
-  headers.set("Access-Control-Allow-Origin", origin || "null");
-  headers.set("Vary", "Origin");
-  return headers;
 }
 
 function getClientIp(req: NextRequest, allowForwardedHeaders: boolean): string | null {

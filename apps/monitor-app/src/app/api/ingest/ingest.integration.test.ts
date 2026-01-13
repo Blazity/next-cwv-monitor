@@ -23,7 +23,7 @@ function buildRequest(
 ) {
   return new NextRequest("http://localhost/api/ingest", {
     method,
-    body: method === 'OPTIONS' ? null : (typeof body === 'string' ? body : JSON.stringify(body)),
+    body: method === "OPTIONS" ? null : typeof body === "string" ? body : JSON.stringify(body),
     headers: {
       "content-type": "application/json",
       origin: "http://localhost",
@@ -434,17 +434,16 @@ describe("POST /api/ingest integration", () => {
     expect(response.status).toBe(429);
   });
 
-  it("responds to OPTIONS preflight with mirrored CORS headers", async () => {
-    const testOrigin = 'https://example.com';
-  
-    const req = buildRequest({}, { 'origin': testOrigin }, 'OPTIONS');
-  
+  it("responds to OPTIONS preflight with wildcard CORS headers", async () => {
+    const testOrigin = "https://example.com";
+
+    const req = buildRequest({}, { origin: testOrigin }, "OPTIONS");
+
     const res = await OPTIONS(req);
-    
+
     expect(res.status).toBe(204);
-    expect(res.headers.get('access-control-allow-origin')).toBe(testOrigin);
-    expect(res.headers.get('access-control-allow-methods')).toContain('POST');
-    expect(res.headers.get('vary')).toBe('Origin');
+    expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("access-control-allow-methods")).toContain("POST");
   });
 
   it("authorizes subdomains using wildcard domains", async () => {
