@@ -133,8 +133,8 @@ export function RouteDetailView({
         )}
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <h1 className={cn("text-foreground truncate font-mono font-semibold", isStuck ? "text-base" : "text-2xl")}>
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+            <h1 className={cn("text-foreground font-mono font-semibold", isStuck ? "text-base" : "text-2xl")}>
               {route}
             </h1>
             <Select

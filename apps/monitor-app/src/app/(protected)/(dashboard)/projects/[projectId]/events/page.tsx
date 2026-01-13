@@ -55,13 +55,14 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex gap-4 flex-row items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-foreground text-2xl font-semibold">Events</h1>
           <p className="text-muted-foreground text-sm">Track conversions and manage custom events</p>
         </div>
         <TimeRangeSelector />
       </div>
+      
       <EventsCards
         eventDisplaySettings={eventDisplaySettings}
         mostActiveEvent={mostActiveEvent}

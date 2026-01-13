@@ -19,6 +19,7 @@ import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thr
 import { formatMetricValue } from "@/lib/utils";
 import type { DailySeriesPoint, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 export type TimeSeriesOverlayPoint = {
   date: string;
@@ -61,6 +62,8 @@ export function TimeSeriesChart({
   height = 300,
   dateRange,
 }: TimeSeriesChartProps) {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   const overlayByDate = useMemo(() => {
     if (!overlay) return null;
     const map = new Map<string, TimeSeriesOverlayPoint>();
@@ -156,6 +159,7 @@ export function TimeSeriesChart({
             tickFormatter={(value) => formatMetricValue(metric, value)}
             domain={[0, maxValue]}
             width={60}
+            hide={isMobile}
           />
           {overlay && (
             <YAxis
@@ -169,6 +173,7 @@ export function TimeSeriesChart({
               tickFormatter={(value) => `${Number(value).toFixed(1)}%`}
               domain={[0, overlayDomainMax]}
               width={50}
+              hide={isMobile}
             />
           )}
           <ReferenceLine
