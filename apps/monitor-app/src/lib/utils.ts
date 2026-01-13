@@ -104,12 +104,16 @@ export function capitalize(text?: string, removeUnderscore?: boolean) {
     .join(" ");
 }
 
+
+const NON_ASCII_CHARACTER_PATTERN = /[^\u0020-\u007E]/;
+const PROTOCOL_PREFIX_PATTERN = /^([a-z0-9+.-]+:)?\/\//;
+
 export const normalizeHostname = (input: string): string => {
   if (!input) return "";
 
   let host = input.trim().toLowerCase();
 
-  host = host.replace(/^([a-z0-9+.-]+:)?\/\//, "");
+  host = host.replace(PROTOCOL_PREFIX_PATTERN, "");
 
   const pathIndex = host.search(/[/?#]/);
   if (pathIndex !== -1) host = host.slice(0, pathIndex);
@@ -125,7 +129,13 @@ export const normalizeHostname = (input: string): string => {
     if (colonIndex !== -1) host = host.slice(0, colonIndex);
   }
 
-  if (/[^\u0020-\u007E]/.test(host)) {
+  /**
+   * Internationalized Domain Names (IDN) Check:
+   * If the host contains non-ASCII characters (like "münchen.de"), we use the 
+   * native URL API to convert it to Punycode ("xn--mnchen-3ya.de"). 
+   * This ensures the hostname is valid for network requests.
+   */
+  if (NON_ASCII_CHARACTER_PATTERN.test(host)) {
     try {
       return new URL(`http://${host}`).hostname;
     } catch {
