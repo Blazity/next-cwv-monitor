@@ -136,6 +136,22 @@ export const normalizeHostname = (input: string): string => {
   return host;
 };
 
+export const isDomainAuthorized = (requestOrigin: string | null, authorizedDomain: string): boolean => {
+  const normalizedAuthorized = authorizedDomain.toLowerCase();
+  
+  if (normalizedAuthorized === "*") return true;
+  if (!requestOrigin) return false;
+
+  const normalizedRequest = normalizeHostname(requestOrigin);
+
+  if (normalizedAuthorized.startsWith("*.")) {
+    const baseDomain = normalizedAuthorized.slice(2);
+    return normalizedRequest === baseDomain || normalizedRequest.endsWith(`.${baseDomain}`);
+  }
+
+  return normalizedRequest === normalizedAuthorized;
+};
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",

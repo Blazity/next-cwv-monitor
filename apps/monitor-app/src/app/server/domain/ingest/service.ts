@@ -5,6 +5,7 @@ import { insertEvents } from "@/app/server/lib/clickhouse/repositories/events-re
 import { insertCustomEvents } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { logger } from "@/app/server/lib/logger";
 import { IngestCommand } from "@/app/server/domain/ingest/types";
+import { isDomainAuthorized, normalizeHostname } from "@/lib/utils";
 
 export type IngestServiceResult =
   | { kind: "ok"; accepted: { cwv: number; custom: number } }
@@ -33,32 +34,15 @@ export class IngestService {
       };
     }
 
-    const requestDomain = command.origin
-      ?.toLowerCase()
-      .replace(/^https?:\/\//, "")
-      .split(":")[0]
-      .split("/")[0];
+    if (!isDomainAuthorized(command.origin, project.domain)) {
+      const requestDomain = normalizeHostname(command.origin ?? "");
 
-    const authorizedDomain = project.domain.toLowerCase();
+      logger.warn({ requestDomain, authorized: project.domain }, "ingest.domain_mismatch");
 
-    let isAuthorized = false;
-
-    if (authorizedDomain === "*") {
-      isAuthorized = true;
-    } else if (authorizedDomain.startsWith("*.")) {
-      const baseDomain = authorizedDomain.slice(2);
-
-      isAuthorized = requestDomain === baseDomain || (requestDomain?.endsWith(`.${baseDomain}`) ?? false);
-    } else {
-      isAuthorized = requestDomain === authorizedDomain;
-    }
-
-    if (!isAuthorized) {
-      logger.warn({ requestDomain, authorized: authorizedDomain }, "ingest.domain_mismatch");
       return {
         kind: "domain-mismatch",
-        requestDomain: requestDomain ?? "unknown",
-        authorizedDomain,
+        requestDomain: requestDomain || "unknown",
+        authorizedDomain: project.domain,
       };
     }
 
