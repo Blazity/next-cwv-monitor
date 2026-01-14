@@ -104,6 +104,64 @@ export function capitalize(text?: string, removeUnderscore?: boolean) {
     .join(" ");
 }
 
+
+const NON_ASCII_CHARACTER_PATTERN = /[^\u0020-\u007E]/;
+const PROTOCOL_PREFIX_PATTERN = /^([a-z0-9+.-]+:)?\/\//;
+
+export const normalizeHostname = (input: string): string => {
+  if (!input) return "";
+
+  let host = input.trim().toLowerCase();
+
+  host = host.replace(PROTOCOL_PREFIX_PATTERN, "");
+
+  const pathIndex = host.search(/[/?#]/);
+  if (pathIndex !== -1) host = host.slice(0, pathIndex);
+
+  const atIndex = host.lastIndexOf("@");
+  if (atIndex !== -1) host = host.slice(atIndex + 1);
+
+  if (host.startsWith("[")) {
+    const closingBracket = host.indexOf("]");
+    if (closingBracket !== -1) host = host.slice(0, closingBracket + 1);
+  } else {
+    const colonIndex = host.indexOf(":");
+    if (colonIndex !== -1) host = host.slice(0, colonIndex);
+  }
+
+  /**
+   * Internationalized Domain Names (IDN) Check:
+   * If the host contains non-ASCII characters (like "münchen.de"), we use the 
+   * native URL API to convert it to Punycode ("xn--mnchen-3ya.de"). 
+   * This ensures the hostname is valid for network requests.
+   */
+  if (NON_ASCII_CHARACTER_PATTERN.test(host)) {
+    try {
+      return new URL(`http://${host}`).hostname;
+    } catch {
+      return host;
+    }
+  }
+
+  return host;
+};
+
+export const isDomainAuthorized = (requestOrigin: string | null, authorizedDomain: string): boolean => {
+  const normalizedAuthorized = authorizedDomain.toLowerCase();
+  
+  if (normalizedAuthorized === "*") return true;
+  if (!requestOrigin) return false;
+
+  const normalizedRequest = normalizeHostname(requestOrigin);
+
+  if (normalizedAuthorized.startsWith("*.")) {
+    const baseDomain = normalizedAuthorized.slice(2);
+    return normalizedRequest === baseDomain || normalizedRequest.endsWith(`.${baseDomain}`);
+  }
+
+  return normalizedRequest === normalizedAuthorized;
+};
+
 const dateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",

@@ -38,7 +38,7 @@ import { deleteProjectAction } from "@/app/server/actions/project/delete-project
 import { resetProjectDataAction } from "@/app/server/actions/project/reset-project";
 import { UpdateProjectNameInput, updateProjectNameSchema } from "@/app/server/domain/projects/update/types";
 import { ProjectWithViews } from "@/app/server/lib/clickhouse/schema";
-import { capitalizeFirstLetter, cn, formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { updateProjectAction } from "@/app/server/actions/project/update-project";
 import { useAction } from "next-safe-action/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -135,7 +135,7 @@ export default function SettingsForm({ project, permissions }: SettingsFormProps
         <CardContent className="space-y-4">
           <div className="text-muted-foreground grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
             <div className="flex items-center gap-2">
-              <Globe className="size-4" /> {project.slug || "No domain"}
+              <Globe className="size-4" /> {project.domain || "No domain"}
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="size-4" /> Created {formatDate(project.created_at)}
@@ -298,13 +298,20 @@ function UpdateNameForm({ project, isEnabled }: { project: ProjectWithViews; isE
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
       <Label htmlFor="name">Project Name</Label>
       <div className="flex gap-2">
-        <Input {...register("name")} id="name" className="bg-background w-full" data-1p-ignore autoComplete="off" disabled={!isEnabled} />
+        <Input
+          {...register("name")}
+          id="name"
+          className="bg-background w-full"
+          data-1p-ignore
+          autoComplete="off"
+          disabled={!isEnabled}
+        />
         <Button type="submit" disabled={!isDirty || isPending || !isEnabled}>
           {isPending && <Loader2 className="mr-2 size-4 animate-spin" />}
           Save
         </Button>
       </div>
-      {errors.name?.message && <p className="text-destructive text-xs">{capitalizeFirstLetter(errors.name.message)}</p>}
+      {errors.name?.message && <p className="text-destructive text-xs">{errors.name.message}</p>}
     </form>
   );
 }

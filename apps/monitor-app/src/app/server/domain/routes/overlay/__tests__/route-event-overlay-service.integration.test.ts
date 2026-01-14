@@ -59,7 +59,7 @@ describe("route-event-overlay-service (integration)", () => {
 
   it("returns daily conversion overlay series (distinct session_id attribution) and totals", async () => {
     const projectId = randomUUID();
-    await createProject({ id: projectId, slug: "overlay-int", name: "Overlay Integration" });
+    await createProject({ id: projectId, domain: "overlay-int.com", name: "Overlay Integration" });
 
     const route = "/checkout";
     const eventName = "purchase";

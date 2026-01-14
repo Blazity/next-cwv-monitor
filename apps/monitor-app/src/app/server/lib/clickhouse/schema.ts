@@ -3,7 +3,7 @@ import { type } from "arktype";
 
 export type ProjectRow = {
   id: string;
-  slug: string;
+  domain: string;
   name: string;
   events_display_settings?: Record<string, unknown> | null;
   created_at: Date | string;

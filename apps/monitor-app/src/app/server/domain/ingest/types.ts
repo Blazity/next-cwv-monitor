@@ -24,6 +24,7 @@ export type CustomEvent = {
 export type IngestCommand = {
   ip: string | null;
   projectId: string;
+  origin: string | null;
   cwvEvents: WebVitalEvent[];
   customEvents: CustomEvent[];
 };

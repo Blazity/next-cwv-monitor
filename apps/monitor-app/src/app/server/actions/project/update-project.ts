@@ -9,11 +9,11 @@ import { updateProjectSchema } from "@/app/server/domain/projects/update/types";
 export const updateProjectAction = permissionActionClient({ project: ["update"] })
   .inputSchema(updateProjectSchema)
   .action(async ({ parsedInput }) => {
-    const { projectId, slug, name, eventSettings } = parsedInput;
+    const { projectId, domain, name, eventSettings } = parsedInput;
 
     const result = await projectsUpdateService.execute({
       id: projectId,
-      ...(slug && { slug }),
+      ...(domain && { domain }),
       ...(name && { name }),
       ...(eventSettings && { events_display_settings: eventSettings }),
     });

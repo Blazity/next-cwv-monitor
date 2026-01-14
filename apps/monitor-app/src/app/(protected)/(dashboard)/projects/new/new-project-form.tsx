@@ -2,26 +2,18 @@
 
 import Link from "next/link";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createProjectAction } from "@/app/server/actions/project/create-project";
 import { createProjectSchema } from "@/app/server/domain/projects/create/types";
-import { capitalizeFirstLetter } from "@/lib/utils";
-import { toast } from "sonner";
 import { useHookFormAction } from "@next-safe-action/adapter-react-hook-form/hooks";
-
-const slugify = (name: string) =>
-  name
-    .toLowerCase()
-    .replaceAll(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replaceAll(/\s+/g, "-")
-    .replaceAll(/-+/g, "-");
+import { normalizeHostname } from "@/lib/utils";
+import { useWatch } from "react-hook-form";
 
 export function NewProjectForm() {
-
   const { form, action, handleSubmitWithAction } = useHookFormAction(
     createProjectAction,
     arktypeResolver(createProjectSchema),
@@ -38,17 +30,21 @@ export function NewProjectForm() {
       },
       formProps: {
         mode: "onBlur",
-        defaultValues: { name: "", slug: "" },
+        defaultValues: { name: "", domain: "" },
       },
-    }
+    },
   );
 
   const {
     register,
-    setValue,
     clearErrors,
-    formState: { errors, dirtyFields },
+    control,
+    formState: { errors },
   } = form;
+
+  const domainValue = useWatch({ control, name: "domain" });
+  const normalizedPreview = normalizeHostname(domainValue);
+  const showPreview = domainValue && normalizedPreview && domainValue !== normalizedPreview;
 
   const isPending = action.isPending;
 
@@ -57,36 +53,37 @@ export function NewProjectForm() {
       <div className="space-y-2">
         <Label htmlFor="project-name">Project name</Label>
         <Input
-          {...register("name", {
-            onChange: (e) => {
-              clearErrors("name");
-              if (!dirtyFields.slug) {
-                setValue("slug", slugify(e.target.value), { shouldValidate: true });
-              }
-            },
-          })}
+          {...register("name", { onChange: () => clearErrors("name") })}
           id="project-name"
           placeholder="My Awesome App"
           disabled={isPending}
         />
         <p className="text-muted-foreground text-xs">A friendly name to identify your project.</p>
-        {errors.name?.message && (
-          <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.name.message)}</p>
-        )}
+        {errors.name?.message && <p className="text-destructive text-sm">{errors.name.message}</p>}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="project-domain">Slug</Label>
+        <Label htmlFor="project-domain">Project domain</Label>
         <Input
-          {...register("slug", { onChange: () => clearErrors("slug") })}
+          {...register("domain", { onChange: () => clearErrors("domain") })}
           id="project-domain"
-          placeholder="my-awesome-app"
+          placeholder="example.com"
           disabled={isPending}
         />
-        <p className="text-muted-foreground text-xs">This will be used in your dashboard URL and API identifiers.</p>
-        {errors.slug?.message && (
-          <p className="text-destructive text-sm">{capitalizeFirstLetter(errors.slug.message)}</p>
+        <p className="text-muted-foreground text-xs">
+          The authorized domain for Web Vitals data collection. Requests from other origins will be blocked.
+        </p>
+        {showPreview && (
+          <div className="bg-status-needs-improvement/15 mt-2 flex items-start gap-2 rounded-md border p-2">
+            <AlertCircle className="text-status-needs-improvement mt-0.5 h-4 w-4" />
+            <div className="text-status-needs-improvement text-xs">
+              <p className="font-medium">Standardized as:</p>
+              <code className="font-mono break-all">{normalizedPreview}</code>
+              <p className="mt-1 opacity-80">We'll strip protocols, paths, and normalize special characters.</p>
+            </div>
+          </div>
         )}
+        {errors.domain?.message && <p className="text-destructive text-sm">{errors.domain.message}</p>}
       </div>
 
       <div className="flex items-center gap-3 pt-2">

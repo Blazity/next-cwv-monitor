@@ -9,7 +9,7 @@ This document describes the ClickHouse schema used by the monitor app and the ra
 | Column       | Type     | Notes                      |
 | ------------ | -------- | -------------------------- |
 | `id`         | UUID     | Primary project identifier |
-| `slug`       | String   | Human-friendly identifier  |
+| `domain`     | String   | Authorized Hostname        |
 | `name`       | String   | Display name               |
 | `created_at` | DateTime | Creation timestamp         |
 | `updated_at` | DateTime | Last update timestamp      |

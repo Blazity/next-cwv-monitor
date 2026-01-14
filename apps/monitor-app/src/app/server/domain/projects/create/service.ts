@@ -1,18 +1,21 @@
-import { createProject, getProjectBySlug } from "@/app/server/lib/clickhouse/repositories/projects-repository";
+import {
+  createProject,
+  getProjectByDomain as getProjectByDomain,
+} from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import { randomUUID } from "node:crypto";
 import { CreateProjectInput, CreateProjectResult } from "@/app/server/domain/projects/create/types";
 
 export class ProjectsCreateService {
   async execute(input: CreateProjectInput): Promise<CreateProjectResult> {
     try {
-      const existing = await getProjectBySlug(input.slug);
-      if (existing) return { kind: "already-exists", slug: input.slug };
+      const existing = await getProjectByDomain(input.domain);
+      if (existing) return { kind: "already-exists", domain: input.domain };
 
       const projectId = randomUUID();
       await createProject({
         id: projectId,
         name: input.name,
-        slug: input.slug,
+        domain: input.domain,
       });
 
       return { kind: "ok", projectId };

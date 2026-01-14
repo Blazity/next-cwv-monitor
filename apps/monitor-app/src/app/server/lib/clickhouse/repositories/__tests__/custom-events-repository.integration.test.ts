@@ -30,7 +30,7 @@ describe("custom-events-repository integration", () => {
     ({ createProject } = await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
 
     projectId = randomUUID();
-    await createProject({ id: projectId, slug: "test", name: "Test" });
+    await createProject({ id: projectId, domain: "test.com", name: "Test" });
   }, 120_000);
 
   afterAll(async () => await container.stop());
@@ -47,7 +47,7 @@ describe("custom-events-repository integration", () => {
         session_id: randomUUID(),
         route: "/",
         path: "/",
-        device_type: "mobile" as const
+        device_type: "mobile" as const,
       }));
 
       await expect(insertCustomEvents(manyEvents)).resolves.not.toThrow();
@@ -268,16 +268,16 @@ describe("custom-events-repository integration", () => {
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
       const days = daysToNumber[range];
-      
-      const format = (d: Date) => d.toISOString().split('T')[0];
+
+      const format = (d: Date) => d.toISOString().split("T")[0];
 
       const now = new Date();
-      const expectedStartTimestamp = now.getTime() - (days * 24 * 60 * 60 * 1000);
+      const expectedStartTimestamp = now.getTime() - days * 24 * 60 * 60 * 1000;
       const expectedStartDate = new Date(expectedStartTimestamp);
-      
+
       const trend = await fetchConversionTrend({ projectId, range, eventName: "any" });
       const firstEntryDate = new Date(trend[0].day);
-    
+
       expect(format(firstEntryDate)).toBe(format(expectedStartDate));
     });
   });

@@ -1,25 +1,25 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-import type { StartedTestContainer } from 'testcontainers';
-import { describe, beforeAll, afterAll, beforeEach, it, expect } from 'vitest';
+import type { StartedTestContainer } from "testcontainers";
+import { describe, beforeAll, afterAll, beforeEach, it, expect } from "vitest";
 
-import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
+import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
-let createProject: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').createProject;
-let getProjectById: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').getProjectById;
-let getProjectBySlug: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').getProjectBySlug;
-let listProjects: typeof import('@/app/server/lib/clickhouse/repositories/projects-repository').listProjects;
+let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
+let createProject: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").createProject;
+let getProjectById: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").getProjectById;
+let getProjectByDomain: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").getProjectByDomain;
+let listProjects: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").listProjects;
 
-describe('projects-repository', () => {
+describe("projects-repository", () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
-    ({ createProject, getProjectById, getProjectBySlug, listProjects } =
-      await import('@/app/server/lib/clickhouse/repositories/projects-repository'));
+    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
+    ({ createProject, getProjectById, getProjectByDomain, listProjects } =
+      await import("@/app/server/lib/clickhouse/repositories/projects-repository"));
   }, 120_000);
 
   afterAll(async () => {
@@ -30,12 +30,12 @@ describe('projects-repository', () => {
     await sql`TRUNCATE TABLE projects`.command();
   });
 
-  describe('createProject', () => {
-    it('creates a project with correct fields', async () => {
+  describe("createProject", () => {
+    it("creates a project with correct fields", async () => {
       const project = {
         id: randomUUID(),
-        slug: 'test-project',
-        name: 'Test Project'
+        domain: "test-project.com",
+        name: "Test Project",
       };
 
       await createProject(project);
@@ -43,15 +43,15 @@ describe('projects-repository', () => {
 
       expect(retrieved).not.toBeNull();
       expect(retrieved?.id).toBe(project.id);
-      expect(retrieved?.slug).toBe(project.slug);
+      expect(retrieved?.domain).toBe(project.domain);
       expect(retrieved?.name).toBe(project.name);
     });
 
-    it('creates a project with timestamps', async () => {
+    it("creates a project with timestamps", async () => {
       const project = {
         id: randomUUID(),
-        slug: 'timestamp-test',
-        name: 'Timestamp Test'
+        domain: "timestamp-test.com",
+        name: "Timestamp Test",
       };
 
       await createProject(project);
@@ -61,14 +61,14 @@ describe('projects-repository', () => {
       expect(retrieved?.updated_at).toBeDefined();
     });
 
-    it('accepts custom timestamps', async () => {
-      const customDate = new Date('2024-01-15T10:00:00Z');
+    it("accepts custom timestamps", async () => {
+      const customDate = new Date("2024-01-15T10:00:00Z");
       const project = {
         id: randomUUID(),
-        slug: 'custom-timestamp',
-        name: 'Custom Timestamp',
+        domain: "custom-timestamp.com",
+        name: "Custom Timestamp",
         created_at: customDate,
-        updated_at: customDate
+        updated_at: customDate,
       };
 
       await createProject(project);
@@ -81,12 +81,12 @@ describe('projects-repository', () => {
     });
   });
 
-  describe('getProjectById', () => {
-    it('retrieves project by id', async () => {
+  describe("getProjectById", () => {
+    it("retrieves project by id", async () => {
       const project = {
         id: randomUUID(),
-        slug: 'get-by-id',
-        name: 'Get By ID'
+        domain: "get-by-id.com",
+        name: "Get By ID",
       };
 
       await createProject(project);
@@ -96,41 +96,41 @@ describe('projects-repository', () => {
       expect(retrieved?.id).toBe(project.id);
     });
 
-    it('returns null for non-existent id', async () => {
+    it("returns null for non-existent id", async () => {
       const retrieved = await getProjectById(randomUUID());
       expect(retrieved).toBeNull();
     });
   });
 
-  describe('getProjectBySlug', () => {
-    it('retrieves project by slug', async () => {
+  describe("getProjectByDomain", () => {
+    it("retrieves project by domain", async () => {
       const project = {
         id: randomUUID(),
-        slug: 'unique-slug-123',
-        name: 'Slug Test'
+        domain: "unique-domain-123.com",
+        name: "Domain Test",
       };
 
       await createProject(project);
-      const retrieved = await getProjectBySlug(project.slug);
+      const retrieved = await getProjectByDomain(project.domain);
 
       expect(retrieved).not.toBeNull();
-      expect(retrieved?.slug).toBe(project.slug);
+      expect(retrieved?.domain).toBe(project.domain);
       expect(retrieved?.id).toBe(project.id);
     });
 
-    it('returns null for non-existent slug', async () => {
-      const retrieved = await getProjectBySlug('non-existent-slug');
+    it("returns null for non-existent domain", async () => {
+      const retrieved = await getProjectByDomain("non-existent-domain");
       expect(retrieved).toBeNull();
     });
   });
 
-  describe('listProjects', () => {
-    it('lists projects ordered by creation date (newest first)', async () => {
+  describe("listProjects", () => {
+    it("lists projects ordered by creation date (newest first)", async () => {
       const now = new Date();
       const projects = [
-        { id: randomUUID(), slug: 'project-a', name: 'Project A', created_at: new Date(now.getTime() - 2000) },
-        { id: randomUUID(), slug: 'project-b', name: 'Project B', created_at: new Date(now.getTime() - 1000) },
-        { id: randomUUID(), slug: 'project-c', name: 'Project C', created_at: now }
+        { id: randomUUID(), domain: "project-a.com", name: "Project A", created_at: new Date(now.getTime() - 2000) },
+        { id: randomUUID(), domain: "project-b.com", name: "Project B", created_at: new Date(now.getTime() - 1000) },
+        { id: randomUUID(), domain: "project-c.com", name: "Project C", created_at: now },
       ];
 
       for (const project of projects) {
@@ -140,16 +140,16 @@ describe('projects-repository', () => {
       const listed = await listProjects();
 
       expect(listed).toHaveLength(3);
-      expect(listed[0]?.slug).toBe('project-c');
-      expect(listed[2]?.slug).toBe('project-a');
+      expect(listed[0]?.domain).toBe("project-c.com");
+      expect(listed[2]?.domain).toBe("project-a.com");
     });
 
-    it('returns all projects', async () => {
+    it("returns all projects", async () => {
       for (let i = 0; i < 5; i++) {
         await createProject({
           id: randomUUID(),
-          slug: `project-${i}`,
-          name: `Project ${i}`
+          domain: `project-${i}.com`,
+          name: `Project ${i}`,
         });
       }
 
@@ -157,7 +157,7 @@ describe('projects-repository', () => {
       expect(listed).toHaveLength(5);
     });
 
-    it('returns empty array when no projects exist', async () => {
+    it("returns empty array when no projects exist", async () => {
       const listed = await listProjects();
       expect(listed).toEqual([]);
     });

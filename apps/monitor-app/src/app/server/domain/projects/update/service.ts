@@ -13,12 +13,10 @@ export class ProjectsUpdateService {
       }
 
       const existingParsed = eventDisplaySettingsSchema(current.events_display_settings);
-      const existingSettings =
-        existingParsed instanceof ArkErrors || existingParsed === null ? {} : existingParsed;
+      const existingSettings = existingParsed instanceof ArkErrors || existingParsed === null ? {} : existingParsed;
 
       const incomingParsed = eventDisplaySettingsSchema(input.events_display_settings ?? null);
-      const incomingSettings =
-        incomingParsed instanceof ArkErrors || incomingParsed === null ? {} : incomingParsed;
+      const incomingSettings = incomingParsed instanceof ArkErrors || incomingParsed === null ? {} : incomingParsed;
 
       const mergedSettingsObject = {
         ...existingSettings,
@@ -27,7 +25,7 @@ export class ProjectsUpdateService {
 
       const hasChanged =
         input.name !== current.name ||
-        input.slug !== current.slug ||
+        input.domain !== current.domain ||
         JSON.stringify(mergedSettingsObject) !== JSON.stringify(existingSettings);
 
       if (!hasChanged) {

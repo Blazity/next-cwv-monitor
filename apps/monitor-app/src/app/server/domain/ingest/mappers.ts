@@ -14,6 +14,7 @@ function determineDeviceType(userAgent?: UserAgentMeta) {
 export function buildIngestCommand(
   parsed: IngestPayloadV1,
   ip: string | null,
+  origin: string | null,
   userAgentHeader?: string
 ): IngestCommand {
   const userAgent = new UAParser(userAgentHeader).getResult();
@@ -58,6 +59,7 @@ export function buildIngestCommand(
   return {
     ip,
     projectId: parsed.projectId,
+    origin,
     cwvEvents,
     customEvents
   };
