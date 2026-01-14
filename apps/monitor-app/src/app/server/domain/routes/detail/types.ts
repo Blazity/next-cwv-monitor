@@ -1,6 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import { DailySeriesPoint, DateRange, MetricName, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
-import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 export type MetricSummary = {
   metricName: string;
@@ -20,7 +20,7 @@ export type GetRouteDetailQuery = {
   projectId: string;
   route: string;
   range: DateRange;
-  deviceType: RoutesDeviceType;
+  deviceType: DeviceFilter;
   selectedMetric: MetricName;
 };
 

@@ -7,7 +7,6 @@ import {
 } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
 import { EventsCards } from "@/components/events/events-cards";
 import { EventsTabs } from "@/components/events/events-tabs";
 import { getAuthorizedSession } from "@/lib/auth-utils";

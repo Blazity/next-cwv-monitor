@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 import { formatDistance } from "date-fns";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 export function DataFreshnessIndicator() {
   const router = useRouter();

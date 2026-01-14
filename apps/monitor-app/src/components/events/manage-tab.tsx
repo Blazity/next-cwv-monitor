@@ -4,7 +4,7 @@ import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { capitalize, cn } from "@/lib/utils";
 import { arktypeResolver } from "@hookform/resolvers/arktype";
 import { type } from "arktype";
@@ -158,20 +158,22 @@ function EventRow({
       })}
     >
       <div className="flex min-w-0 flex-1 items-center gap-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onClick={toggleVisibility}
-              type="button"
-              className={cn("text-status-good hover:bg-status-good/10 rounded-md p-1.5 transition-colors", {
-                "text-muted-foreground hover:text-foreground hover:bg-accent": settings.isHidden,
-              })}
-            >
-              {settings.isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>{settings.isHidden ? "Show in selectors" : "Hide from selectors"}</TooltipContent>
-        </Tooltip>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleVisibility}
+                type="button"
+                className={cn("text-status-good hover:bg-status-good/10 rounded-md p-1.5 transition-colors", {
+                  "text-muted-foreground hover:text-foreground hover:bg-accent": settings.isHidden,
+                })}
+              >
+                {settings.isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{settings.isHidden ? "Show in selectors" : "Hide from selectors"}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <div className="min-w-0 flex-1">
           {isEditing ? (

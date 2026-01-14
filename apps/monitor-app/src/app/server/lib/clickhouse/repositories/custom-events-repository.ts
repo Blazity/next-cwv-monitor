@@ -1,7 +1,7 @@
 import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
-import { DeviceType } from "@/app/server/lib/device-types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 import { chunkGenerator, daysToNumber, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
 import { coerceClickHouseDateTime } from "@/lib/utils";
 
@@ -102,7 +102,6 @@ export async function fetchCustomEvents(filters: CustomEventFilters): Promise<Cu
   return query;
 }
 
-export type DeviceFilter = DeviceType | "all";
 
 type FetchEventsStatsData = {
   range: TimeRangeKey;

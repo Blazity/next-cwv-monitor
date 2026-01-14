@@ -1,12 +1,7 @@
+import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
+import { RegressionMetricName, RegressionsMetricFilter, RegressionsSortField } from "@/app/server/domain/regressions/list/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
-import type { DeviceType } from "@/app/server/lib/device-types";
-
-export type RegressionsDeviceFilter = DeviceType | "all";
-export type RegressionMetricName = "LCP" | "INP" | "CLS" | "TTFB";
-export type RegressionsMetricFilter = RegressionMetricName | "all";
-
-export type SortField = "route" | "metric" | "change" | "views";
-export type SortDirection = "asc" | "desc";
+import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -17,7 +12,7 @@ type DateRange = {
 
 type BaseFilters = {
   projectId: string;
-  deviceType: RegressionsDeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 type PeriodFilters = BaseFilters & {
@@ -104,7 +99,7 @@ export type RegressionsListPageQuery = BaseFilters & {
   previousRange: DateRange;
   search?: string;
   metric: RegressionsMetricFilter;
-  sort: { field: SortField; direction: SortDirection };
+  sort: { field: RegressionsSortField; direction: SortDirection };
   limit: number;
   offset: number;
 };

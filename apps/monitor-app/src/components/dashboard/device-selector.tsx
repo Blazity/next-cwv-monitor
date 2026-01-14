@@ -8,9 +8,9 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { useQueryState } from "nuqs";
 import { parseAsStringEnum } from "nuqs";
 import { OVERVIEW_DEVICE_TYPES } from "@/app/server/domain/dashboard/overview/types";
-import type { OverviewDeviceType } from "@/app/server/domain/dashboard/overview/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
-const devices: { value: OverviewDeviceType; label: string; shortLabel: string; icon: ReactNode }[] = [
+const devices: { value: DeviceFilter; label: string; shortLabel: string; icon: ReactNode }[] = [
   { value: "all", label: "All devices", shortLabel: "All", icon: <Layers className="h-3.5 w-3.5" /> },
   { value: "desktop", label: "Desktop", shortLabel: "Desktop", icon: <Monitor className="h-3.5 w-3.5" /> },
   { value: "mobile", label: "Mobile", shortLabel: "Mobile", icon: <Smartphone className="h-3.5 w-3.5" /> },
@@ -24,7 +24,7 @@ export function DeviceSelector() {
       .withOptions({ shallow: false }),
   );
 
-  const handleDeviceChange = (value: OverviewDeviceType) => {
+  const handleDeviceChange = (value: DeviceFilter) => {
     void setDeviceType(value);
   };
 
