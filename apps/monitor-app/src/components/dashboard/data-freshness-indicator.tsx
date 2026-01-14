@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -29,14 +29,14 @@ export function DataFreshnessIndicator() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
     router.refresh();
     setTimeout(() => {
       setLastUpdated(new Date());
       setIsRefreshing(false);
     }, 500);
-  }, [router]);
+  };
 
   return (
     <div className="text-muted-foreground flex items-center gap-2 text-xs">
