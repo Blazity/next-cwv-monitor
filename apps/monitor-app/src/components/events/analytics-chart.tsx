@@ -1,5 +1,6 @@
 "use client";
 import { fetchConversionTrend } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMemo } from "react";
 import {
   CartesianGrid,
@@ -25,6 +26,8 @@ type ChartPoint = {
 };
 
 export function AnalyticsChart({ chartData }: Props) {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   const memoizedChartData = useMemo(
     () =>
       chartData.map(
@@ -67,6 +70,7 @@ export function AnalyticsChart({ chartData }: Props) {
           tick={{ fill: "var(--muted-foreground)" }}
           tickFormatter={(v) => `${v.toFixed(1)}%`}
           width={50}
+          hide={isMobile}
         />
         <RechartsTooltip
           content={({ active, payload }) => {

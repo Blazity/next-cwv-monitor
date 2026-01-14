@@ -58,7 +58,7 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
 
   return (
     <TooltipProvider>
-      <div className="bg-muted flex items-center gap-1 rounded-lg p-1" role="tablist">
+      <div className="bg-muted flex w-fit items-center gap-1 rounded-lg p-1" role="tablist">
         {displayMetrics.map((metric) => {
           const info = METRIC_INFO[metric];
           const isOther = !info.isCoreWebVital;

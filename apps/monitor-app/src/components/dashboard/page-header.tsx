@@ -42,7 +42,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
               className={cn(
                 "bg-background/95 border-border border-b backdrop-blur will-change-transform",
                 "pointer-events-auto transition-transform duration-300 ease-out",
-                showStickyBar ? "translate-y-0 shadow-sm" : "-translate-y-[110%] ease-in",
+                showStickyBar ? "translate-y-0 shadow-sm visible" : "-translate-y-[110%] ease-in invisible",
               )}
             >
               <div className="px-3 py-3 sm:px-4 lg:px-6">
@@ -59,7 +59,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
         </div>
       )}
 
-      <div ref={headerRef} className="flex items-start justify-between gap-4">
+      <div ref={headerRef} className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="flex min-w-0 flex-col gap-2 transition-all duration-200">
           <div className="flex items-center gap-2">
             <h1 className="text-foreground text-2xl font-semibold">{title}</h1>

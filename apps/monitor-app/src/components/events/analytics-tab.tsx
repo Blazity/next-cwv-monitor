@@ -101,7 +101,7 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
         </CardContent>
         {hasStats && (
           <CardFooter className="border-border border-t pt-4">
-            <div className="flex w-full items-center justify-between text-sm">
+            <div className="flex w-full items-center justify-between text-sm gap-4">
               <span className="text-muted-foreground">
                 Tracked on {eventStats.length} route{eventStats.length === 1 ? "" : "s"}
               </span>
