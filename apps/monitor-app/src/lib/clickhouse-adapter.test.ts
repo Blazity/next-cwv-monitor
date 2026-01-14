@@ -1,10 +1,10 @@
-import { describe, afterAll, beforeAll } from 'vitest';
-import { runAdapterTest } from 'better-auth/adapters/test';
-import { sql } from '@/app/server/lib/clickhouse/client';
-import { clickHouseAdapter } from '@/lib/clickhouse-adapter';
+import { describe, afterAll, beforeAll } from "vitest";
+import { runAdapterTest } from "better-auth/adapters/test";
+import { sql } from "@/app/server/lib/clickhouse/client";
+import { clickHouseAdapter } from "@/lib/clickhouse-adapter";
 
 const cleanupTables = async () => {
-  const tables = ['user', 'session', 'account', 'verification'];
+  const tables = ["user", "session", "account", "verification"];
   for (const table of tables) {
     try {
       await sql.unsafe(`TRUNCATE TABLE IF EXISTS ${table}`).command();
@@ -15,7 +15,7 @@ const cleanupTables = async () => {
   }
 };
 
-describe('ClickHouse Adapter Tests', async () => {
+describe("ClickHouse Adapter Tests", async () => {
   beforeAll(async () => {
     await cleanupTables();
   });
@@ -29,6 +29,6 @@ describe('ClickHouse Adapter Tests', async () => {
   runAdapterTest({
     getAdapter: async (betterAuthOptions: Record<string, unknown> = {}) => {
       return adapterFactory(betterAuthOptions);
-    }
+    },
   });
 });

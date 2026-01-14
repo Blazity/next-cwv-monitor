@@ -167,7 +167,7 @@ export default function SettingsForm({ project, permissions }: SettingsFormProps
         </CardContent>
       </Card>
 
-      <SDKIntegrationCard projectId={project.id}/>
+      <SDKIntegrationCard projectId={project.id} />
 
       <Card className="border-destructive/20">
         <CardHeader>
@@ -267,8 +267,7 @@ function UpdateNameForm({ project, isEnabled }: { project: ProjectWithViews; isE
   );
 }
 
-function SDKIntegrationCard({projectId}: {projectId: string}){
-
+function SDKIntegrationCard({ projectId }: { projectId: string }) {
   const codes = getSdkCodes(projectId);
   const [activeTab, setActiveTab] = useState<"app" | "pages">("app");
   const [copied, setCopied] = useState(false);
@@ -280,48 +279,41 @@ function SDKIntegrationCard({projectId}: {projectId: string}){
 
   return (
     <Card>
-    <CardHeader>
-      <CardTitle>SDK Integration</CardTitle>
-      <CardDescription>
-        Add the following code to your application to start collecting Core Web Vitals
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4 px-6">
-      <Tabs className="w-full" value={activeTab} onValueChange={(v) => setActiveTab(v as "app" | "pages")}>
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="app">App Router</TabsTrigger>
-            <TabsTrigger value="pages">Pages Router</TabsTrigger>
-          </TabsList>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCopy}
-            className="h-8 gap-1.5"
-          >
-            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-            <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
-          </Button>
-        </div>
-        <TabsContent value="app" className="relative">
-          <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">
-            {codes.app}
-          </pre>
-        </TabsContent>
-        <TabsContent value="pages" className="relative">
-          <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">
-            {codes.pages}
-          </pre>
-        </TabsContent>
-      </Tabs>
-      <p className="text-muted-foreground text-sm">
-        Install the SDK with{" "}
-        <code className="bg-muted text-foreground rounded px-1.5 py-0.5">npm install next-cwv-monitor</code> and add
-        this to your app's entry point
-      </p>
-    </CardContent>
-  </Card>
-  )
+      <CardHeader>
+        <CardTitle>SDK Integration</CardTitle>
+        <CardDescription>
+          Add the following code to your application to start collecting Core Web Vitals
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 px-6">
+        <Tabs className="w-full" value={activeTab} onValueChange={(v) => setActiveTab(v as "app" | "pages")}>
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="app">App Router</TabsTrigger>
+              <TabsTrigger value="pages">Pages Router</TabsTrigger>
+            </TabsList>
+            <Button variant="ghost" size="sm" onClick={onCopy} className="h-8 gap-1.5">
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+            </Button>
+          </div>
+          <TabsContent value="app" className="relative">
+            <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">{codes.app}</pre>
+          </TabsContent>
+          <TabsContent value="pages" className="relative">
+            <pre className="bg-muted text-foreground overflow-x-auto rounded-md p-4 font-mono text-sm">
+              {codes.pages}
+            </pre>
+          </TabsContent>
+        </Tabs>
+        <p className="text-muted-foreground text-sm">
+          Install the SDK with{" "}
+          <code className="bg-muted text-foreground rounded px-1.5 py-0.5">npm install next-cwv-monitor</code> and add
+          this to your app's entry point
+        </p>
+      </CardContent>
+    </Card>
+  );
 }
 
 type DangerRowProps = {

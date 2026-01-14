@@ -1,6 +1,6 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import { DailySeriesPoint, DateRange, MetricName, QuantileSummary } from '@/app/server/domain/dashboard/overview/types';
-import { RoutesDeviceType } from '@/app/server/domain/routes/list/types';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import { DailySeriesPoint, DateRange, MetricName, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
+import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
 
 export type MetricSummary = {
   metricName: string;
@@ -12,7 +12,7 @@ export type MetricSummary = {
 export type StatusDistribution = Record<WebVitalRatingV1, number>;
 
 export type InsightItem = {
-  kind: 'success' | 'warning' | 'info';
+  kind: "success" | "warning" | "info";
   message: string;
 };
 
@@ -35,9 +35,7 @@ export type RouteDetail = {
 };
 
 export type GetRouteDetailResult =
-  | { kind: 'ok'; data: RouteDetail }
-  | { kind: 'project-not-found'; projectId: string }
-  | { kind: 'route-not-found'; route: string }
-  | { kind: 'unsupported-metric'; metricName: string };
-
-
+  | { kind: "ok"; data: RouteDetail }
+  | { kind: "project-not-found"; projectId: string }
+  | { kind: "route-not-found"; route: string }
+  | { kind: "unsupported-metric"; metricName: string };

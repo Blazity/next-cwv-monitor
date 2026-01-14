@@ -1,6 +1,6 @@
 /* eslint-disable @eslint-react/no-array-index-key */
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function QuickStatsSkeleton() {
   return (

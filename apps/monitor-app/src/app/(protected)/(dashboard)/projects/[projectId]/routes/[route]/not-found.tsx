@@ -26,5 +26,3 @@ export default function NotFound() {
 
   return <RouteDetailNotFoundState routesHref={routesHref} route={route} />;
 }
-
-

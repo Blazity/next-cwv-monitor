@@ -1,12 +1,12 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID } from "node:crypto";
 
-import type { StartedTestContainer } from 'testcontainers';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { StartedTestContainer } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { setupClickHouseContainer } from '@/test/clickhouse-test-utils';
+import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 
 let container: StartedTestContainer;
-let sql: typeof import('@/app/server/lib/clickhouse/client').sql;
+let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
 
 let currentHeaders = new Headers();
 
@@ -23,17 +23,17 @@ type SafeActionResult<TData> = {
   validationErrors?: unknown;
 };
 
-vi.mock('next/cache', () => ({
-  updateTag: vi.fn()
+vi.mock("next/cache", () => ({
+  updateTag: vi.fn(),
 }));
 
-vi.mock('next/headers', () => ({
-  headers: async () => currentHeaders
+vi.mock("next/headers", () => ({
+  headers: async () => currentHeaders,
 }));
 
 function expectServerError(result: unknown, pattern: RegExp | string) {
   const res = result as SafeActionResult<unknown>;
-  const message = res.serverError ?? '';
+  const message = res.serverError ?? "";
   if (pattern instanceof RegExp) {
     expect(message).toMatch(pattern);
   } else {
@@ -44,16 +44,16 @@ function expectServerError(result: unknown, pattern: RegExp | string) {
 async function expectRedirect(promise: Promise<unknown>) {
   await expect(promise).rejects.toSatisfy((error: unknown) => {
     const maybe = error as { digest?: unknown; message?: unknown };
-    const tag = typeof maybe.digest === 'string' ? maybe.digest : maybe.message;
-    return typeof tag === 'string' && tag.includes('NEXT_REDIRECT');
+    const tag = typeof maybe.digest === "string" ? maybe.digest : maybe.message;
+    return typeof tag === "string" && tag.includes("NEXT_REDIRECT");
   });
 }
 
 function getSetCookies(headers: Headers): string[] {
   const maybe = headers as unknown as { getSetCookie?: () => string[] };
-  if (typeof maybe.getSetCookie === 'function') return maybe.getSetCookie();
+  if (typeof maybe.getSetCookie === "function") return maybe.getSetCookie();
 
-  const raw = headers.get('set-cookie');
+  const raw = headers.get("set-cookie");
   if (!raw) return [];
 
   return [raw];
@@ -61,13 +61,13 @@ function getSetCookies(headers: Headers): string[] {
 
 function toCookieHeader(setCookies: string[]): string {
   return setCookies
-    .map((cookie) => cookie.split(';')[0])
+    .map((cookie) => cookie.split(";")[0])
     .filter(Boolean)
-    .join('; ');
+    .join("; ");
 }
 
 async function resetAuthTables(): Promise<void> {
-  const tables = ['user', 'session', 'account', 'verification'] as const;
+  const tables = ["user", "session", "account", "verification"] as const;
   for (const table of tables) {
     await sql.unsafe(`TRUNCATE TABLE IF EXISTS ${table}`).command();
     await sql.unsafe(`OPTIMIZE TABLE ${table} FINAL`).command();
@@ -75,7 +75,7 @@ async function resetAuthTables(): Promise<void> {
 }
 
 async function signUpUser(params: { email: string; password: string; name: string }): Promise<{ userId: string }> {
-  const { auth } = await import('@/lib/auth');
+  const { auth } = await import("@/lib/auth");
   const res = await auth.api.signUpEmail({ body: params });
   return { userId: res.user.id };
 }
@@ -141,7 +141,7 @@ async function promoteUserToAdmin(userId: string): Promise<void> {
       ${user.image},
       toDateTime(${createdAtSeconds}),
       toDateTime(${updatedAtSeconds}),
-      ${'admin'},
+      ${"admin"},
       ${user.banned},
       ${user.is_password_temporary},
       ${user.ban_reason},
@@ -151,7 +151,7 @@ async function promoteUserToAdmin(userId: string): Promise<void> {
 }
 
 async function signInAndSetRequestCookies(params: { email: string; password: string }): Promise<void> {
-  const { auth } = await import('@/lib/auth');
+  const { auth } = await import("@/lib/auth");
   const response = await auth.api.signInEmail({ body: params, asResponse: true });
   const cookieHeader = toCookieHeader(getSetCookies(response.headers));
   currentHeaders = new Headers(cookieHeader ? { cookie: cookieHeader } : {});
@@ -159,18 +159,18 @@ async function signInAndSetRequestCookies(params: { email: string; password: str
 
 async function setupAdminSession(): Promise<void> {
   const email = `admin+${randomUUID()}@example.com`;
-  const password = 'Password1234!';
+  const password = "Password1234!";
 
-  const { userId } = await signUpUser({ email, password, name: 'Admin User' });
+  const { userId } = await signUpUser({ email, password, name: "Admin User" });
   await promoteUserToAdmin(userId);
   await signInAndSetRequestCookies({ email, password });
 }
 
 async function setupMemberSession(): Promise<{ userId: string; email: string; password: string }> {
   const email = `member+${randomUUID()}@example.com`;
-  const password = 'Password1234!';
+  const password = "Password1234!";
 
-  const { userId } = await signUpUser({ email, password, name: 'Member User' });
+  const { userId } = await signUpUser({ email, password, name: "Member User" });
   await signInAndSetRequestCookies({ email, password });
 
   return { userId, email, password };
@@ -188,19 +188,19 @@ async function getUserIdByEmail(email: string): Promise<string | null> {
 }
 
 async function listUserById(userId: string) {
-  const { auth } = await import('@/lib/auth');
+  const { auth } = await import("@/lib/auth");
   const res = await auth.api.listUsers({
-    query: { filterOperator: 'eq', filterField: 'id', filterValue: userId },
-    headers: currentHeaders
+    query: { filterOperator: "eq", filterField: "id", filterValue: userId },
+    headers: currentHeaders,
   });
   return (res.users.at(0) as ListedUser | undefined) ?? null;
 }
 
-describe('users server actions (integration)', () => {
+describe("users server actions (integration)", () => {
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
-    ({ sql } = await import('@/app/server/lib/clickhouse/client'));
+    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
   }, 120_000);
 
   afterAll(async () => {
@@ -213,147 +213,145 @@ describe('users server actions (integration)', () => {
     vi.resetModules();
   });
 
-  describe('createUserAction', () => {
-    it('requires authentication', async () => {
+  describe("createUserAction", () => {
+    it("requires authentication", async () => {
       currentHeaders = new Headers();
 
-      const { createUserAction } = await import('../create-user');
+      const { createUserAction } = await import("../create-user");
 
-      await expectRedirect(
-        createUserAction({ email: `x+${randomUUID()}@example.com`, name: 'X', role: 'member' }),
-      );
+      await expectRedirect(createUserAction({ email: `x+${randomUUID()}@example.com`, name: "X", role: "member" }));
     });
 
-    it('fails for authenticated non-admin users', async () => {
+    it("fails for authenticated non-admin users", async () => {
       await setupMemberSession();
-      const { createUserAction } = await import('../create-user');
+      const { createUserAction } = await import("../create-user");
 
       const email = `member2+${randomUUID()}@example.com`;
-      const result = await createUserAction({ email, name: 'Created By Member', role: 'member' });
+      const result = await createUserAction({ email, name: "Created By Member", role: "member" });
 
       expectServerError(result, /required permissions/i);
       expect(await getUserIdByEmail(email)).toBeNull();
     });
 
-    it('creates a new user (admin session) and returns a temp password', async () => {
+    it("creates a new user (admin session) and returns a temp password", async () => {
       await setupAdminSession();
 
-      const { createUserAction } = await import('../create-user');
+      const { createUserAction } = await import("../create-user");
 
       const email = `member+${randomUUID()}@example.com`;
-      const result = await createUserAction({ email, name: 'Member User', role: 'member' });
+      const result = await createUserAction({ email, name: "Member User", role: "member" });
 
       expect(result.serverError).toBeUndefined();
       expect(result.validationErrors).toBeUndefined();
       expect(result.data).toBeDefined();
-      expect(typeof result.data?.password).toBe('string');
-      expect((result.data?.password ?? '').length).toBeGreaterThanOrEqual(12);
+      expect(typeof result.data?.password).toBe("string");
+      expect((result.data?.password ?? "").length).toBeGreaterThanOrEqual(12);
 
-      const { auth } = await import('@/lib/auth');
+      const { auth } = await import("@/lib/auth");
       const users = await auth.api.listUsers({
-        query: { filterOperator: 'eq', filterField: 'email', filterValue: email },
-        headers: currentHeaders
+        query: { filterOperator: "eq", filterField: "email", filterValue: email },
+        headers: currentHeaders,
       });
       expect(users.users).toHaveLength(1);
-      expect(users.users[0]?.role).toBe('member');
+      expect(users.users[0]?.role).toBe("member");
       const createdUser = users.users[0] as (typeof users.users)[number] | undefined;
       expect((createdUser as unknown as { isPasswordTemporary?: boolean } | undefined)?.isPasswordTemporary).toBe(true);
     });
 
-    it('rejects invalid payloads before calling auth', async () => {
+    it("rejects invalid payloads before calling auth", async () => {
       await setupAdminSession();
 
-      const { createUserAction } = await import('../create-user');
-      const result = await createUserAction({ email: 'not-an-email', name: '', role: 'member' });
+      const { createUserAction } = await import("../create-user");
+      const result = await createUserAction({ email: "not-an-email", name: "", role: "member" });
       expect(result.data).toBeUndefined();
       expect(result.validationErrors).toBeDefined();
     });
   });
 
-  describe('setRoleAction', () => {
-    it('requires authentication', async () => {
+  describe("setRoleAction", () => {
+    it("requires authentication", async () => {
       currentHeaders = new Headers();
 
-      const { setRoleAction } = await import('../set-role-user');
+      const { setRoleAction } = await import("../set-role-user");
 
-      await expectRedirect(setRoleAction({ userId: randomUUID(), newRole: 'admin' }));
+      await expectRedirect(setRoleAction({ userId: randomUUID(), newRole: "admin" }));
     });
 
-    it('fails for authenticated non-admin users', async () => {
+    it("fails for authenticated non-admin users", async () => {
       await setupMemberSession();
-      const { setRoleAction } = await import('../set-role-user');
+      const { setRoleAction } = await import("../set-role-user");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Test User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Test User" });
 
-      const result = await setRoleAction({ userId, newRole: 'admin' });
+      const result = await setRoleAction({ userId, newRole: "admin" });
       expectServerError(result, /required permissions/i);
     });
 
-    it('sets user role for an unbanned user', async () => {
+    it("sets user role for an unbanned user", async () => {
       await setupAdminSession();
-      const { setRoleAction } = await import('../set-role-user');
+      const { setRoleAction } = await import("../set-role-user");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Test User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Test User" });
 
-      const result = await setRoleAction({ userId, newRole: 'admin' });
+      const result = await setRoleAction({ userId, newRole: "admin" });
       expect(result.serverError).toBeUndefined();
       expect(result.data).toMatchObject({ success: true });
 
       const user = await listUserById(userId);
       expect(user).not.toBeNull();
-      expect(user!.role).toBe('admin');
+      expect(user!.role).toBe("admin");
     });
 
-    it('rejects role changes for banned users', async () => {
+    it("rejects role changes for banned users", async () => {
       await setupAdminSession();
-      const { setRoleAction } = await import('../set-role-user');
+      const { setRoleAction } = await import("../set-role-user");
 
-      const { auth } = await import('@/lib/auth');
+      const { auth } = await import("@/lib/auth");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Banned User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Banned User" });
 
-      await auth.api.banUser({ body: { userId, banReason: 'DISABLED' }, headers: currentHeaders });
+      await auth.api.banUser({ body: { userId, banReason: "DISABLED" }, headers: currentHeaders });
 
-      const result = await setRoleAction({ userId, newRole: 'admin' });
-      expectServerError(result, 'You cannot change this user role');
+      const result = await setRoleAction({ userId, newRole: "admin" });
+      expectServerError(result, "You cannot change this user role");
     });
   });
 
-  describe('deleteUserAction', () => {
-    it('requires authentication', async () => {
+  describe("deleteUserAction", () => {
+    it("requires authentication", async () => {
       currentHeaders = new Headers();
 
-      const { deleteUserAction } = await import('../delete-user');
+      const { deleteUserAction } = await import("../delete-user");
 
       await expectRedirect(deleteUserAction({ userId: randomUUID() }));
     });
 
-    it('fails for authenticated non-admin users', async () => {
+    it("fails for authenticated non-admin users", async () => {
       await setupMemberSession();
-      const { deleteUserAction } = await import('../delete-user');
+      const { deleteUserAction } = await import("../delete-user");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Deletable User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Deletable User" });
 
       const result = await deleteUserAction({ userId });
       expectServerError(result, /required permissions/i);
       expect(await getUserIdByEmail(email)).toBe(userId);
     });
 
-    it('deletes a non-admin user', async () => {
+    it("deletes a non-admin user", async () => {
       await setupAdminSession();
-      const { deleteUserAction } = await import('../delete-user');
+      const { deleteUserAction } = await import("../delete-user");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Deletable User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Deletable User" });
 
       const result = await deleteUserAction({ userId });
       expect(result.serverError).toBeUndefined();
@@ -363,13 +361,13 @@ describe('users server actions (integration)', () => {
       expect(user).toBeNull();
     });
 
-    it('refuses to delete an admin user', async () => {
+    it("refuses to delete an admin user", async () => {
       await setupAdminSession();
-      const { deleteUserAction } = await import('../delete-user');
+      const { deleteUserAction } = await import("../delete-user");
 
       const email = `admin2+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Another Admin' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Another Admin" });
       await promoteUserToAdmin(userId);
 
       const result = await deleteUserAction({ userId });
@@ -377,34 +375,34 @@ describe('users server actions (integration)', () => {
     });
   });
 
-  describe('toggleAccountStatusAction', () => {
-    it('requires authentication', async () => {
+  describe("toggleAccountStatusAction", () => {
+    it("requires authentication", async () => {
       currentHeaders = new Headers();
 
-      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+      const { toggleAccountStatusAction } = await import("../toggle-user-status");
 
       await expectRedirect(toggleAccountStatusAction({ userId: randomUUID(), currentStatus: null }));
     });
 
-    it('fails for authenticated non-admin users', async () => {
+    it("fails for authenticated non-admin users", async () => {
       await setupMemberSession();
-      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+      const { toggleAccountStatusAction } = await import("../toggle-user-status");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Toggle User" });
 
       const result = await toggleAccountStatusAction({ userId, currentStatus: null });
       expectServerError(result, /required permissions/i);
     });
 
-    it('disables and enables a user for the DISABLED reason', async () => {
+    it("disables and enables a user for the DISABLED reason", async () => {
       await setupAdminSession();
-      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+      const { toggleAccountStatusAction } = await import("../toggle-user-status");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Toggle User" });
 
       const disabled = await toggleAccountStatusAction({ userId, currentStatus: null });
       expect(disabled.serverError).toBeUndefined();
@@ -413,9 +411,9 @@ describe('users server actions (integration)', () => {
       const afterDisable = await listUserById(userId);
       expect(afterDisable).not.toBeNull();
       expect(afterDisable!.banned).toBe(true);
-      expect(afterDisable!.banReason).toBe('DISABLED');
+      expect(afterDisable!.banReason).toBe("DISABLED");
 
-      const enabled = await toggleAccountStatusAction({ userId, currentStatus: 'DISABLED' });
+      const enabled = await toggleAccountStatusAction({ userId, currentStatus: "DISABLED" });
       expect(enabled.serverError).toBeUndefined();
       expect(enabled.data).toMatchObject({ success: true });
 
@@ -425,17 +423,17 @@ describe('users server actions (integration)', () => {
       expect(afterEnable!.banReason).toBeNull();
     });
 
-    it('refuses to toggle when user is disabled for a different reason', async () => {
+    it("refuses to toggle when user is disabled for a different reason", async () => {
       await setupAdminSession();
-      const { toggleAccountStatusAction } = await import('../toggle-user-status');
+      const { toggleAccountStatusAction } = await import("../toggle-user-status");
 
       const email = `user+${randomUUID()}@example.com`;
-      const password = 'Password1234!';
-      const { userId } = await signUpUser({ email, password, name: 'Toggle User' });
+      const password = "Password1234!";
+      const { userId } = await signUpUser({ email, password, name: "Toggle User" });
 
-      const result = await toggleAccountStatusAction({ userId, currentStatus: 'SOME_OTHER_REASON' });
+      const result = await toggleAccountStatusAction({ userId, currentStatus: "SOME_OTHER_REASON" });
       expect(result.serverError).toBeUndefined();
-      expect(result.data).toMatchObject({ success: false, message: 'User is disabled for a different reason' });
+      expect(result.data).toMatchObject({ success: false, message: "User is disabled for a different reason" });
     });
   });
 });

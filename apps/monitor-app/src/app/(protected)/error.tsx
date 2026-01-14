@@ -1,6 +1,6 @@
-'use client'; // Error boundaries must be Client Components
+"use client"; // Error boundaries must be Client Components
 
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw } from "lucide-react";
 
 export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (

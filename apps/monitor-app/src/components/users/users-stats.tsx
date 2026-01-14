@@ -1,11 +1,11 @@
-import { Card } from '@/components/ui/card';
-import { AdminApiResult } from '@/lib/auth';
-import { ADMIN_ROLES } from '@/lib/auth-shared';
-import { hasAnyRoleOf } from '@/lib/utils';
-import { Shield, Users } from 'lucide-react';
+import { Card } from "@/components/ui/card";
+import { AdminApiResult } from "@/lib/auth";
+import { ADMIN_ROLES } from "@/lib/auth-shared";
+import { hasAnyRoleOf } from "@/lib/utils";
+import { Shield, Users } from "lucide-react";
 
 type Props = {
-  users: AdminApiResult<'listUsers'>['users'];
+  users: AdminApiResult<"listUsers">["users"];
   total: number;
 };
 

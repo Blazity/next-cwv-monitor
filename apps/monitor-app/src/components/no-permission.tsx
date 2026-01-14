@@ -1,9 +1,9 @@
-import type { ComponentProps } from 'react';
-import Link from 'next/link';
-import { Home, LayoutDashboard, ShieldOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import type { ComponentProps } from "react";
+import Link from "next/link";
+import { Home, LayoutDashboard, ShieldOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-type LinkHref = ComponentProps<typeof Link>['href'];
+type LinkHref = ComponentProps<typeof Link>["href"];
 
 type Props = {
   title?: string;
@@ -15,12 +15,12 @@ type Props = {
 };
 
 export function NoPermission({
-  title = 'Access denied',
+  title = "Access denied",
   description = "You don't have permission to view this page.",
-  primaryActionHref = '/projects',
-  primaryActionLabel = 'Back to projects',
-  secondaryActionHref = '/',
-  secondaryActionLabel = 'Home'
+  primaryActionHref = "/projects",
+  primaryActionLabel = "Back to projects",
+  secondaryActionHref = "/",
+  secondaryActionLabel = "Home",
 }: Props) {
   return (
     <div className="bg-background flex min-h-[60vh] items-center justify-center p-4">

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 
 type RoutesListPaginationProps = {
   currentPage: number;
@@ -21,7 +21,7 @@ export function RoutesListPagination({
   rangeEnd,
   totalRoutes,
   isPending,
-  onPageChange
+  onPageChange,
 }: RoutesListPaginationProps) {
   return (
     <div className="border-border flex flex-wrap items-center justify-between gap-3 border-t p-4">

@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { TooltipProvider } from '@/components/ui/tooltip';
-import Link from 'next/link';
-import { Activity, Users } from 'lucide-react';
-import { useParams, usePathname } from 'next/navigation';
-import { cn, hasAnyRoleOf } from '@/lib/utils';
-import { type ListProjectsResult } from '@/app/server/domain/projects/list/types';
-import { useUser } from '@/app/hooks/use-session';
-import { ProjectSelector } from '@/components/dashboard/projects-selector';
-import { MobileSheet } from '@/components/dashboard/mobile-sheet';
-import { getNavItems } from '@/components/dashboard/nav-items';
-import { ThemeToggle } from '@/components/dashboard/theme-toggle';
-import { UserDropdown } from '@/components/dashboard/user-dropdown';
-import { ADMIN_ROLES } from '@/lib/auth-shared';
-import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Link from "next/link";
+import { Activity, Users } from "lucide-react";
+import { useParams, usePathname } from "next/navigation";
+import { cn, hasAnyRoleOf } from "@/lib/utils";
+import { type ListProjectsResult } from "@/app/server/domain/projects/list/types";
+import { useUser } from "@/app/hooks/use-session";
+import { ProjectSelector } from "@/components/dashboard/projects-selector";
+import { MobileSheet } from "@/components/dashboard/mobile-sheet";
+import { getNavItems } from "@/components/dashboard/nav-items";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
+import { UserDropdown } from "@/components/dashboard/user-dropdown";
+import { ADMIN_ROLES } from "@/lib/auth-shared";
+import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 type NavbarProps = {
   projects: ListProjectsResult;
@@ -47,16 +47,16 @@ export function Navbar({ projects }: NavbarProps) {
               {navItems.map((item) => {
                 const isActive = item.isExact
                   ? pathname === item.href
-                  : pathname === item.href || pathname.startsWith(item.href + '/');
+                  : pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <PersistParamsLink
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? 'bg-accent text-accent-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
                     )}
                   >
                     <item.icon className="h-4 w-4" />
@@ -68,10 +68,10 @@ export function Navbar({ projects }: NavbarProps) {
                 <Link
                   href="/users"
                   className={cn(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                    pathname === '/users'
-                      ? 'bg-accent text-accent-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    pathname === "/users"
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
                   )}
                 >
                   <Users className="h-4 w-4" />

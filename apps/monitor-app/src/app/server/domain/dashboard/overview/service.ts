@@ -113,7 +113,7 @@ export class DashboardOverviewService {
       timeSeriesByMetric.get(metric)?.push({
         date: row.event_date,
         sampleSize: Number(row.sample_size || 0),
-        quantiles
+        quantiles,
       });
     }
 
@@ -135,9 +135,9 @@ export class DashboardOverviewService {
       statusDistribution[row.status] = Number(row.route_count || 0);
     }
 
-    const lcpRow = metricsRows.find(r => r.metric_name === 'LCP');
-    const prevLcpRow = previousMetricsRows.find(r => r.metric_name === 'LCP');
-    
+    const lcpRow = metricsRows.find((r) => r.metric_name === "LCP");
+    const prevLcpRow = previousMetricsRows.find((r) => r.metric_name === "LCP");
+
     const currentTotalViews = Number(lcpRow?.sample_size || 0);
     const previousTotalViews = Number(prevLcpRow?.sample_size || 0);
 

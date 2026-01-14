@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { Route } from 'lucide-react';
+import { Route } from "lucide-react";
 
 type RoutesListEmptyProps = {
   search: string;
@@ -12,7 +12,7 @@ export function RoutesListEmpty({ search }: RoutesListEmptyProps) {
     <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
       <Route className="text-muted-foreground mb-3 h-8 w-8" />
       <p className="text-muted-foreground text-sm">
-        {normalizedSearch ? `No routes matching "${normalizedSearch}"` : 'No routes found'}
+        {normalizedSearch ? `No routes matching "${normalizedSearch}"` : "No routes found"}
       </p>
     </div>
   );

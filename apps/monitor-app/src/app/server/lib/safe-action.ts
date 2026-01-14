@@ -1,10 +1,5 @@
 import { createSafeActionClient } from "next-safe-action";
-import {
-  ensurePermission,
-  getAuthorizedSession,
-  redirectToLogin,
-  UnauthorizedError,
-} from "@/lib/auth-utils";
+import { ensurePermission, getAuthorizedSession, redirectToLogin, UnauthorizedError } from "@/lib/auth-utils";
 import { auth } from "@/lib/auth";
 
 function isNextRedirectError(value: unknown): value is { digest: string } {

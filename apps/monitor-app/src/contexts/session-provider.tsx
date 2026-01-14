@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { SessionContext } from '@/contexts/session-context';
-import { auth } from '@/lib/auth';
+import { useMemo } from "react";
+import { SessionContext } from "@/contexts/session-context";
+import { auth } from "@/lib/auth";
 
 export function SessionProvider({
   initialSessionData,
-  children
+  children,
 }: {
   // NOTE: This provider is currently used only under `app/(protected)` where the layout redirects
   // on missing sessions (so `initialSessionData` is always non-null at runtime).

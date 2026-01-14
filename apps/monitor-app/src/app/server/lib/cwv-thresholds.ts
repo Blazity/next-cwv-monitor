@@ -1,4 +1,4 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 
 export type MetricThresholds = {
   good: number;
@@ -17,7 +17,7 @@ const THRESHOLDS = {
   CLS: { good: 0.1, needsImprovement: 0.25 },
   TTFB: { good: 800, needsImprovement: 1800 },
   FCP: { good: 1800, needsImprovement: 3000 },
-  FID: { good: 100, needsImprovement: 300 }
+  FID: { good: 100, needsImprovement: 300 },
 } as const;
 
 type ThresholdMetricName = keyof typeof THRESHOLDS;
@@ -29,7 +29,7 @@ export function getMetricThresholds(metricName: ThresholdMetricName): MetricThre
 export function getRatingForValue(metricName: ThresholdMetricName, value: number): WebVitalRatingV1 {
   const thresholds = getMetricThresholds(metricName);
 
-  if (value <= thresholds.good) return 'good';
-  if (value <= thresholds.needsImprovement) return 'needs-improvement';
-  return 'poor';
+  if (value <= thresholds.good) return "good";
+  if (value <= thresholds.needsImprovement) return "needs-improvement";
+  return "poor";
 }

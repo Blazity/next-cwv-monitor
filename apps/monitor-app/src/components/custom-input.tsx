@@ -7,7 +7,7 @@ type Props<T extends FieldValues> = {
   registration: UseFormRegisterReturn<Path<T>>;
   control: Control<T>;
   "data-1p-ignore"?: boolean | "true" | "false";
-} & React.ComponentProps<typeof Input>
+} & React.ComponentProps<typeof Input>;
 
 export function CustomInput<T extends FieldValues>({
   label,

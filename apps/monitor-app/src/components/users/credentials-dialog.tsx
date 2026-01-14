@@ -64,29 +64,25 @@ export function CredentialsDialog({
         {result ? (
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                 Email Address
               </Label>
               <div className="relative">
-                <Input
-                  readOnly
-                  value={result.email}
-                  className="pr-10 font-mono text-sm bg-muted/30"
-                />
+                <Input readOnly value={result.email} className="bg-muted/30 pr-10 font-mono text-sm" />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full w-10 hover:bg-transparent"
+                  className="absolute top-0 right-0 h-full w-10 hover:bg-transparent"
                   onClick={() => copyToClipboard(result.email, "Email")}
                 >
-                  <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                  <Copy className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
                 </Button>
               </div>
             </div>
 
             {result.password && (
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Label className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                   Temporary Password
                 </Label>
                 <div className="relative">
@@ -94,13 +90,13 @@ export function CredentialsDialog({
                     readOnly
                     type={isVisible ? "text" : "password"}
                     value={result.password}
-                    className="pr-20 font-mono text-sm bg-muted/30"
+                    className="bg-muted/30 pr-20 font-mono text-sm"
                   />
-                  <div className="absolute right-0 top-0 flex h-full items-center pr-1">
+                  <div className="absolute top-0 right-0 flex h-full items-center pr-1">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground h-8 w-8"
                       onClick={() => setIsVisible(!isVisible)}
                     >
                       {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -108,7 +104,7 @@ export function CredentialsDialog({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground h-8 w-8"
                       onClick={() => copyToClipboard(result.password!, "Password")}
                     >
                       <Copy className="h-3.5 w-3.5" />

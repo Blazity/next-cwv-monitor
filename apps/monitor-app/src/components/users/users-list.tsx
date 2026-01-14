@@ -227,7 +227,9 @@ export default function UsersList({ users }: Props) {
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem
                             onSelect={(e) => e.preventDefault()}
-                            disabled={currentUser.email === user.email || isDisabled || hasAnyRoleOf(user.role, ADMIN_ROLES)}
+                            disabled={
+                              currentUser.email === user.email || isDisabled || hasAnyRoleOf(user.role, ADMIN_ROLES)
+                            }
                             className="text-destructive focus:text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />

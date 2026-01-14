@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TimeSeriesChart } from '@/components/dashboard/time-series-chart';
-import { MetricSelector } from '@/components/dashboard/metric-selector';
-import type { DashboardOverview, DateRange } from '@/app/server/domain/dashboard/overview/types';
-import type { MetricName } from '@/app/server/domain/dashboard/overview/types';
+import { useState } from "react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { TimeSeriesChart } from "@/components/dashboard/time-series-chart";
+import { MetricSelector } from "@/components/dashboard/metric-selector";
+import type { DashboardOverview, DateRange } from "@/app/server/domain/dashboard/overview/types";
+import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
 
 type TrendChartByMetricProps = {
-  timeSeriesByMetric: DashboardOverview['timeSeriesByMetric'];
+  timeSeriesByMetric: DashboardOverview["timeSeriesByMetric"];
   initialMetric?: MetricName;
   title?: string;
-  dateRange: DateRange
+  dateRange: DateRange;
 };
 
 export function TrendChartByMetric({
   timeSeriesByMetric,
-  initialMetric = 'LCP',
-  title = 'Trend Over Time',
-  dateRange
+  initialMetric = "LCP",
+  title = "Trend Over Time",
+  dateRange,
 }: TrendChartByMetricProps) {
   const [selectedMetric, setSelectedMetric] = useState<MetricName>(initialMetric);
   const data = timeSeriesByMetric[selectedMetric];
@@ -32,14 +32,14 @@ export function TrendChartByMetric({
         </div>
       </CardHeader>
       <CardContent>
-        <TimeSeriesChart data={data} metric={selectedMetric} height={300} dateRange={dateRange}/>
+        <TimeSeriesChart data={data} metric={selectedMetric} height={300} dateRange={dateRange} />
         <div className="text-muted-foreground mt-4 flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div
               className="bg-status-good h-px w-8 opacity-50"
               style={{
                 backgroundImage:
-                  'repeating-linear-gradient(90deg, var(--status-good) 0, var(--status-good) 4px, transparent 4px, transparent 8px)'
+                  "repeating-linear-gradient(90deg, var(--status-good) 0, var(--status-good) 4px, transparent 4px, transparent 8px)",
               }}
             />
             <span>Good threshold</span>
@@ -49,7 +49,7 @@ export function TrendChartByMetric({
               className="bg-status-poor h-px w-8 opacity-50"
               style={{
                 backgroundImage:
-                  'repeating-linear-gradient(90deg, var(--status-poor) 0, var(--status-poor) 4px, transparent 4px, transparent 8px)'
+                  "repeating-linear-gradient(90deg, var(--status-poor) 0, var(--status-poor) 4px, transparent 4px, transparent 8px)",
               }}
             />
             <span>Poor threshold</span>

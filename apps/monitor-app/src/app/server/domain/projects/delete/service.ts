@@ -5,10 +5,10 @@ export class ProjectsDeleteService {
   async execute(projectId: string): Promise<DeleteProjectResult> {
     try {
       await deleteProject(projectId);
-      return { kind: 'ok' };
+      return { kind: "ok" };
     } catch (error) {
       console.error("Delete Project Service Error:", error);
-      return { kind: 'error', message: 'Failed to delete project.' };
+      return { kind: "error", message: "Failed to delete project." };
     }
   }
 }

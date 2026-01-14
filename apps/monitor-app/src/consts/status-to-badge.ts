@@ -1,22 +1,22 @@
-import type { WebVitalRatingV1 } from 'cwv-monitor-contracts';
-import type { BadgeProps } from '@/components/badge';
+import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
+import type { BadgeProps } from "@/components/badge";
 
-type StatusBadgeConfig = Pick<BadgeProps, 'label' | 'defaultIcon' | 'type'>;
+type StatusBadgeConfig = Pick<BadgeProps, "label" | "defaultIcon" | "type">;
 
 export const statusToBadge = {
   good: {
-    label: 'Good',
+    label: "Good",
     defaultIcon: true,
-    type: 'success'
+    type: "success",
   },
-  'needs-improvement': {
-    label: 'Needs improvement',
+  "needs-improvement": {
+    label: "Needs improvement",
     defaultIcon: true,
-    type: 'warning'
+    type: "warning",
   },
   poor: {
-    label: 'Poor',
+    label: "Poor",
     defaultIcon: true,
-    type: 'error'
-  }
+    type: "error",
+  },
 } as const satisfies Record<WebVitalRatingV1, StatusBadgeConfig>;

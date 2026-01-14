@@ -42,7 +42,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
               className={cn(
                 "bg-background/95 border-border border-b backdrop-blur will-change-transform",
                 "pointer-events-auto transition-transform duration-300 ease-out",
-                showStickyBar ? "translate-y-0 shadow-sm visible" : "-translate-y-[110%] ease-in invisible",
+                showStickyBar ? "visible translate-y-0 shadow-sm" : "invisible -translate-y-[110%] ease-in",
               )}
             >
               <div className="px-3 py-3 sm:px-4 lg:px-6">

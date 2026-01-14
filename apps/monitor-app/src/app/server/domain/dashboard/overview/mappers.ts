@@ -2,8 +2,8 @@ import {
   DateRange,
   GetDashboardOverviewQuery,
   MetricName,
-  OverviewDeviceType
-} from '@/app/server/domain/dashboard/overview/types';
+  OverviewDeviceType,
+} from "@/app/server/domain/dashboard/overview/types";
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_TOP_ROUTES_LIMIT = 5;
@@ -36,9 +36,9 @@ export function buildDashboardOverviewQuery(input: BuildDashboardOverviewQueryIn
 
   return {
     projectId: input.projectId,
-    deviceType: input.deviceType ?? 'all',
+    deviceType: input.deviceType ?? "all",
     range: { start, end },
-    selectedMetric: input.selectedMetric ?? 'LCP',
-    topRoutesLimit: input.topRoutesLimit ?? DEFAULT_TOP_ROUTES_LIMIT
+    selectedMetric: input.selectedMetric ?? "LCP",
+    topRoutesLimit: input.topRoutesLimit ?? DEFAULT_TOP_ROUTES_LIMIT,
   };
 }

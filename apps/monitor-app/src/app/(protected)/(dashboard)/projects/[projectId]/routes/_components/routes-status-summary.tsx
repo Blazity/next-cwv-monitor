@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Eye } from 'lucide-react';
+import { Eye } from "lucide-react";
 
-import { Card } from '@/components/ui/card';
-import type { StatusDistribution } from '@/app/server/domain/routes/list/types';
+import { Card } from "@/components/ui/card";
+import type { StatusDistribution } from "@/app/server/domain/routes/list/types";
 
 type RoutesStatusSummaryProps = {
   percentileLabel: string;
@@ -20,9 +20,7 @@ export function RoutesStatusSummary({ percentileLabel, statusDistribution }: Rou
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Good Routes ({percentileLabel})</div>
-            <div className="text-foreground text-xl font-semibold">
-              {statusDistribution.good.toLocaleString()}
-            </div>
+            <div className="text-foreground text-xl font-semibold">{statusDistribution.good.toLocaleString()}</div>
           </div>
         </div>
       </Card>
@@ -34,7 +32,7 @@ export function RoutesStatusSummary({ percentileLabel, statusDistribution }: Rou
           <div>
             <div className="text-muted-foreground text-sm">Needs Improvement</div>
             <div className="text-foreground text-xl font-semibold">
-              {statusDistribution['needs-improvement'].toLocaleString()}
+              {statusDistribution["needs-improvement"].toLocaleString()}
             </div>
           </div>
         </div>
@@ -46,9 +44,7 @@ export function RoutesStatusSummary({ percentileLabel, statusDistribution }: Rou
           </div>
           <div>
             <div className="text-muted-foreground text-sm">Poor Routes</div>
-            <div className="text-foreground text-xl font-semibold">
-              {statusDistribution.poor.toLocaleString()}
-            </div>
+            <div className="text-foreground text-xl font-semibold">{statusDistribution.poor.toLocaleString()}</div>
           </div>
         </div>
       </Card>
