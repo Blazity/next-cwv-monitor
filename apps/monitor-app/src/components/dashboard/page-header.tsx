@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { DeviceSelector } from "@/components/dashboard/device-selector";
 import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
+import { DataFreshnessIndicator } from "@/components/dashboard/data-freshness-indicator";
 
 type PageHeaderProps = {
   title: string;
@@ -68,9 +69,12 @@ export function PageHeader({ title, description, children, showFilters = true }:
         </div>
         {showFilters && (
           <div className="shrink-0">
-            <div className="flex items-center gap-2">
-              <DeviceSelector />
-              <TimeRangeSelector />
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <DeviceSelector />
+                <TimeRangeSelector />
+              </div>
+              <DataFreshnessIndicator />
             </div>
           </div>
         )}
