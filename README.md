@@ -1,3 +1,11 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./.assets/dark_mode.png">
+    <source media="(prefers-color-scheme: light)" srcset="./.assets/light_mode.png">
+    <img alt="CWV Monitor dashboard screenshot" src="./.assets/light_mode.png" width="900">
+  </picture>
+</p>
+
 <h1 align="center">next-cwv-monitor</h1>
 
 <p align="center">
@@ -82,7 +90,7 @@ That's it! Your app will start sending CWV metrics 🎉
 <details>
 <summary><strong>Dashboard Overview</strong></summary>
 <p align="center">
-  <img src="./docs/screenshots/dashboard-overview.png" alt="Dashboard Overview" width="800">
+  <img src="./.assets/dashboard-overview.png" alt="Dashboard Overview" width="800">
   <br>
   <em>Dashboard overview showing CWV metrics across all routes</em>
 </p>
@@ -91,7 +99,7 @@ That's it! Your app will start sending CWV metrics 🎉
 <details>
 <summary><strong>Route Detail View</strong></summary>
 <p align="center">
-  <img src="./docs/screenshots/route-detail.png" alt="Route Detail View" width="800">
+  <img src="./.assets/route-detail.png" alt="Route Detail View" width="800">
   <br>
   <em>Drill down into individual routes with percentile distributions</em>
 </p>
@@ -100,7 +108,7 @@ That's it! Your app will start sending CWV metrics 🎉
 <details>
 <summary><strong>Custom Events</strong></summary>
 <p align="center">
-  <img src="./docs/screenshots/custom-events.png" alt="Custom Events" width="800">
+  <img src="./.assets/custom-events.png" alt="Custom Events" width="800">
   <br>
   <em>Track custom business events correlated with Core Web Vitals</em>
 </p>
