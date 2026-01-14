@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Route } from 'lucide-react';
-import { RouteHelpTooltip } from '@/components/dashboard/route-help-tooltip';
-import { MetricName, WorstRouteItem } from '@/app/server/domain/dashboard/overview/types';
-import { Badge } from '@/components/badge';
-import { formatCompactNumber, formatMetricValue } from '@/lib/utils';
-import { statusToBadge } from '@/consts/status-to-badge';
-import { PersistParamsLink } from '@/components/dashboard/persist-params-link';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, Route } from "lucide-react";
+import { RouteHelpTooltip } from "@/components/dashboard/route-help-tooltip";
+import { MetricName, WorstRouteItem } from "@/app/server/domain/dashboard/overview/types";
+import { Badge } from "@/components/badge";
+import { formatCompactNumber, formatMetricValue } from "@/lib/utils";
+import { statusToBadge } from "@/consts/status-to-badge";
+import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 type WorstRoutesByMetricProps = {
   projectId: string;

@@ -1,10 +1,10 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: "standalone",
   typedRoutes: true,
-  transpilePackages: ['@t3-oss/env-nextjs', '@t3-oss/env-core', 'cwv-monitor-contracts'],
-  serverExternalPackages: ['pino'],
+  transpilePackages: ["@t3-oss/env-nextjs", "@t3-oss/env-core", "cwv-monitor-contracts"],
+  serverExternalPackages: ["pino"],
   cacheComponents: true,
 };
 

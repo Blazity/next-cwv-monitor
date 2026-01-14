@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
-import { cn } from '@/lib/utils';
-import { Monitor, Smartphone, Layers } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { useQueryState } from 'nuqs';
-import { parseAsStringEnum } from 'nuqs';
-import { OVERVIEW_DEVICE_TYPES } from '@/app/server/domain/dashboard/overview/types';
-import type { OverviewDeviceType } from '@/app/server/domain/dashboard/overview/types';
+import { cn } from "@/lib/utils";
+import { Monitor, Smartphone, Layers } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useQueryState } from "nuqs";
+import { parseAsStringEnum } from "nuqs";
+import { OVERVIEW_DEVICE_TYPES } from "@/app/server/domain/dashboard/overview/types";
+import type { OverviewDeviceType } from "@/app/server/domain/dashboard/overview/types";
 
 const devices: { value: OverviewDeviceType; label: string; shortLabel: string; icon: ReactNode }[] = [
-  { value: 'all', label: 'All devices', shortLabel: 'All', icon: <Layers className="h-3.5 w-3.5" /> },
-  { value: 'desktop', label: 'Desktop', shortLabel: 'Desktop', icon: <Monitor className="h-3.5 w-3.5" /> },
-  { value: 'mobile', label: 'Mobile', shortLabel: 'Mobile', icon: <Smartphone className="h-3.5 w-3.5" /> }
+  { value: "all", label: "All devices", shortLabel: "All", icon: <Layers className="h-3.5 w-3.5" /> },
+  { value: "desktop", label: "Desktop", shortLabel: "Desktop", icon: <Monitor className="h-3.5 w-3.5" /> },
+  { value: "mobile", label: "Mobile", shortLabel: "Mobile", icon: <Smartphone className="h-3.5 w-3.5" /> },
 ];
 
 export function DeviceSelector() {
   const [deviceType, setDeviceType] = useQueryState(
-    'deviceType',
+    "deviceType",
     parseAsStringEnum([...OVERVIEW_DEVICE_TYPES])
-      .withDefault('all')
-      .withOptions({ shallow: false })
+      .withDefault("all")
+      .withOptions({ shallow: false }),
   );
 
   const handleDeviceChange = (value: OverviewDeviceType) => {
@@ -44,8 +44,8 @@ export function DeviceSelector() {
                 aria-selected={deviceType === device.value}
                 onClick={() => handleDeviceChange(device.value)}
                 className={cn(
-                  'text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 sm:text-sm',
-                  { 'bg-background text-foreground shadow-sm': deviceType === device.value }
+                  "text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 sm:text-sm",
+                  { "bg-background text-foreground shadow-sm": deviceType === device.value },
                 )}
               >
                 {device.icon}

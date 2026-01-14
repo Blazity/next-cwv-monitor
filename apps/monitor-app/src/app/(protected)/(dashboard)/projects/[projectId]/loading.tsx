@@ -1,10 +1,10 @@
-import { PageHeader } from '@/components/dashboard/page-header';
+import { PageHeader } from "@/components/dashboard/page-header";
 import {
   ChartSkeleton,
   CoreWebVitalsSkeleton,
   QuickStatsSkeleton,
-  WorstRoutesSkeleton
-} from '@/components/dashboard/page-skeleton';
+  WorstRoutesSkeleton,
+} from "@/components/dashboard/page-skeleton";
 
 export default function Loading() {
   return (

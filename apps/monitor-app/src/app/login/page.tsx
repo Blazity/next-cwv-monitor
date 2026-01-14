@@ -1,12 +1,12 @@
-import { Suspense } from 'react';
-import { LoginForm } from '@/components/login-form';
-import { auth } from '@/lib/auth';
-import { getSafeCallbackUrl } from '@/lib/auth-utils';
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { Suspense } from "react";
+import { LoginForm } from "@/components/login-form";
+import { auth } from "@/lib/auth";
+import { getSafeCallbackUrl } from "@/lib/auth-utils";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 async function LoginPageContent({
-  searchParams
+  searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
@@ -14,7 +14,7 @@ async function LoginPageContent({
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
 
   const session = await auth.api.getSession({
-    headers: await headers()
+    headers: await headers(),
   });
 
   if (session) {

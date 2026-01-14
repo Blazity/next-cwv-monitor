@@ -1,4 +1,4 @@
-import { RateLimiterMemory, RateLimiterRes } from 'rate-limiter-flexible';
+import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 const DEFAULT_LIMIT = 1000;
 const ONE_HOUR_SECONDS = 60 * 60;
@@ -35,7 +35,7 @@ export class MemoryRateLimiter implements RateLimiter {
     this.limiter = new RateLimiterMemory({
       points: this.points,
       duration: this.durationSeconds,
-      blockDuration: this.blockDurationSeconds
+      blockDuration: this.blockDurationSeconds,
     });
   }
 
@@ -46,7 +46,7 @@ export class MemoryRateLimiter implements RateLimiter {
       this.limiter = new RateLimiterMemory({
         points: this.points,
         duration: this.durationSeconds,
-        blockDuration: this.blockDurationSeconds
+        blockDuration: this.blockDurationSeconds,
       });
     }
   }
@@ -58,7 +58,7 @@ export class MemoryRateLimiter implements RateLimiter {
         ok: true,
         limit: this.points,
         remaining: Math.max(0, res.remainingPoints),
-        resetAt: Date.now() + res.msBeforeNext
+        resetAt: Date.now() + res.msBeforeNext,
       };
     } catch (error) {
       if (error instanceof RateLimiterRes) {
@@ -66,7 +66,7 @@ export class MemoryRateLimiter implements RateLimiter {
           ok: false,
           limit: this.points,
           remaining: 0,
-          resetAt: Date.now() + error.msBeforeNext
+          resetAt: Date.now() + error.msBeforeNext,
         };
       }
       throw error;

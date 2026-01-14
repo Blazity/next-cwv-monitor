@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import { Toaster } from 'sonner';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { Toaster } from "sonner";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 type ProvidersProps = {
   children: React.ReactNode;

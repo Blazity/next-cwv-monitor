@@ -1,6 +1,6 @@
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from "lucide-react";
 
-import { Card } from '@/components/ui/card';
+import { Card } from "@/components/ui/card";
 
 type RoutesErrorStateProps = {
   message: string;

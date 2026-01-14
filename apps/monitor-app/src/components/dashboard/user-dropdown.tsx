@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { LogOut, Users } from 'lucide-react';
+import { useTransition } from "react";
+import { LogOut, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuSeparator,
-  DropdownMenuItem
-} from '@/components/ui/dropdown-menu';
-import type { SessionData } from '@/lib/auth';
-import { signOut } from '@/app/server/actions/sign-out';
-import Link from 'next/link';
-import { hasAnyRoleOf } from '@/lib/utils';
-import { ADMIN_ROLES } from '@/lib/auth-shared';
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import type { SessionData } from "@/lib/auth";
+import { signOut } from "@/app/server/actions/sign-out";
+import Link from "next/link";
+import { hasAnyRoleOf } from "@/lib/utils";
+import { ADMIN_ROLES } from "@/lib/auth-shared";
 
-type SessionUser = SessionData['user'];
+type SessionUser = SessionData["user"];
 
 export function UserDropdown({ user }: { user: SessionUser }) {
   const [isPending, startTransition] = useTransition();
@@ -50,7 +50,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         )}
         <DropdownMenuItem className="text-muted-foreground" onClick={handleSignOut} disabled={isPending}>
           <LogOut className="mr-2 h-4 w-4" />
-          {isPending ? 'Signing out...' : 'Sign out'}
+          {isPending ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -11,11 +11,7 @@ import { notFound } from "next/navigation";
 import { RoutesList } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/routes-list";
 import { RoutesErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-error-state";
 import type { MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import type {
-  RoutesDeviceType,
-  RoutesSortField,
-  SortDirection,
-} from "@/app/server/domain/routes/list/types";
+import type { RoutesDeviceType, RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
 import type { Percentile } from "@/app/server/domain/dashboard/overview/types";
 
 const routesListService = new RoutesListService();

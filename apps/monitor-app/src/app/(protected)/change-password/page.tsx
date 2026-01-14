@@ -1,9 +1,7 @@
 import { ChangePasswordForm } from "@/components/change-password-form";
 import { getAuthorizedSession, getSafeCallbackUrl } from "@/lib/auth-utils";
 
-export default async function ChangePasswordPage({
-  searchParams,
-}: PageProps<"/change-password">) {
+export default async function ChangePasswordPage({ searchParams }: PageProps<"/change-password">) {
   await getAuthorizedSession();
   const params = await searchParams;
   const callbackUrl = getSafeCallbackUrl(params.callbackUrl);

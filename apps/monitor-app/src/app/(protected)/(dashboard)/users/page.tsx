@@ -1,17 +1,17 @@
-import { CreateUserBtn } from '@/components/users/create-user-btn';
-import { NoPermission } from '@/components/no-permission';
-import UsersList from '@/components/users/users-list';
-import UsersStats from '@/components/users/users-stats';
-import { auth } from '@/lib/auth';
-import { ADMIN_ROLES } from '@/lib/auth-shared';
-import { getAuthorizedSession } from '@/lib/auth-utils';
-import { hasAnyRoleOf } from '@/lib/utils';
-import { cacheTag } from 'next/cache';
-import { headers } from 'next/headers';
+import { CreateUserBtn } from "@/components/users/create-user-btn";
+import { NoPermission } from "@/components/no-permission";
+import UsersList from "@/components/users/users-list";
+import UsersStats from "@/components/users/users-stats";
+import { auth } from "@/lib/auth";
+import { ADMIN_ROLES } from "@/lib/auth-shared";
+import { getAuthorizedSession } from "@/lib/auth-utils";
+import { hasAnyRoleOf } from "@/lib/utils";
+import { cacheTag } from "next/cache";
+import { headers } from "next/headers";
 
 const fetchCachedUsers = async (headers: HeadersInit) => {
-  'use cache';
-  cacheTag('users');
+  "use cache";
+  cacheTag("users");
   return auth.api.listUsers({ query: {}, headers });
 };
 

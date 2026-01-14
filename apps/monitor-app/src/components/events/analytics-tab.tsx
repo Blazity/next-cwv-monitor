@@ -23,7 +23,7 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
   const hasStats = Array.isArray(eventStats) && eventStats.length > 0;
   const hasChartData = Array.isArray(chartData) && chartData.length > 0;
 
-  if (!selectedEvent || selectedEvent && eventDisplaySettings?.[selectedEvent]?.isHidden) {
+  if (!selectedEvent || (selectedEvent && eventDisplaySettings?.[selectedEvent]?.isHidden)) {
     return (
       <Empty className="border-2 border-dashed py-20">
         <EmptyHeader>
@@ -101,7 +101,7 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
         </CardContent>
         {hasStats && (
           <CardFooter className="border-border border-t pt-4">
-            <div className="flex w-full items-center justify-between text-sm gap-4">
+            <div className="flex w-full items-center justify-between gap-4 text-sm">
               <span className="text-muted-foreground">
                 Tracked on {eventStats.length} route{eventStats.length === 1 ? "" : "s"}
               </span>

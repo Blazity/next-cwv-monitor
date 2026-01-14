@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useTransition } from 'react';
-import { LogOut } from 'lucide-react';
-import { User } from 'better-auth';
-import { signOut } from '@/app/server/actions/sign-out';
+import { useTransition } from "react";
+import { LogOut } from "lucide-react";
+import { User } from "better-auth";
+import { signOut } from "@/app/server/actions/sign-out";
 
 export function UserActionsMobile({
   setMobileMenuOpen,
-  user
+  user,
 }: {
   setMobileMenuOpen: (open: boolean) => void;
   user: User;
@@ -39,7 +39,7 @@ export function UserActionsMobile({
         className="text-muted-foreground hover:text-foreground hover:bg-accent/50 flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
       >
         <LogOut className="h-4 w-4" />
-        {isPending ? 'Signing out...' : 'Sign out'}
+        {isPending ? "Signing out..." : "Sign out"}
       </button>
     </div>
   );

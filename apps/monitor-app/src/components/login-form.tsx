@@ -17,29 +17,29 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const { form, action, handleSubmitWithAction } = useHookFormAction(
-    loginAction,
-    arktypeResolver(loginSchema),
-    {
-      actionProps: {
-        onSuccess: () => {
-          toast.success("Logged in. Redirecting...");
-          globalThis.location.replace(callbackUrl);
-        },
-        onError: ({ error }) => {
-          const message = error.serverError || "Login failed";
-          form.setError("root", { type: "server", message });
-        },
+  const { form, action, handleSubmitWithAction } = useHookFormAction(loginAction, arktypeResolver(loginSchema), {
+    actionProps: {
+      onSuccess: () => {
+        toast.success("Logged in. Redirecting...");
+        globalThis.location.replace(callbackUrl);
       },
-      formProps: {
-        mode: "onBlur",
-        defaultValues: { email: "", password: "" },
+      onError: ({ error }) => {
+        const message = error.serverError || "Login failed";
+        form.setError("root", { type: "server", message });
       },
-    }
-  );
+    },
+    formProps: {
+      mode: "onBlur",
+      defaultValues: { email: "", password: "" },
+    },
+  });
 
-  const { register, formState: { errors }, clearErrors } = form;
-  
+  const {
+    register,
+    formState: { errors },
+    clearErrors,
+  } = form;
+
   const isLoading = action.isPending || form.formState.isSubmitting;
   const errorMessage = errors.root?.message || errors.email?.message || errors.password?.message;
 

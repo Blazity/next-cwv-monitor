@@ -1,6 +1,6 @@
-import { DateRange, MetricName } from '@/app/server/domain/dashboard/overview/types';
-import type { GetRouteDetailQuery } from '@/app/server/domain/routes/detail/types';
-import { RoutesDeviceType } from '@/app/server/domain/routes/list/types';
+import { DateRange, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import type { GetRouteDetailQuery } from "@/app/server/domain/routes/detail/types";
+import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
 
 const DEFAULT_RANGE_DAYS = 7;
 
@@ -32,10 +32,8 @@ export function buildRouteDetailQuery(input: BuildRouteDetailQueryInput): GetRou
   return {
     projectId: input.projectId,
     route: input.route,
-    deviceType: input.deviceType ?? 'all',
+    deviceType: input.deviceType ?? "all",
     range: { start, end },
-    selectedMetric: input.selectedMetric ?? 'LCP'
+    selectedMetric: input.selectedMetric ?? "LCP",
   };
 }
-
-

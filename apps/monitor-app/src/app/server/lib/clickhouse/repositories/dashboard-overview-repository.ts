@@ -1,8 +1,8 @@
-import { MetricName } from '@/app/server/domain/dashboard/overview/types';
-import { sql } from '@/app/server/lib/clickhouse/client';
-import type { DeviceType } from '@/app/server/lib/device-types';
+import { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { sql } from "@/app/server/lib/clickhouse/client";
+import type { DeviceType } from "@/app/server/lib/device-types";
 
-export type OverviewDeviceFilter = DeviceType | 'all';
+export type OverviewDeviceFilter = DeviceType | "all";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -19,7 +19,7 @@ function buildWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFra
       AND event_date BETWEEN toDate(${filters.start}) AND toDate(${filters.end})
   `;
 
-  if (filters.deviceType !== 'all') {
+  if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
   }
 
@@ -59,7 +59,7 @@ export type WorstRouteRow = {
 export async function fetchWorstRoutes(
   filters: BaseFilters,
   metricName: MetricName,
-  limit: number
+  limit: number,
 ): Promise<WorstRouteRow[]> {
   const where = buildWhereClause(filters, metricName);
 
@@ -91,11 +91,11 @@ export type MetricDailySeriesRow = {
 
 export async function fetchMetricDailySeries(
   filters: BaseFilters,
-  metricName: MetricName
-): Promise<Omit<MetricDailySeriesRow, 'metric_name'>[]> {
+  metricName: MetricName,
+): Promise<Omit<MetricDailySeriesRow, "metric_name">[]> {
   const where = buildWhereClause(filters, metricName);
 
-  return sql<Omit<MetricDailySeriesRow, 'metric_name'>>`
+  return sql<Omit<MetricDailySeriesRow, "metric_name">>`
     SELECT
       event_date,
       quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
@@ -131,7 +131,7 @@ export type RouteStatusDistributionRow = {
 export async function fetchRouteStatusDistribution(
   filters: BaseFilters,
   metricName: MetricName,
-  thresholds: { good: number; needsImprovement: number }
+  thresholds: { good: number; needsImprovement: number },
 ): Promise<RouteStatusDistributionRow[]> {
   const where = buildWhereClause(filters, metricName);
 

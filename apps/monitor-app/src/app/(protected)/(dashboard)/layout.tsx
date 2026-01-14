@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import { Navbar } from '@/components/dashboard/navbar';
-import { projectsListService } from '@/app/server/domain/projects/list/service';
+import type { ReactNode } from "react";
+import { Navbar } from "@/components/dashboard/navbar";
+import { projectsListService } from "@/app/server/domain/projects/list/service";
 
 async function DashboardLayout({ children }: { children: ReactNode }) {
   const projectsData = await projectsListService.list();

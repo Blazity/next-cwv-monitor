@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { METRIC_NAMES, type MetricName } from '@/app/server/domain/dashboard/overview/types';
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { METRIC_NAMES, type MetricName } from "@/app/server/domain/dashboard/overview/types";
 
 const METRIC_INFO: Record<
   MetricName,
@@ -13,30 +13,30 @@ const METRIC_INFO: Record<
   }
 > = {
   LCP: {
-    name: 'Largest Contentful Paint',
-    description: 'Measures loading performance. Marks the point when the largest content element becomes visible.',
-    isCoreWebVital: true
+    name: "Largest Contentful Paint",
+    description: "Measures loading performance. Marks the point when the largest content element becomes visible.",
+    isCoreWebVital: true,
   },
   INP: {
-    name: 'Interaction to Next Paint',
-    description: 'Measures interactivity. Evaluates the responsiveness of a page to user interactions.',
-    isCoreWebVital: true
+    name: "Interaction to Next Paint",
+    description: "Measures interactivity. Evaluates the responsiveness of a page to user interactions.",
+    isCoreWebVital: true,
   },
   CLS: {
-    name: 'Cumulative Layout Shift',
-    description: 'Measures visual stability. Quantifies how much visible content shifts during page load.',
-    isCoreWebVital: true
+    name: "Cumulative Layout Shift",
+    description: "Measures visual stability. Quantifies how much visible content shifts during page load.",
+    isCoreWebVital: true,
   },
   FCP: {
-    name: 'First Contentful Paint',
-    description: 'Measures when the first content (text or image) is painted to the screen.',
-    isCoreWebVital: false
+    name: "First Contentful Paint",
+    description: "Measures when the first content (text or image) is painted to the screen.",
+    isCoreWebVital: false,
   },
   TTFB: {
-    name: 'Time to First Byte',
-    description: 'Measures the time between requesting a resource and when the first byte arrives from the server.',
-    isCoreWebVital: false
-  }
+    name: "Time to First Byte",
+    description: "Measures the time between requesting a resource and when the first byte arrives from the server.",
+    isCoreWebVital: false,
+  },
 };
 
 function isCoreWebVital(metric: MetricName): metric is MetricName {
@@ -72,11 +72,11 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
                   aria-selected={selected === metric}
                   onClick={() => onChange(metric)}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                     selected === metric
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
-                    isOther && selected !== metric && 'opacity-70'
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                    isOther && selected !== metric && "opacity-70",
                   )}
                 >
                   {metric}

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { FolderX, Home, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { FolderX, Home, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function ProjectNotFound() {
   return (

@@ -1,5 +1,5 @@
 export const BAN_REASONS = {
-  disableAccount: 'DISABLED'
+  disableAccount: "DISABLED",
 } as const;
 
 export type BanReasonKey = keyof typeof BAN_REASONS;

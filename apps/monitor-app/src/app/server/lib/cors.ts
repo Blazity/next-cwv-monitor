@@ -8,11 +8,7 @@ export type CorsOptions = {
 
 export function getCorsHeaders(req: Request | NextRequest, options: CorsOptions = {}) {
   const origin = req.headers.get("origin");
-  const { 
-    allowedOrigins = [], 
-    allowCredentials = false, 
-    methods = ["GET", "POST", "OPTIONS"] 
-  } = options;
+  const { allowedOrigins = [], allowCredentials = false, methods = ["GET", "POST", "OPTIONS"] } = options;
 
   const headers = new Headers({
     "Access-Control-Allow-Methods": methods.join(","),
@@ -25,9 +21,9 @@ export function getCorsHeaders(req: Request | NextRequest, options: CorsOptions 
   }
 
   const isAllowed = origin && allowedOrigins.includes(origin);
-  
+
   headers.set("Vary", "Origin");
-  
+
   if (isAllowed) {
     headers.set("Access-Control-Allow-Origin", origin);
   } else {

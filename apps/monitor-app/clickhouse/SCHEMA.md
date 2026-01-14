@@ -121,20 +121,20 @@ The monitor app uses Better Auth for authentication. The following tables are cr
 
 ### `user`
 
-| Column           | Type             | Notes                   |
-| ---------------- | ---------------- | ----------------------- |
-| `id`             | String           | Primary user identifier |
-| `name`           | String           | Display name            |
-| `email`          | String           | User email address      |
-| `email_verified` | Bool             | Defaults to `false`     |
-| `role`           | String           | Defaults to `'user'`    |
-| `banned`         | Bool             | Defaults to `false`     |
-| `is_password_temporary` | Bool      | Defaults to `false`     |
-| `ban_reason`     | Nullable(String) | Optional ban reason     |
-| `ban_expires`    | Nullable(DateTime) | Optional ban expiration |
-| `image`          | Nullable(String) | Optional avatar/image   |
-| `created_at`     | DateTime         | Defaults to `now()`     |
-| `updated_at`     | DateTime         | Defaults to `now()`     |
+| Column                  | Type               | Notes                   |
+| ----------------------- | ------------------ | ----------------------- |
+| `id`                    | String             | Primary user identifier |
+| `name`                  | String             | Display name            |
+| `email`                 | String             | User email address      |
+| `email_verified`        | Bool               | Defaults to `false`     |
+| `role`                  | String             | Defaults to `'user'`    |
+| `banned`                | Bool               | Defaults to `false`     |
+| `is_password_temporary` | Bool               | Defaults to `false`     |
+| `ban_reason`            | Nullable(String)   | Optional ban reason     |
+| `ban_expires`           | Nullable(DateTime) | Optional ban expiration |
+| `image`                 | Nullable(String)   | Optional avatar/image   |
+| `created_at`            | DateTime           | Defaults to `now()`     |
+| `updated_at`            | DateTime           | Defaults to `now()`     |
 
 Engine: `ReplacingMergeTree(updated_at)`  
 Order key: `(id)`  
@@ -142,16 +142,16 @@ Indexes: `idx_user_email` (bloom filter)
 
 ### `session`
 
-| Column       | Type             | Notes                        |
-| ------------ | ---------------- | ---------------------------- |
-| `id`         | String           | Primary session identifier   |
-| `expires_at` | DateTime         | Session expiration timestamp |
-| `token`      | String           | Session token                |
-| `created_at` | DateTime         | Defaults to `now()`          |
-| `updated_at` | DateTime         | Defaults to `now()`          |
-| `ip_address` | Nullable(String) | Optional client IP address   |
-| `user_agent` | Nullable(String) | Optional client user agent   |
-| `user_id`    | String           | Owning user (`user.id`)      |
+| Column            | Type             | Notes                         |
+| ----------------- | ---------------- | ----------------------------- |
+| `id`              | String           | Primary session identifier    |
+| `expires_at`      | DateTime         | Session expiration timestamp  |
+| `token`           | String           | Session token                 |
+| `created_at`      | DateTime         | Defaults to `now()`           |
+| `updated_at`      | DateTime         | Defaults to `now()`           |
+| `ip_address`      | Nullable(String) | Optional client IP address    |
+| `user_agent`      | Nullable(String) | Optional client user agent    |
+| `user_id`         | String           | Owning user (`user.id`)       |
 | `impersonated_by` | Nullable(String) | Optional impersonator user id |
 
 Engine: `ReplacingMergeTree(updated_at)`  
