@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { RefreshCw } from "lucide-react";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
+  const diffMins = Math.floor(diffMs / 60_000);
 
   if (diffMins < 1) return "just now";
   if (diffMins < 60) return `${diffMins}m ago`;
@@ -20,13 +20,12 @@ function getRelativeTime(date: Date): string {
 
 export function DataFreshnessIndicator() {
   const router = useRouter();
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    setLastUpdated(new Date());
-    const interval = setInterval(() => setTick((n) => n + 1), 60000);
+    const interval = setInterval(() => setTick((n) => n + 1), 60_000);
     return () => clearInterval(interval);
   }, []);
 
@@ -41,10 +40,11 @@ export function DataFreshnessIndicator() {
 
   return (
     <div className="text-muted-foreground flex items-center gap-2 text-xs">
-      <span>Updated {lastUpdated ? getRelativeTime(lastUpdated) : "just now"}</span>
+      <span>Updated {getRelativeTime(lastUpdated)}</span>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
+            type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="hover:bg-accent rounded p-1 transition-colors disabled:opacity-50"
