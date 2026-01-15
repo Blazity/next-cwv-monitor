@@ -9,7 +9,7 @@ export default function CustomEventButton(props: Props) {
     <BaseCustomEventButton
       {...props}
       useTrackHook={useTrackCustomEvent}
-      className={props.className ?? "bg-black text-white px-4 py-2 rounded-xl"}
+      className={props.className ?? 'rounded-xl bg-black px-4 py-2 text-white'}
     />
   );
 }

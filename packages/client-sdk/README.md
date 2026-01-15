@@ -4,16 +4,15 @@ A lightweight React SDK for monitoring Core Web Vitals and custom events in Next
 
 ## Features
 
-* ⚡️ **Zero Config Vitals:** Automatically tracks LCP, INP, CLS, FCP, and TTFB.
-* 🔄 **Dual-Router Support:** First-class support for both Next.js App Router and Pages Router.
-* 🛡 **Privacy First:** No cookies or `localStorage`. Uses in-memory session IDs that rotate on every page view.
-* 📦 **Smart Batching:** Events are debounced and batched to minimize network overhead and impact on the main thread.
-* 📊 **Route Normalization:** Automatically transforms concrete paths (e.g., `/blog/my-post`) into parameterized routes (e.g., `/blog/[slug]`) for cleaner grouping.
+- ⚡️ **Zero Config Vitals:** Automatically tracks LCP, INP, CLS, FCP, and TTFB.
+- 🔄 **Dual-Router Support:** First-class support for both Next.js App Router and Pages Router.
+- 🛡 **Privacy First:** No cookies or `localStorage`. Uses in-memory session IDs that rotate on every page view.
+- 📦 **Smart Batching:** Events are debounced and batched to minimize network overhead and impact on the main thread.
+- 📊 **Route Normalization:** Automatically transforms concrete paths (e.g., `/blog/my-post`) into parameterized routes (e.g., `/blog/[slug]`) for cleaner grouping.
 
 ## Installation
 
     npm install next-cwv-monitor
-    
 
 ## Usage
 
@@ -25,13 +24,13 @@ Wrap your root layout or a provider component.
 
 ```tsx
 import { CWVMonitor } from 'next-cwv-monitor/app-router';
-    
+
 export function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <CWVMonitor 
-          projectId="YOUR-PROJECT-UUID" 
+        <CWVMonitor
+          projectId="YOUR-PROJECT-UUID"
           endpoint="https://your-monitor-api.com"
           sampleRate={0.5} // Optional: track 50% of page views
         >
@@ -86,22 +85,22 @@ export function CheckoutButton() {
 
 ### `CWVMonitor` Props
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `projectId` | `string` | **Required.** Your unique project identifier. |
-| `endpoint` | `string` | **Required.** The base URL of your ingestion server. |
-| `sampleRate` | `number` | Value between 0 and 1. Default is `1` (100%). |
-| `abortTime` | `number` | Optional timeout in ms for ingest requests. |
+| Prop         | Type     | Description                                          |
+| ------------ | -------- | ---------------------------------------------------- |
+| `projectId`  | `string` | **Required.** Your unique project identifier.        |
+| `endpoint`   | `string` | **Required.** The base URL of your ingestion server. |
+| `sampleRate` | `number` | Value between 0 and 1. Default is `1` (100%).        |
+| `abortTime`  | `number` | Optional timeout in ms for ingest requests.          |
 
 ### `useTrackCustomEvent()`
 
 Returns: `(name: string, options?: TrackCustomEventOptions) => void`
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `route` | `string` | Override the detected route name (e.g., /custom-route). |
-| `path` | `string` | Override the detected URL path. |
-| `recordedAt` | `string` | Override the timestamp (ISO string). |
+| Option       | Type     | Description                                             |
+| ------------ | -------- | ------------------------------------------------------- |
+| `route`      | `string` | Override the detected route name (e.g., /custom-route). |
+| `path`       | `string` | Override the detected URL path.                         |
+| `recordedAt` | `string` | Override the timestamp (ISO string).                    |
 
 ## Technical Details
 
@@ -109,13 +108,13 @@ Returns: `(name: string, options?: TrackCustomEventOptions) => void`
 
 The SDK utilizes the `web-vitals` library to capture the following metrics:
 
-| Metric | Name | Description |
-| --- | --- | --- |
-| **LCP** | Largest Contentful Paint | Measures loading performance. |
-| **INP** | Interaction to Next Paint | Measures responsiveness to user input. |
-| **CLS** | Cumulative Layout Shift | Measures visual stability. |
-| **FCP** | First Contentful Paint | Time until the first bit of content is rendered. |
-| **TTFB** | Time to First Byte | Measures server responsiveness. |
+| Metric   | Name                      | Description                                      |
+| -------- | ------------------------- | ------------------------------------------------ |
+| **LCP**  | Largest Contentful Paint  | Measures loading performance.                    |
+| **INP**  | Interaction to Next Paint | Measures responsiveness to user input.           |
+| **CLS**  | Cumulative Layout Shift   | Measures visual stability.                       |
+| **FCP**  | First Contentful Paint    | Time until the first bit of content is rendered. |
+| **TTFB** | Time to First Byte        | Measures server responsiveness.                  |
 
 ### Sampling Logic Detail
 
@@ -125,31 +124,31 @@ If the decision is `false`, the SDK will still track `$page_view` and any custom
 
 ### Deployment & Compatibility
 
-* **Environment**: Works in all modern browsers (Chrome, Edge, Firefox, Safari).
-* **Frameworks**: Requires **Next.js 13+**, **React 18+**
-* **Tree Shaking**: The SDK is modular. If you only import from `app-router`, the `pages-router` logic will be excluded from your production bundle.
+- **Environment**: Works in all modern browsers (Chrome, Edge, Firefox, Safari).
+- **Frameworks**: Requires **Next.js 13+**, **React 18+**
+- **Tree Shaking**: The SDK is modular. If you only import from `app-router`, the `pages-router` logic will be excluded from your production bundle.
 
 ### Event Batching & Delivery
 
 Events are sent to `POST /api/ingest`. To prevent performance bottlenecks, the queue flushes based on these triggers:
 
-* Threshold: When at least 10 items are queued.
-* Debounce: 50ms after the last recorded event (trailing debounce).
-* Unload: Best-effort delivery via navigator.sendBeacon (using keepalive: true) when a user closes the tab.
-* Retries: Automatic exponential backoff (up to 3 retries) for failed requests.
+- Threshold: When at least 10 items are queued.
+- Debounce: 50ms after the last recorded event (trailing debounce).
+- Unload: Best-effort delivery via navigator.sendBeacon (using keepalive: true) when a user closes the tab.
+- Retries: Automatic exponential backoff (up to 3 retries) for failed requests.
 
 ### Page Views & Route Reconstruction
 
 Page views are tracked automatically (as a system event named `$page_view`) and can be used as the denominator for conversion rates. Every event includes:
 
-* `path`: the concrete URL path (e.g. `/blog/hello-world`)
-* `route`: a parameterized route template (e.g. `/blog/[slug]`). The SDK reconstructs this by comparing the pathname against active URL parameters, allowing you to aggregate data by page type.
+- `path`: the concrete URL path (e.g. `/blog/hello-world`)
+- `route`: a parameterized route template (e.g. `/blog/[slug]`). The SDK reconstructs this by comparing the pathname against active URL parameters, allowing you to aggregate data by page type.
 
 ### Privacy & Sessions
 
-* In-Memory: Session IDs are generated at runtime and **never** stored in cookies or browser storage.
-* Rotation: The session id is rotated on every page view, so you can treat each view as a separate session without tracking users across browser sessions.
-* Sampling: Decisions are made **per page view**. If a view is sampled, all Web Vitals for that specific view are captured to ensure a complete performance profile.
+- In-Memory: Session IDs are generated at runtime and **never** stored in cookies or browser storage.
+- Rotation: The session id is rotated on every page view, so you can treat each view as a separate session without tracking users across browser sessions.
+- Sampling: Decisions are made **per page view**. If a view is sampled, all Web Vitals for that specific view are captured to ensure a complete performance profile.
 
 ## Internal Architecture
 
@@ -189,7 +188,6 @@ When the SDK flushes data, it sends a `POST` request to `{endpoint}/api/ingest` 
     }
   ]
 }
-
 ```
 
 ## Implementation Details
@@ -207,9 +205,9 @@ Sampling is "Sticky" per page view. When a user lands on a page (or navigates to
 
 The SDK uses a custom utility to reverse-engineer the route template in the App Router. Because Next.js doesn't natively expose the template (like `/shop/[id]`) to the client-side `usePathname()` hook, the SDK:
 
-* Extracts the raw pathname.
-* Maps active URL parameters back into the string.
-* Identifies "Catch-all" routes (e.g., `[...slug]`) by finding contiguous matches in the segment array.
+- Extracts the raw pathname.
+- Maps active URL parameters back into the string.
+- Identifies "Catch-all" routes (e.g., `[...slug]`) by finding contiguous matches in the segment array.
 
 ## FAQ
 

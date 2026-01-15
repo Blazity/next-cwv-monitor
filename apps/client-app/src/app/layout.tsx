@@ -27,7 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <CWVMonitor projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID} endpoint={env.NEXT_PUBLIC_MONITOR_API} useBeacon={!env.NEXT_PUBLIC_DISABLE_BEACON}>{children}</CWVMonitor>
+        <CWVMonitor
+          projectId={env.NEXT_PUBLIC_MONITOR_PROJECT_ID}
+          endpoint={env.NEXT_PUBLIC_MONITOR_API}
+          useBeacon={!env.NEXT_PUBLIC_DISABLE_BEACON}
+        >
+          {children}
+        </CWVMonitor>
       </body>
     </html>
   );

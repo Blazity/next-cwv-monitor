@@ -50,12 +50,9 @@ export function DemoShell({ children }: DemoShellProps) {
 
       <footer className="relative border-t border-zinc-200/60 py-10 text-center text-xs text-zinc-500 dark:border-zinc-800/70 dark:text-zinc-300">
         <div className="mx-auto max-w-6xl px-6">
-          <p>
-            Tip: open the console to see SDK debug logs in dev; use Chrome to observe LCP/CLS/INP more reliably.
-          </p>
+          <p>Tip: open the console to see SDK debug logs in dev; use Chrome to observe LCP/CLS/INP more reliably.</p>
         </div>
       </footer>
     </div>
   );
 }
-

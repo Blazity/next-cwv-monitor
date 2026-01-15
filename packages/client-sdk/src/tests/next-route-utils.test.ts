@@ -18,5 +18,3 @@ describe('reconstructAppRouterRoute()', () => {
     expect(reconstructAppRouterRoute('/about', { slug: 'hello-world' })).toBe('/about');
   });
 });
-
-

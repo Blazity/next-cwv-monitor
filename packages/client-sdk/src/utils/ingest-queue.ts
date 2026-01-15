@@ -194,7 +194,12 @@ export class IngestQueue {
     this._attemptFlush({ _cwvCopy: cwvCopy, _customCopy: customCopy, _retryNumber: 0, _reason: reason });
   }
 
-  private _attemptFlush({ _cwvCopy: cwvCopy, _customCopy: customCopy, _retryNumber, _reason: reason }: AttemptArgs): void {
+  private _attemptFlush({
+    _cwvCopy: cwvCopy,
+    _customCopy: customCopy,
+    _retryNumber,
+    _reason: reason
+  }: AttemptArgs): void {
     const cfg = this._config;
     if (!cfg) {
       for (const event of cwvCopy) this._cwvEvents.add(event);
@@ -252,7 +257,12 @@ export class IngestQueue {
         } else {
           this._retryTimeoutId = setTimeout(
             () => {
-              this._attemptFlush({ _cwvCopy: cwvCopy, _customCopy: customCopy, _retryNumber: _retryNumber + 1, _reason: reason });
+              this._attemptFlush({
+                _cwvCopy: cwvCopy,
+                _customCopy: customCopy,
+                _retryNumber: _retryNumber + 1,
+                _reason: reason
+              });
             },
             100 * 2 ** _retryNumber
           );

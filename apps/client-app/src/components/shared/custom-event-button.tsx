@@ -1,9 +1,9 @@
 import { ComponentPropsWithoutRef, MouseEvent } from 'react';
 
 type TrackCustomEventOptions = {
-    route?: string;
-    path?: string;
-    recordedAt?: string;
+  route?: string;
+  path?: string;
+  recordedAt?: string;
 };
 type TrackCustomEvent = (name: string, options?: TrackCustomEventOptions) => void;
 
@@ -26,7 +26,7 @@ export function BaseCustomEventButton({
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     trackEvent(eventName, {
-      ...eventOptions,
+      ...eventOptions
     });
 
     onClick?.(event);

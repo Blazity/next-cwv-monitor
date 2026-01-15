@@ -28,5 +28,3 @@ export function __setMockRouter(router: MockNextRouter): void {
 export function useRouter(): Required<MockNextRouter> {
   return currentRouter;
 }
-
-

@@ -64,5 +64,3 @@ export function reconstructAppRouterRoute(pathname: string, params: NextParams):
 
   return '/' + result.filter(Boolean).join('/');
 }
-
-

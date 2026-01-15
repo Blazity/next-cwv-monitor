@@ -19,5 +19,3 @@ export function usePathname(): string {
 export function useParams(): MockNextParams {
   return currentParams;
 }
-
-

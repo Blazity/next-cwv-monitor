@@ -27,7 +27,9 @@ export default function PagesRouterIndexPage() {
               Go to sub page
             </Link>
 
-            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
+            <CustomEventButton eventName="Subscribe" name="subscribe">
+              Subscribe
+            </CustomEventButton>
           </div>
         </div>
 

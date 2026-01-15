@@ -60,7 +60,10 @@ export const BLOG_POSTS: BlogPost[] = [
     publishedAt: '2025-12-19',
     content: [
       { type: 'p', text: 'Each page view rotates the in-memory session id.' },
-      { type: 'p', text: 'CWV sampling is primed per page view so all vitals for that view are included/excluded together.' },
+      {
+        type: 'p',
+        text: 'CWV sampling is primed per page view so all vitals for that view are included/excluded together.'
+      },
       { type: 'h2', text: 'Route vs path' },
       { type: 'p', text: 'Route is the template (/blog/[slug]). Path is the concrete URL (/blog/routing-and-metrics).' }
     ]
@@ -70,5 +73,3 @@ export const BLOG_POSTS: BlogPost[] = [
 export function getBlogPost(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((p) => p.slug === slug);
 }
-
-

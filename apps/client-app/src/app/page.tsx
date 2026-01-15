@@ -46,7 +46,9 @@ export default function Home() {
               CWV docs
             </a>
 
-            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
+            <CustomEventButton eventName="Subscribe" name="subscribe">
+              Subscribe
+            </CustomEventButton>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
