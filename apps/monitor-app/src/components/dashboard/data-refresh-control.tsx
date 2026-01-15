@@ -23,9 +23,9 @@ const formatLastUpdated = (date: Date) => {
 
 export function DataRefreshControl() {
   const router = useRouter();
-  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState(() => new Date());
   const [isPending, startTransition] = useTransition();
-  const [, setTick] = useState(0);
+  const [_tick, setTick] = useState(0);
 
   const handleRefresh = useCallback(() => {
     startTransition(() => {
