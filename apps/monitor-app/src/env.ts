@@ -44,9 +44,12 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
   },
-  client: {},
+  client: {
+    NEXT_PUBLIC_AUTO_REFRESH_INTERVAL_SECONDS: z.coerce.number().positive().default(60),
+  },
   skipValidation: process.env.SKIP_VALIDATION === "true" || isBuildCommand,
   runtimeEnv: {
+    NEXT_PUBLIC_AUTO_REFRESH_INTERVAL_SECONDS: process.env.NEXT_PUBLIC_AUTO_REFRESH_INTERVAL_SECONDS,
     MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
     RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
     MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
