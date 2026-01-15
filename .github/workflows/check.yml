@@ -39,6 +39,9 @@ jobs:
       - name: Install deps
         run: pnpm install
 
+      - name: Check Prettier
+        run: pnpm -r run --aggregate-output --no-bail format:check
+
       - name: Determine changed parts
         id: changes
         run: |
