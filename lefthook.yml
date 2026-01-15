@@ -1,0 +1,14 @@
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.{js,jsx,ts,tsx,json,md,mjs}"
+      run: pnpm -r run --no-bail format:check
+    lint:
+      glob: "*.{js,jsx,ts,tsx}"
+      run: pnpm -r run --no-bail lint
+
+pre-push:
+  commands:
+    type-check:
+      run: pnpm -r run --no-bail type-check
