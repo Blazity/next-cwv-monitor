@@ -44,6 +44,7 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     LOG_LEVEL: z.enum(LOG_LEVELS).default("info"),
   },
+  client: {},
   skipValidation: process.env.SKIP_VALIDATION === "true" || isBuildCommand,
   runtimeEnv: {
     MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
