@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { DeviceSelector } from "@/components/dashboard/device-selector";
 import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
-import { DataFreshnessIndicator } from "@/components/dashboard/data-freshness-indicator";
+import { DataRefreshControl } from "@/components/dashboard/data-refresh-control";
 
 type PageHeaderProps = {
   title: string;
@@ -74,7 +74,7 @@ export function PageHeader({ title, description, children, showFilters = true }:
                 <DeviceSelector />
                 <TimeRangeSelector />
               </div>
-              <DataFreshnessIndicator />
+              <DataRefreshControl />
             </div>
           </div>
         )}
