@@ -2,11 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { env } from "@/env";
 import { formatCountdown } from "@/lib/format-countdown";
 
-const AUTO_REFRESH_INTERVAL_SECONDS = env.NEXT_PUBLIC_AUTO_REFRESH_INTERVAL_SECONDS;
+type UseAutoRefreshProps = {
+  onRefresh: () => void;
+  isPending: boolean;
+  autoRefreshIntervalSeconds: number;
+};
 
-export function useAutoRefresh(onRefresh: () => void, isPending: boolean) {
+export function useAutoRefresh({ onRefresh, isPending, autoRefreshIntervalSeconds }: UseAutoRefreshProps) {
   const [enabled, setEnabled] = useState(false);
-  const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(AUTO_REFRESH_INTERVAL_SECONDS);
+  const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(autoRefreshIntervalSeconds);
 
   useEffect(() => {
     if (enabled) {
@@ -19,7 +23,7 @@ export function useAutoRefresh(onRefresh: () => void, isPending: boolean) {
       return;
     }
 
-    const targetTime = Date.now() + AUTO_REFRESH_INTERVAL_SECONDS * 1000;
+    const targetTime = Date.now() + autoRefreshIntervalSeconds * 1000;
 
     const countdownInterval = setInterval(() => {
       const now = Date.now();
@@ -35,9 +39,9 @@ export function useAutoRefresh(onRefresh: () => void, isPending: boolean) {
 
     return () => {
       clearInterval(countdownInterval);
-      setSecondsUntilRefresh(AUTO_REFRESH_INTERVAL_SECONDS);
+      setSecondsUntilRefresh(autoRefreshIntervalSeconds);
     };
-  }, [enabled, isPending, onRefresh]);
+  }, [enabled, isPending, onRefresh, autoRefreshIntervalSeconds]);
 
   const toggle = useCallback(() => {
     setEnabled((prev) => !prev);

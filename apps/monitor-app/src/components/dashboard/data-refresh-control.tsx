@@ -6,11 +6,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { RefreshCw, Timer, TimerOff } from "lucide-react";
 import { formatDistance } from "date-fns";
-import { env } from "@/env";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { formatCountdown } from "@/lib/format-countdown";
 
-const AUTO_REFRESH_INTERVAL_SECONDS = env.NEXT_PUBLIC_AUTO_REFRESH_INTERVAL_SECONDS;
+const AUTO_REFRESH_INTERVAL_SECONDS = 60;
 const ONE_SECOND_MS = 1000;
 
 const formatLastUpdated = (date: Date) => {
@@ -18,7 +17,7 @@ const formatLastUpdated = (date: Date) => {
   if (diffInSeconds < 60) {
     return "just now";
   }
-  return formatDistance(date, new Date(), { addSuffix: true, includeSeconds: true });
+  return formatDistance(date, new Date(), { addSuffix: true });
 };
 
 export function DataRefreshControl() {
@@ -34,7 +33,11 @@ export function DataRefreshControl() {
     });
   }, [router]);
 
-  const autoRefresh = useAutoRefresh(handleRefresh, isPending);
+  const autoRefresh = useAutoRefresh({
+    onRefresh: handleRefresh,
+    isPending,
+    autoRefreshIntervalSeconds: AUTO_REFRESH_INTERVAL_SECONDS,
+  });
 
   useEffect(() => {
     const interval = setInterval(() => setTick((n) => n + 1), ONE_SECOND_MS);
