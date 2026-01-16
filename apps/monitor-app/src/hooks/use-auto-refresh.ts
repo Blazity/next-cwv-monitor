@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { env } from "@/env";
 import { formatCountdown } from "@/lib/format-countdown";
 
 type UseAutoRefreshProps = {
