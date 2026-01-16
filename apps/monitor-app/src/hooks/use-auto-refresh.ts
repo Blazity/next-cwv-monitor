@@ -28,6 +28,7 @@ export function useAutoRefresh({ onRefresh, isPending, autoRefreshIntervalSecond
       const now = Date.now();
 
       if (now >= targetTime) {
+        clearInterval(countdownInterval);
         onRefresh();
         return;
       }
