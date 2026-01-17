@@ -1,17 +1,16 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
-import type { DeviceType } from "@/app/server/lib/device-types";
-import { DateRange, MetricName, Percentile, QuantileSummary } from "@/app/server/domain/dashboard/overview/types";
+import type { DeviceFilter } from "@/app/server/lib/device-types";
+import { DateRange, MetricName, Percentile, QuantileSummary, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 
 export const ROUTES_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
-export type RoutesDeviceType = DeviceType | "all";
 
 export type RoutesSortField = "route" | "views" | "metric";
-export type SortDirection = "asc" | "desc";
+
 
 export type ListRoutesQuery = {
   projectId: string;
   range: DateRange;
-  deviceType: RoutesDeviceType;
+  deviceType: DeviceFilter;
   search?: string;
   metricName: MetricName;
   percentile: Percentile;

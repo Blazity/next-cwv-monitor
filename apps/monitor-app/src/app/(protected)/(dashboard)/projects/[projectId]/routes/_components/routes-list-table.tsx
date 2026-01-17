@@ -5,8 +5,8 @@ import { ArrowDown, ArrowRight, ArrowUp, ArrowUpDown, Route } from "lucide-react
 import { Badge } from "@/components/badge";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { formatCompactNumber, formatMetricValue } from "@/lib/utils";
-import type { RouteListItem, RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
-import { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import type { RouteListItem, RoutesSortField } from "@/app/server/domain/routes/list/types";
+import { MetricName, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 
 type RoutesListTableProps = {
   items: RouteListItem[];

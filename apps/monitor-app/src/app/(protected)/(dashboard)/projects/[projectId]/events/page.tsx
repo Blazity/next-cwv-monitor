@@ -6,7 +6,7 @@ import {
   fetchProjectEventNames,
 } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
-import { TimeRangeSelector } from "@/components/dashboard/time-range-selector";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { EventsCards } from "@/components/events/events-cards";
 import { EventsTabs } from "@/components/events/events-tabs";
 import { getAuthorizedSession } from "@/lib/auth-utils";
@@ -19,7 +19,7 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
   await getAuthorizedSession();
   const { projectId } = await params;
   // TODO: time range should handle 24h here
-  const { timeRange, event = "" } = eventsSearchParamsCache.parse(await searchParams);
+  const { timeRange, deviceType, event = "" } = eventsSearchParamsCache.parse(await searchParams);
 
   const [allEvents, names, project] = await Promise.all([
     fetchEvents({ projectId, range: timeRange }),
@@ -47,21 +47,15 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
   const [events, eventsStats, chartData] =
     hasEvents && selectedEvent
       ? await Promise.all([
-          fetchEventsStatsData({ eventName: selectedEvent, projectId, range: timeRange }),
-          fetchTotalStatsEvents({ projectId, range: timeRange }),
-          fetchConversionTrend({ projectId, range: timeRange, eventName: selectedEvent }),
+          fetchEventsStatsData({ eventName: selectedEvent, projectId, range: timeRange, deviceType }),
+          fetchTotalStatsEvents({ projectId, range: timeRange, deviceType }),
+          fetchConversionTrend({ projectId, range: timeRange, eventName: selectedEvent, deviceType }),
         ])
       : [null, null, null];
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-row items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-foreground text-2xl font-semibold">Events</h1>
-          <p className="text-muted-foreground text-sm">Track conversions and manage custom events</p>
-        </div>
-        <TimeRangeSelector />
-      </div>
+      <PageHeader title="Events" description="Track conversions and manage custom events" />
 
       <EventsCards
         eventDisplaySettings={eventDisplaySettings}

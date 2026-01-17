@@ -10,16 +10,17 @@ import { cacheLife } from "next/cache";
 import { notFound } from "next/navigation";
 import { RoutesList } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/routes-list";
 import { RoutesErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-error-state";
-import type { MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import type { RoutesDeviceType, RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
+import type { MetricName, SortDirection, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { RoutesSortField } from "@/app/server/domain/routes/list/types";
 import type { Percentile } from "@/app/server/domain/dashboard/overview/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const routesListService = new RoutesListService();
 const PAGE_SIZE = 10;
 
 async function getCachedRoutesList(
   projectId: string,
-  deviceType: RoutesDeviceType,
+  deviceType: DeviceFilter,
   timeRange: TimeRangeKey,
   search: string,
   metricName: MetricName,

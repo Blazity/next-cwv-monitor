@@ -1,19 +1,16 @@
-import { DateRange, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, MetricName, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 import { Percentile } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
-import type { DeviceType } from "@/app/server/lib/device-types";
-
-export type RoutesDeviceFilter = DeviceType | "all";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 export type SortField = "route" | "views" | "metric";
-export type SortDirection = "asc" | "desc";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
 type BaseFilters = {
   projectId: string;
   range: DateRange;
-  deviceType: RoutesDeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 const PAGE_VIEW_EVENT_NAME = "$page_view";

@@ -1,8 +1,7 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
-import type { DeviceType } from "@/app/server/lib/device-types";
+import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
-export type OverviewDeviceType = DeviceType | "all";
 
 export const METRIC_NAMES = ["LCP", "INP", "CLS", "FCP", "TTFB"] as const;
 export type MetricName = (typeof METRIC_NAMES)[number];
@@ -20,11 +19,13 @@ export type DateRange = {
   end: Date;
 };
 
+export type SortDirection = "asc" | "desc";
+
 export type GetDashboardOverviewQuery = {
   projectId: string;
   range: DateRange;
   selectedMetric: MetricName;
-  deviceType: OverviewDeviceType;
+  deviceType: DeviceFilter;
   topRoutesLimit: number;
 };
 
@@ -75,8 +76,8 @@ export function isMetricName(value: unknown): value is MetricName {
   return typeof value === "string" && METRIC_NAMES.includes(value as MetricName);
 }
 
-export function isOverviewDeviceType(value: unknown): value is OverviewDeviceType {
-  return typeof value === "string" && OVERVIEW_DEVICE_TYPES.includes(value as OverviewDeviceType);
+export function isOverviewDeviceType(value: unknown): value is DeviceFilter {
+  return typeof value === "string" && OVERVIEW_DEVICE_TYPES.includes(value as DeviceFilter);
 }
 
 export function isTimeRangeKey(value: unknown): value is TimeRangeKey {
@@ -90,5 +91,6 @@ export function parseTimeRange(key: unknown): DateRange {
   start.setDate(end.getDate() - range.days);
   return { start, end };
 }
+
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
 export type Percentile = (typeof PERCENTILES)[number];

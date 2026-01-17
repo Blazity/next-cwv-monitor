@@ -1,5 +1,6 @@
 export const DEVICE_TYPES = ["desktop", "mobile"] as const;
 export type DeviceType = (typeof DEVICE_TYPES)[number];
+export type DeviceFilter = DeviceType | "all";
 
 export const DEFAULT_DEVICE_TYPE: DeviceType = "desktop";
 

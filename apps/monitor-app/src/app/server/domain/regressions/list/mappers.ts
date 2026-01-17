@@ -1,11 +1,11 @@
+import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
 import type {
   DateRange,
   ListRegressionsQuery,
-  RegressionsDeviceType,
   RegressionsMetricFilter,
   RegressionsSortField,
-  SortDirection,
 } from "@/app/server/domain/regressions/list/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_LIMIT = 20;
@@ -19,7 +19,7 @@ type SortInput = {
 export type BuildListRegressionsQueryInput = {
   projectId: string;
   range?: Partial<DateRange>;
-  deviceType?: RegressionsDeviceType;
+  deviceType?: DeviceFilter;
   search?: string;
   metric?: RegressionsMetricFilter;
   sort?: SortInput;

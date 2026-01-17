@@ -1,9 +1,8 @@
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 
 export function RouteHelpTooltip() {
   return (
-    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -23,6 +22,5 @@ export function RouteHelpTooltip() {
           </p>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
   );
 }

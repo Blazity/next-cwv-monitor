@@ -13,7 +13,7 @@ import { DistributionChart } from "@/app/(protected)/(dashboard)/projects/[proje
 import { InsightsCard } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/insights-card";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TimeSeriesChart, type TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
 import { CORE_WEB_VITALS, OTHER_METRICS } from "@/consts/metrics";
 import { cn, capitalize } from "@/lib/utils";
@@ -178,125 +178,122 @@ export function RouteDetailView({
           )}
         </div>
       </div>
-
-      <TooltipProvider>
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-foreground text-lg font-medium">Core Web Vitals</h2>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Info className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>Core Web Vitals are Google&apos;s key metrics for user experience.</p>
-              </TooltipContent>
-            </Tooltip>
-            <span className="text-muted-foreground text-xs">({percentileLabel})</span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {CORE_WEB_VITALS.map((metricName) => {
-              const metric = metricsByName.get(metricName);
-              return (
-                <MetricCard
-                  key={metricName}
-                  metricName={metricName}
-                  quantiles={metric?.quantiles ?? null}
-                  sampleCount={metric?.sampleSize ?? 0}
-                  selectedPercentile={selectedPercentile}
-                />
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-foreground text-lg font-medium">Other Metrics</h2>
-            <span className="text-muted-foreground text-xs">({percentileLabel})</span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
-            {OTHER_METRICS.map((metricName) => {
-              const metric = metricsByName.get(metricName);
-              return (
-                <MetricCard
-                  key={metricName}
-                  metricName={metricName}
-                  quantiles={metric?.quantiles ?? null}
-                  sampleCount={metric?.sampleSize ?? 0}
-                  selectedPercentile={selectedPercentile}
-                />
-              );
-            })}
-          </div>
-        </section>
-
-        <Card className="bg-card border-border">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-foreground text-lg font-medium">Performance Trend</CardTitle>
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <MetricSelector
-                selected={selectedMetric as unknown as Parameters<typeof MetricSelector>[0]["selected"]}
-                onChange={(value) => void setSelectedMetric(value as MetricName)}
-                showOtherMetrics
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-foreground text-lg font-medium">Core Web Vitals</h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Info className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p>Core Web Vitals are Google&apos;s key metrics for user experience.</p>
+            </TooltipContent>
+          </Tooltip>
+          <span className="text-muted-foreground text-xs">({percentileLabel})</span>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {CORE_WEB_VITALS.map((metricName) => {
+            const metric = metricsByName.get(metricName);
+            return (
+              <MetricCard
+                key={metricName}
+                metricName={metricName}
+                quantiles={metric?.quantiles ?? null}
+                sampleCount={metric?.sampleSize ?? 0}
+                selectedPercentile={selectedPercentile}
               />
-              <Select
-                value={selectedEvent || "none"}
-                onValueChange={(value) => void setSelectedEvent(value === "none" ? "" : value)}
-                disabled={visibleEvents.length === 0}
-              >
-                <SelectTrigger className="bg-card border-border w-48">
-                  <SelectValue placeholder="Overlay events" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No events</SelectItem>
-                  {visibleEvents.map((eventName) => (
-                    <SelectItem key={eventName} value={eventName}>
-                      {getEventLabel(eventName, eventDisplaySettings)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-foreground text-lg font-medium">Other Metrics</h2>
+          <span className="text-muted-foreground text-xs">({percentileLabel})</span>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
+          {OTHER_METRICS.map((metricName) => {
+            const metric = metricsByName.get(metricName);
+            return (
+              <MetricCard
+                key={metricName}
+                metricName={metricName}
+                quantiles={metric?.quantiles ?? null}
+                sampleCount={metric?.sampleSize ?? 0}
+                selectedPercentile={selectedPercentile}
+              />
+            );
+          })}
+        </div>
+      </section>
+
+      <Card className="bg-card border-border">
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-foreground text-lg font-medium">Performance Trend</CardTitle>
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+            <MetricSelector
+              selected={selectedMetric as unknown as Parameters<typeof MetricSelector>[0]["selected"]}
+              onChange={(value) => void setSelectedMetric(value as MetricName)}
+              showOtherMetrics
+            />
+            <Select
+              value={selectedEvent || "none"}
+              onValueChange={(value) => void setSelectedEvent(value === "none" ? "" : value)}
+              disabled={visibleEvents.length === 0}
+            >
+              <SelectTrigger className="bg-card border-border w-48">
+                <SelectValue placeholder="Overlay events" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No events</SelectItem>
+                {visibleEvents.map((eventName) => (
+                  <SelectItem key={eventName} value={eventName}>
+                    {getEventLabel(eventName, eventDisplaySettings)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <TimeSeriesChart
+            data={data.timeSeries}
+            metric={selectedMetric as unknown as Parameters<typeof TimeSeriesChart>[0]["metric"]}
+            percentile={selectedPercentile}
+            overlay={overlayInput}
+            height={300}
+            dateRange={dateRange}
+          />
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground text-lg font-medium">
+              {METRIC_INFO[selectedMetric].friendlyLabel} Distribution
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <TimeSeriesChart
-              data={data.timeSeries}
-              metric={selectedMetric as unknown as Parameters<typeof TimeSeriesChart>[0]["metric"]}
-              percentile={selectedPercentile}
-              overlay={overlayInput}
-              height={300}
-              dateRange={dateRange}
+            <DistributionChart
+              good={data.distribution.good}
+              needsImprovement={data.distribution["needs-improvement"]}
+              poor={data.distribution.poor}
             />
           </CardContent>
+          <CardFooter className="border-border border-t">
+            <div className="flex w-full items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total measurements</span>
+              <span className="text-foreground font-medium">{selectedMetricSampleSize.toLocaleString()}</span>
+            </div>
+          </CardFooter>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-foreground text-lg font-medium">
-                {METRIC_INFO[selectedMetric].friendlyLabel} Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DistributionChart
-                good={data.distribution.good}
-                needsImprovement={data.distribution["needs-improvement"]}
-                poor={data.distribution.poor}
-              />
-            </CardContent>
-            <CardFooter className="border-border border-t">
-              <div className="flex w-full items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total measurements</span>
-                <span className="text-foreground font-medium">{selectedMetricSampleSize.toLocaleString()}</span>
-              </div>
-            </CardFooter>
-          </Card>
-
-          <InsightsCard insights={data.insights} />
-        </div>
-      </TooltipProvider>
+        <InsightsCard insights={data.insights} />
+      </div>
     </div>
   );
 }

@@ -2,8 +2,8 @@ import {
   DateRange,
   GetDashboardOverviewQuery,
   MetricName,
-  OverviewDeviceType,
 } from "@/app/server/domain/dashboard/overview/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_TOP_ROUTES_LIMIT = 5;
@@ -11,7 +11,7 @@ const DEFAULT_TOP_ROUTES_LIMIT = 5;
 export type BuildDashboardOverviewQueryInput = {
   projectId: string;
   range?: Partial<DateRange>;
-  deviceType?: OverviewDeviceType;
+  deviceType?: DeviceFilter;
   selectedMetric?: MetricName;
   topRoutesLimit?: number;
 };

@@ -11,11 +11,12 @@ import { dashboardSearchParamsCache } from "@/lib/search-params";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { OverviewDeviceType as DeviceType, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceType, timeRange: TimeRangeKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
   const dateRange = timeRangeToDateRange(timeRange);
