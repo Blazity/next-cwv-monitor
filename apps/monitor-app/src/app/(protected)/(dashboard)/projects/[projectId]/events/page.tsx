@@ -55,7 +55,8 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Events" description="Track conversions and manage custom events"></PageHeader>
+      <PageHeader title="Events" description="Track conversions and manage custom events" />
+
       <EventsCards
         eventDisplaySettings={eventDisplaySettings}
         mostActiveEvent={mostActiveEvent}
