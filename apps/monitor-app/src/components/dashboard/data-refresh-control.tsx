@@ -14,9 +14,15 @@ const ONE_SECOND_MS = 1000;
 
 const formatLastUpdated = (date: Date) => {
   const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (diffInSeconds < 60) {
-    return "just now";
+
+  if(diffInSeconds < 10) {
+    return "a couple seconds ago"
   }
+  if(diffInSeconds < 30) {
+    return "less than 30 seconds ago"
+  }
+
+
   return formatDistance(date, new Date(), { addSuffix: true });
 };
 
