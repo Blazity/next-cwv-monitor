@@ -1,6 +1,6 @@
 import { getAuthorizedSession, hasPermission } from "@/lib/auth-utils";
 import { getProjectWithViewsById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
-import SettingsForm from "@/components/projects/settings-form";
+import SettingsForm from "@/components/projects/settings/settings-form";
 import { notFound } from "next/navigation";
 
 type ProjectSettingsPageProps = {

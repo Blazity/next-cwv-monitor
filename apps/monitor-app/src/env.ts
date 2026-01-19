@@ -6,6 +6,24 @@ const LOG_LEVELS = ["fatal", "error", "warn", "info", "debug", "trace", "silent"
 const lifecycleEvent = process.env.npm_lifecycle_event ?? "";
 const isBuildCommand = lifecycleEvent === "build" || lifecycleEvent.startsWith("build:");
 
+function resolveAuthBaseUrl(): string | undefined {
+  const explicit = process.env.AUTH_BASE_URL;
+  if (explicit && explicit.trim().length > 0) return explicit;
+
+  // Vercel provides `VERCEL_URL` (without protocol) for every deployment, including previews.
+  // Use it as a fallback so Preview deployments don't require manual `AUTH_BASE_URL` configuration.
+  const vercelUrl = process.env.VERCEL_URL || process.env.VERCEL_BRANCH_URL;
+  if (vercelUrl && vercelUrl.trim().length > 0) return `https://${vercelUrl}`;
+
+  // As a last resort on Vercel, fall back to the canonical production URL.
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercelProductionUrl && vercelProductionUrl.trim().length > 0) return `https://${vercelProductionUrl}`;
+
+  return undefined;
+}
+
+const resolvedAuthBaseUrl = resolveAuthBaseUrl();
+
 export const env = createEnv({
   server: {
     AUTH_BASE_URL: z.url(),
@@ -32,7 +50,7 @@ export const env = createEnv({
     MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
     RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
     MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
-    AUTH_BASE_URL: process.env.AUTH_BASE_URL,
+    AUTH_BASE_URL: resolvedAuthBaseUrl,
     TRUST_PROXY: process.env.TRUST_PROXY,
     CLICKHOUSE_HOST: process.env.CLICKHOUSE_HOST,
     CLICKHOUSE_PORT: process.env.CLICKHOUSE_PORT,

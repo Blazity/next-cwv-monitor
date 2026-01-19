@@ -56,7 +56,7 @@ export function MetricCard({ metricName, quantiles, selectedPercentile = "p75", 
 
   return (
     <Card className="bg-card border-border">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0">
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 sm:flex-col lg:flex-row">
         <div className="space-y-1">
           <CardTitle className="text-lg">{info.friendlyLabel}</CardTitle>
           <CardDescription className="flex items-center gap-2">
