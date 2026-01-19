@@ -1,11 +1,10 @@
-import type { DeviceType } from "@/app/server/lib/device-types";
+import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
+import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 export const REGRESSION_METRIC_NAMES = ["LCP", "INP", "CLS", "TTFB"] as const;
 export type RegressionMetricName = (typeof REGRESSION_METRIC_NAMES)[number];
 
 export type RegressionsMetricFilter = RegressionMetricName | "all";
-
-export type RegressionsDeviceType = DeviceType | "all";
 
 export type DateRange = {
   start: Date;
@@ -13,12 +12,11 @@ export type DateRange = {
 };
 
 export type RegressionsSortField = "route" | "metric" | "change" | "views";
-export type SortDirection = "asc" | "desc";
 
 export type ListRegressionsQuery = {
   projectId: string;
   range: DateRange;
-  deviceType: RegressionsDeviceType;
+  deviceType: DeviceFilter;
   search?: string;
   metric: RegressionsMetricFilter;
   sort: { field: RegressionsSortField; direction: SortDirection };

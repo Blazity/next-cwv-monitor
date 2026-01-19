@@ -17,8 +17,8 @@ import type {
   ListRegressionsData,
   RegressionsMetricFilter,
   RegressionsSortField,
-  SortDirection,
 } from "@/app/server/domain/regressions/list/types";
+import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
 
 const SEARCH_DEBOUNCE_MS = 300;
 

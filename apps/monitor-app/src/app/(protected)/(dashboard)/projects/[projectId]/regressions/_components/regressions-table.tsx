@@ -7,11 +7,11 @@ import { formatCompactNumber, formatMetricValue } from "@/lib/utils";
 import type {
   RegressionListItem,
   RegressionsSortField,
-  SortDirection,
 } from "@/app/server/domain/regressions/list/types";
 import { getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { Badge } from "@/components/badge";
+import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
 
 type RegressionsTableProps = {
   items: RegressionListItem[];

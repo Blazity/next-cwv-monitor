@@ -1,8 +1,6 @@
 import { MetricName } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
-import type { DeviceType } from "@/app/server/lib/device-types";
-
-export type OverviewDeviceFilter = DeviceType | "all";
+import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
@@ -10,7 +8,7 @@ type BaseFilters = {
   projectId: string;
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
-  deviceType: OverviewDeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 function buildWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
