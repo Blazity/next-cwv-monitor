@@ -60,6 +60,7 @@ export function DataRefreshControl() {
               <button
                 type="button"
                 onClick={handleRefresh}
+                aria-label="Refresh data"
                 disabled={isPending}
                 className="hover:bg-accent rounded p-1 transition-colors disabled:opacity-50"
               >
@@ -81,6 +82,8 @@ export function DataRefreshControl() {
                 className={cn("hover:bg-accent flex items-center gap-1 rounded px-1.5 py-1 transition-colors", {
                   "bg-muted text-muted-foreground hover:bg-muted/80": autoRefresh.enabled,
                 })}
+                aria-pressed={autoRefresh.enabled}
+                aria-label={autoRefresh.enabled ? "Disable auto-refresh" : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`}
               >
                 {autoRefresh.enabled ? (
                   <>
