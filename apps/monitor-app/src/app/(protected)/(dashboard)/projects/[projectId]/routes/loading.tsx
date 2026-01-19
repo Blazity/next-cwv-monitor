@@ -1,9 +1,9 @@
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageHeaderSkeleton } from "@/components/dashboard/page-header-skeleton";
 
 export default function RoutesLoading() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Routes" description="Analyze Core Web Vitals performance by route pattern." />
+      <PageHeaderSkeleton title="Routes" description="Analyze Core Web Vitals performance by route pattern." />
       <div className="space-y-6">
         <div className="bg-muted h-10 w-full animate-pulse rounded-lg sm:h-12" />
         <div className="bg-muted h-96 w-full animate-pulse rounded-lg" />

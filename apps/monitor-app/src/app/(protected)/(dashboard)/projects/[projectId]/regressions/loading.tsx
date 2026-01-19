@@ -1,9 +1,12 @@
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageHeaderSkeleton } from "@/components/dashboard/page-header-skeleton";
 
 export default function RegressionsLoading() {
   return (
     <div>
-      <PageHeader title="Regressions" description="Routes with degraded performance compared to the previous period." />
+      <PageHeaderSkeleton
+        title="Regressions"
+        description="Routes with degraded performance compared to the previous period."
+      />
       <div className="mt-6 space-y-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="bg-muted h-24 w-full animate-pulse rounded-lg" />
