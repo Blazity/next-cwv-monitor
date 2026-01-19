@@ -52,7 +52,7 @@ type SettingsFormProps = {
   };
 };
 
-const getSdkCodes = (id: string) => ({
+const getSdkCodes = (id: string, domain: string) => ({
   app: `import { CWVMonitor } from 'next-cwv-monitor/app-router';
 
 export function RootLayout({ children }: { children: React.ReactNode }) {
@@ -61,7 +61,7 @@ export function RootLayout({ children }: { children: React.ReactNode }) {
       <body>
         <CWVMonitor 
           projectId="${id}" 
-          endpoint="https://your-monitor-api.com"
+          endpoint="${domain}"
           sampleRate={0.5} // Optional: track 50% of page views
         >
           {children}
@@ -75,7 +75,7 @@ import { CWVMonitor } from 'next-cwv-monitor/pages-router';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <CWVMonitor projectId="${id}" endpoint="https://your-monitor-api.com">
+    <CWVMonitor projectId="${id}" endpoint="${domain}">
       <Component {...pageProps} />
     </CWVMonitor>
   );
@@ -167,7 +167,7 @@ export default function SettingsForm({ project, permissions }: SettingsFormProps
         </CardContent>
       </Card>
 
-      <SDKIntegrationCard projectId={project.id} />
+      <SDKIntegrationCard projectId={project.id} projectDomain={project.domain} />
 
       <Card className="border-destructive/20">
         <CardHeader>
@@ -267,8 +267,8 @@ function UpdateNameForm({ project, isEnabled }: { project: ProjectWithViews; isE
   );
 }
 
-function SDKIntegrationCard({ projectId }: { projectId: string }) {
-  const codes = getSdkCodes(projectId);
+function SDKIntegrationCard({ projectId, projectDomain }: { projectId: string; projectDomain: string }) {
+  const codes = getSdkCodes(projectId, projectDomain);
   const [activeTab, setActiveTab] = useState<"app" | "pages">("app");
   const [copied, setCopied] = useState(false);
 

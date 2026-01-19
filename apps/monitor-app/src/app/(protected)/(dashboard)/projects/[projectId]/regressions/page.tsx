@@ -10,20 +10,19 @@ import { getAuthorizedSession } from "@/lib/auth-utils";
 import { regressionsSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
-import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { SortDirection, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import type {
   RegressionsMetricFilter,
   RegressionsSortField,
-  SortDirection,
-  RegressionsDeviceType,
 } from "@/app/server/domain/regressions/list/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const regressionsListService = new RegressionsListService();
 const PAGE_SIZE = 20;
 
 async function getCachedRegressionsList(
   projectId: string,
-  deviceType: RegressionsDeviceType,
+  deviceType: DeviceFilter,
   timeRange: TimeRangeKey,
   search: string,
   metric: RegressionsMetricFilter,

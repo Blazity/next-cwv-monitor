@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { METRIC_NAMES, type MetricName } from "@/app/server/domain/dashboard/overview/types";
 
 const METRIC_INFO: Record<
@@ -57,7 +57,6 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
   const displayMetrics = metrics || (showOtherMetrics ? [...CORE_WEB_VITALS, ...OTHER_METRICS] : CORE_WEB_VITALS);
 
   return (
-    <TooltipProvider>
       <div className="bg-muted flex w-fit items-center gap-1 rounded-lg p-1" role="tablist">
         {displayMetrics.map((metric) => {
           const info = METRIC_INFO[metric];
@@ -99,6 +98,5 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
           );
         })}
       </div>
-    </TooltipProvider>
   );
 }

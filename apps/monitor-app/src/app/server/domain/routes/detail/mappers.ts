@@ -1,6 +1,6 @@
 import { DateRange, MetricName } from "@/app/server/domain/dashboard/overview/types";
 import type { GetRouteDetailQuery } from "@/app/server/domain/routes/detail/types";
-import { RoutesDeviceType } from "@/app/server/domain/routes/list/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
 
@@ -8,7 +8,7 @@ export type BuildRouteDetailQueryInput = {
   projectId: string;
   route: string;
   range?: Partial<DateRange>;
-  deviceType?: RoutesDeviceType;
+  deviceType?: DeviceFilter;
   selectedMetric?: MetricName;
 };
 
