@@ -1,6 +1,5 @@
 "use client";
 
-import { TooltipProvider } from "@/components/ui/tooltip";
 import Link from "next/link";
 import { Activity, Users } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
@@ -27,7 +26,6 @@ export function Navbar({ projects }: NavbarProps) {
 
   const navItems = getNavItems(projectId);
   return (
-    <TooltipProvider>
       <header className="border-border bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 border-b backdrop-blur">
         <div className="flex h-14 items-center justify-between px-3 sm:px-4 lg:px-6">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
@@ -90,6 +88,5 @@ export function Navbar({ projects }: NavbarProps) {
           </div>
         </div>
       </header>
-    </TooltipProvider>
   );
 }

@@ -1,10 +1,9 @@
-import { DateRange, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, MetricName, Percentile, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 import type {
   ListRoutesQuery,
-  RoutesDeviceType,
   RoutesSortField,
-  SortDirection,
 } from "@/app/server/domain/routes/list/types";
+import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
 const DEFAULT_LIMIT = 20;
@@ -18,7 +17,7 @@ type SortInput = {
 export type BuildListRoutesQueryInput = {
   projectId: string;
   range?: Partial<DateRange>;
-  deviceType?: RoutesDeviceType;
+  deviceType?: DeviceFilter;
   search?: string;
   metricName?: MetricName;
   percentile?: Percentile;

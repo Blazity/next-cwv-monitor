@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageHeaderSkeleton } from "@/components/dashboard/page-header-skeleton";
 import {
   ChartSkeleton,
   CoreWebVitalsSkeleton,
@@ -9,7 +9,7 @@ import {
 export default function Loading() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
+      <PageHeaderSkeleton title="Overview" description="Monitor Core Web Vitals across all routes" />
       <QuickStatsSkeleton />
       <CoreWebVitalsSkeleton />
       <ChartSkeleton />

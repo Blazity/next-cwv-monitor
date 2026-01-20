@@ -5,10 +5,10 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES } from "@/app/server/domain/dashboard/overview/types";
+import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
 import { REGRESSION_METRIC_NAMES } from "@/app/server/domain/regressions/list/types";
-import type { RoutesSortField, SortDirection } from "@/app/server/domain/routes/list/types";
+import type { RoutesSortField } from "@/app/server/domain/routes/list/types";
 import type { RegressionsSortField } from "@/app/server/domain/regressions/list/types";
 
 export const ROUTES_SORT_FIELDS = ["route", "views", "metric"] as const satisfies RoutesSortField[];
