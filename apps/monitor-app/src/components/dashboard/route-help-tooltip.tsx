@@ -13,7 +13,7 @@ export function RouteHelpTooltip() {
             <span className="sr-only">What is a route pattern?</span>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
+        <TooltipContent side="top">
           <p className="text-sm">
             <strong>Route patterns</strong> group URLs with dynamic segments. For example,{" "}
             <code className="bg-muted text-foreground rounded px-1">/blog/hello</code> and{" "}

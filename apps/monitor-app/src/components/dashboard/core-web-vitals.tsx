@@ -22,7 +22,7 @@ export function CoreWebVitals({ metricOverview }: CoreWebVitalsProps) {
               <span className="sr-only">Metric information</span>
             </button>
           </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
+          <TooltipContent>
             <p>
               Core Web Vitals are the key metrics that Google uses to measure user experience: LCP, INP, and CLS.
               <br />
