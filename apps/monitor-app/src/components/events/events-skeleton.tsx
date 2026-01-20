@@ -45,7 +45,8 @@ export function EventsCardsSkeleton() {
             </div>
           </div>
         </CardContent>
-      </Card>      <Card className="bg-card border-border">
+      </Card>
+      <Card className="bg-card border-border">
         <CardContent className="p-4">
           <div className="flex items-center gap-3">
             <Skeleton className="h-10 w-10 rounded-lg" />
