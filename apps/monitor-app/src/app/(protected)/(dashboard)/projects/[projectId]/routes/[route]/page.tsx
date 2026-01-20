@@ -35,7 +35,7 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
   const dateRange = timeRangeToDateRange(timeRange);
   const route = safeDecodeURIComponent(routeParam);
 
-  const detailResult = await routeDetailService.getDetail(
+  const detailPromise = routeDetailService.getDetail(
     buildRouteDetailQuery({
       projectId,
       route,
@@ -44,6 +44,13 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
       selectedMetric: metric,
     }),
   );
+  const projectPromise = getCachedProject(projectId);
+  const eventNamesPromise = fetchProjectEventNames({ projectId });
+  const [detailResult, project, eventNameRows] = await Promise.all([
+    detailPromise,
+    projectPromise,
+    eventNamesPromise,
+  ]);
 
   if (detailResult.kind === "project-not-found") {
     notFound();
@@ -66,7 +73,6 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
     notFound();
   }
 
-  const project = await getCachedProject(projectId);
   if (!project) {
     notFound();
   }
@@ -74,7 +80,6 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
   const out = eventDisplaySettingsSchema(project.events_display_settings);
   const eventDisplaySettings = out instanceof ArkErrors ? null : out;
 
-  const eventNameRows = await fetchProjectEventNames({ projectId });
   const eventNames = eventNameRows.map((row) => row.event_name);
   const visibleEvents = eventNames.filter((name) => {
     const settings = eventDisplaySettings?.[name];
