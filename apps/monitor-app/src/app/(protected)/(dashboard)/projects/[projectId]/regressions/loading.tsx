@@ -3,14 +3,14 @@ import {
   RegressionsSummarySkeleton,
   RegressionsTableSkeleton,
 } from "@/app/(protected)/(dashboard)/projects/[projectId]/regressions/_components/regressions-skeleton";
-import { PageHeader } from "@/components/dashboard/page-header";
+import { PageHeaderSkeleton } from "@/components/dashboard/page-header-skeleton";
 
 export default function RegressionsLoading() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Regressions" description="Routes with degraded performance compared to the previous period.">
+      <PageHeaderSkeleton title="Regressions" description="Routes with degraded performance compared to the previous period.">
         <RegressionsHelpTooltip />
-      </PageHeader>
+      </PageHeaderSkeleton>
       <RegressionsSummarySkeleton />
       <RegressionsTableSkeleton />
     </div>
