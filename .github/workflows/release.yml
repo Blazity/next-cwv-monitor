@@ -17,7 +17,11 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     outputs:
+      sdk_new_tag: ${{ steps.sdk-tag.outputs.new_tag }}
+      sdk_tag: ${{ steps.sdk-tag.outputs.tag }}
+      sdk_version: ${{ steps.sdk-tag.outputs.version }}
       app_new_tag: ${{ steps.app-tag.outputs.new_tag }}
+      app_tag: ${{ steps.app-tag.outputs.tag }}
       app_version: ${{ steps.app-tag.outputs.version }}
     steps:
       - name: Checkout Repo
@@ -52,19 +56,38 @@ jobs:
           version: pnpm version-packages
           commit: "chore: release packages"
           title: "chore: release packages"
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Create SDK Git Tag
+        id: sdk-tag
         if: steps.changesets.outputs.published == 'true'
         run: |
+          git fetch --tags
+
           SDK_VERSION=$(echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | select(.name == "next-cwv-monitor") | .version')
-          if [ -n "$SDK_VERSION" ]; then
-            echo "Creating tag next-cwv-monitor-v${SDK_VERSION}"
-            git tag "next-cwv-monitor-v${SDK_VERSION}"
-            git push origin "next-cwv-monitor-v${SDK_VERSION}"
+          SDK_TAG="next-cwv-monitor-v${SDK_VERSION}"
+
+          echo "version=${SDK_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${SDK_TAG}" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$SDK_VERSION" ]; then
+            echo "new_tag=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          if git tag -l "${SDK_TAG}" | grep -q .; then
+            echo "Tag ${SDK_TAG} already exists, skipping"
+            echo "new_tag=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Creating tag ${SDK_TAG} at ${GITHUB_SHA}"
+          git tag "${SDK_TAG}" "${GITHUB_SHA}"
+          git push origin "${SDK_TAG}"
+          echo "new_tag=true" >> "$GITHUB_OUTPUT"
 
       - name: Create Monitor App Git Tag
         id: app-tag
@@ -74,16 +97,19 @@ jobs:
 
           # Create tag for monitor-app if it doesn't exist for current version
           APP_VERSION=$(jq -r '.version' apps/monitor-app/package.json)
-          echo "version=${APP_VERSION}" >> $GITHUB_OUTPUT
+          APP_TAG="monitor-app-v${APP_VERSION}"
 
-          if ! git tag -l "monitor-app-v${APP_VERSION}" | grep -q .; then
-            echo "Creating tag monitor-app-v${APP_VERSION}"
-            git tag "monitor-app-v${APP_VERSION}"
-            git push origin "monitor-app-v${APP_VERSION}"
-            echo "new_tag=true" >> $GITHUB_OUTPUT
+          echo "version=${APP_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${APP_TAG}" >> "$GITHUB_OUTPUT"
+
+          if ! git tag -l "${APP_TAG}" | grep -q .; then
+            echo "Creating tag ${APP_TAG} at ${GITHUB_SHA}"
+            git tag "${APP_TAG}" "${GITHUB_SHA}"
+            git push origin "${APP_TAG}"
+            echo "new_tag=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Tag monitor-app-v${APP_VERSION} already exists, skipping"
-            echo "new_tag=false" >> $GITHUB_OUTPUT
+            echo "Tag ${APP_TAG} already exists, skipping"
+            echo "new_tag=false" >> "$GITHUB_OUTPUT"
           fi
 
   docker:
@@ -96,3 +122,23 @@ jobs:
     permissions:
       contents: read
       packages: write
+
+  sdk_github_release:
+    name: Create SDK GitHub Release
+    needs: release
+    if: needs.release.outputs.sdk_new_tag == 'true'
+    uses: ./.github/workflows/create-github-release.yml
+    with:
+      tag: ${{ needs.release.outputs.sdk_tag }}
+    permissions:
+      contents: write
+
+  monitor_app_github_release:
+    name: Create Monitor App GitHub Release
+    needs: [release, docker]
+    if: needs.release.outputs.app_new_tag == 'true'
+    uses: ./.github/workflows/create-github-release.yml
+    with:
+      tag: ${{ needs.release.outputs.app_tag }}
+    permissions:
+      contents: write
