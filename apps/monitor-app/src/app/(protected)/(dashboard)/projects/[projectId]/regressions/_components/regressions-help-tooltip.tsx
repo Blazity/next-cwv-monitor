@@ -13,7 +13,7 @@ export function RegressionsHelpTooltip() {
           <span className="sr-only">About regressions</span>
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs">
+      <TooltipContent side="top">
         <div className="space-y-2 text-sm">
           <p>
             <strong>Regressions</strong> are route + metric pairs where the <strong>P75</strong> value in the selected

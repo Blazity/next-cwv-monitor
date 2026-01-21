@@ -187,7 +187,7 @@ export function RouteDetailView({
                 <Info className="h-4 w-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
+            <TooltipContent>
               <p>Core Web Vitals are Google&apos;s key metrics for user experience.</p>
             </TooltipContent>
           </Tooltip>

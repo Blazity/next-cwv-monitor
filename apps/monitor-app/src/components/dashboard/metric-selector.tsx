@@ -81,7 +81,7 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
                   {metric}
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-xs">
+              <TooltipContent side="bottom">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{info.name}</span>

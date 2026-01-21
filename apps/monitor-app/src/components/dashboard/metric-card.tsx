@@ -67,7 +67,7 @@ export function MetricCard({ metricName, quantiles, selectedPercentile = "p75", 
                   <Info className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
+              <TooltipContent side="top">
                 <p className="font-medium">{info.name}</p>
                 <p className="mt-1 text-xs">{info.description}</p>
               </TooltipContent>

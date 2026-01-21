@@ -14,7 +14,7 @@ export function RouteHelpTooltip() {
           </button>
         </TooltipTrigger>
         <TooltipContent side="top">
-          <p className="max-w-xs text-sm">
+          <p className="text-sm">
             <strong>Route patterns</strong> group URLs with dynamic segments. For example,{" "}
             <code className="bg-muted text-foreground rounded px-1">/blog/hello</code> and{" "}
             <code className="bg-muted text-foreground rounded px-1">/blog/world</code> are grouped under{" "}
