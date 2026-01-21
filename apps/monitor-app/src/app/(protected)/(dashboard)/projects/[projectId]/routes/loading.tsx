@@ -1,18 +1,20 @@
-import { PageHeader } from "@/components/dashboard/page-header";
+import {
+  RoutesListSkeleton,
+  RoutesSummarySkeleton,
+  RoutesToolbarSkeleton,
+} from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/_components/routes-skeleton";
+import { PageHeaderSkeleton } from "@/components/dashboard/page-header-skeleton";
+import { RouteHelpTooltip } from "@/components/dashboard/route-help-tooltip";
 
 export default function RoutesLoading() {
   return (
     <div className="space-y-6">
-      <PageHeader title="Routes" description="Analyze Core Web Vitals performance by route pattern." />
-      <div className="space-y-6">
-        <div className="bg-muted h-10 w-full animate-pulse rounded-lg sm:h-12" />
-        <div className="bg-muted h-96 w-full animate-pulse rounded-lg" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
-          <div className="bg-muted h-24 animate-pulse rounded-lg" />
-        </div>
-      </div>
+      <PageHeaderSkeleton title="Routes" description="Analyze Core Web Vitals performance by route.">
+        <RouteHelpTooltip />
+      </PageHeaderSkeleton>
+      <RoutesToolbarSkeleton />
+      <RoutesListSkeleton />
+      <RoutesSummarySkeleton />
     </div>
   );
 }
