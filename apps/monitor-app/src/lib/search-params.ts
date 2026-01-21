@@ -1,6 +1,7 @@
 import {
   createSearchParamsCache,
   createSerializer,
+  parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -27,9 +28,12 @@ export const SEARCH_QUERY_OPTIONS = {
   shallow: true,
 } as const;
 
+export const autoRefreshParser = parseAsBoolean.withDefault(false);
+
 export const dashboardSearchParsers = {
   timeRange: parseAsStringLiteral(TIME_RANGE_KEYS).withDefault("7d"),
   deviceType: parseAsStringLiteral(OVERVIEW_DEVICE_TYPES).withDefault("all"),
+  autoRefresh: autoRefreshParser,
 };
 
 export const dashboardSearchParamsCache = createSearchParamsCache(dashboardSearchParsers);

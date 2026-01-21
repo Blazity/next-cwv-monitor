@@ -8,6 +8,8 @@ import { RefreshCw, Timer, TimerOff } from "lucide-react";
 import { formatDistance } from "date-fns";
 import { useAutoRefresh } from "@/hooks/use-auto-refresh";
 import { formatCountdown } from "@/lib/format-countdown";
+import { autoRefreshParser, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
+import { useQueryState } from "nuqs";
 
 const AUTO_REFRESH_INTERVAL_SECONDS = 60;
 const ONE_SECOND_MS = 1000;
@@ -15,13 +17,12 @@ const ONE_SECOND_MS = 1000;
 const formatLastUpdated = (date: Date) => {
   const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
-  if(diffInSeconds < 10) {
-    return "a couple seconds ago"
+  if (diffInSeconds < 10) {
+    return "a couple seconds ago";
   }
-  if(diffInSeconds < 30) {
-    return "less than 30 seconds ago"
+  if (diffInSeconds < 30) {
+    return "less than 30 seconds ago";
   }
-
 
   return formatDistance(date, new Date(), { addSuffix: true });
 };
@@ -32,6 +33,11 @@ export function DataRefreshControl() {
   const [isPending, startTransition] = useTransition();
   const [_tick, setTick] = useState(0);
 
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useQueryState(
+    "autoRefresh",
+    autoRefreshParser.withOptions(SEARCH_QUERY_OPTIONS),
+  );
+
   const handleRefresh = useCallback(() => {
     startTransition(() => {
       router.refresh();
@@ -39,10 +45,19 @@ export function DataRefreshControl() {
     });
   }, [router]);
 
+  const handleSetAutoRefresh = useCallback(
+    (enabled: boolean) => {
+      void setAutoRefreshEnabled(enabled || null);
+    },
+    [setAutoRefreshEnabled],
+  );
+
   const autoRefresh = useAutoRefresh({
     onRefresh: handleRefresh,
     isPending,
     autoRefreshIntervalSeconds: AUTO_REFRESH_INTERVAL_SECONDS,
+    enabled: autoRefreshEnabled,
+    setEnabled: handleSetAutoRefresh,
   });
 
   useEffect(() => {

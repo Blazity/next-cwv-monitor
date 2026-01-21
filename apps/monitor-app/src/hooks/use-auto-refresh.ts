@@ -5,10 +5,17 @@ type UseAutoRefreshProps = {
   onRefresh: () => void;
   isPending: boolean;
   autoRefreshIntervalSeconds: number;
+  enabled: boolean;
+  setEnabled: (enabled: boolean) => void;
 };
 
-export function useAutoRefresh({ onRefresh, isPending, autoRefreshIntervalSeconds }: UseAutoRefreshProps) {
-  const [enabled, setEnabled] = useState(false);
+export function useAutoRefresh({
+  onRefresh,
+  isPending,
+  autoRefreshIntervalSeconds,
+  enabled,
+  setEnabled,
+}: UseAutoRefreshProps) {
   const [secondsUntilRefresh, setSecondsUntilRefresh] = useState(autoRefreshIntervalSeconds);
 
   useEffect(() => {
@@ -44,8 +51,8 @@ export function useAutoRefresh({ onRefresh, isPending, autoRefreshIntervalSecond
   }, [enabled, isPending, onRefresh, autoRefreshIntervalSeconds]);
 
   const toggle = useCallback(() => {
-    setEnabled((prev) => !prev);
-  }, []);
+    setEnabled(!enabled);
+  }, [enabled, setEnabled]);
 
   return {
     enabled,
