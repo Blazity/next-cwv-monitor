@@ -2,7 +2,7 @@ import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
 import { DeviceFilter } from "@/app/server/lib/device-types";
-import { chunkGenerator, daysToNumber, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
+import { chunkGenerator, timeRangeToDays, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
 import { coerceClickHouseDateTime } from "@/lib/utils";
 
 type CustomEventFilters = {
@@ -225,7 +225,7 @@ type FetchMostActiveEventResult = {
 };
 
 export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
-  const negativeRange = daysToNumber[range] * -1;
+  const negativeRange = timeRangeToDays[range] * -1;
   const query = sql<FetchMostActiveEventResult | undefined>`
     SELECT
       ce.event_name,
