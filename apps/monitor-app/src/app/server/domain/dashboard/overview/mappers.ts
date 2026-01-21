@@ -8,7 +8,7 @@ import {
 } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
-const DEFAULT_TIME_RANGE = "7d";
+const DEFAULT_TIME_RANGE: TimeRangeKey = "7d";
 const DEFAULT_TOP_ROUTES_LIMIT = 5;
 
 export type BuildDashboardOverviewQueryInput = {

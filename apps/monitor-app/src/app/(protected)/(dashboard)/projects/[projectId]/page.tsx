@@ -17,10 +17,10 @@ import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, granularity: GranularityKey | null) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, granularity: GranularityKey) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, granularity: granularity ?? undefined });
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, granularity });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -38,7 +38,7 @@ export default async function ProjectPage({
   
   const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
   
-  const overview = await getCachedOverview(projectId, deviceType, timeRange, granularity);
+  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveGranularity);
 
   if (overview.kind === "project-not-found") {
     notFound();
