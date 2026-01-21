@@ -396,7 +396,7 @@ export function TimeSeriesChart({
           {/* Tooltip */}
           <RechartsTooltip
             content={({ active, payload }) => {
-              if (!active) return null;
+              if (!active || payload.length === 0) return null;
               const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
               return <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlay={overlay} />;
