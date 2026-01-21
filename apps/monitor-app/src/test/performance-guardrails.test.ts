@@ -44,18 +44,19 @@ let regressionsService: InstanceType<
 >;
 
 const BUDGETS = {
-  OVERVIEW: 500, // /projects/[projectId]/
-  ROUTES_LIST: 300, // /projects/[projectId]/routes
-  ROUTE_DETAIL: 400, // /projects/[projectId]/routes/[route]
-  CONVERSIONS: 400, // /projects/[projectId]/routes/[route] (Overlay)
-  REGRESSIONS: 700, // /projects/[projectId]/regressions
-  EVENTS_STATS: 450, // /projects/[projectId]/events (Conversion rate table calculation)
-  EVENTS_TOTAL_STATS: 450, // /projects/[projectId]/events (Conversion rate table calculation)
-  EVENTS_TREND: 300, // /projects/[projectId]/events (time-series conversion chart)
+  OVERVIEW: 100, // /projects/[projectId]/
+  ROUTES_LIST: 150, // /projects/[projectId]/routes
+  ROUTE_DETAIL: 100, // /projects/[projectId]/routes/[route]
+  CONVERSIONS: 100, // /projects/[projectId]/routes/[route] (Overlay)
+  REGRESSIONS: 150, // /projects/[projectId]/regressions
+  EVENTS_STATS: 100, // /projects/[projectId]/events (Conversion rate table calculation)
+  EVENTS_TOTAL_STATS: 100, // /projects/[projectId]/events (Conversion rate table calculation)
+  EVENTS_TREND: 100, // /projects/[projectId]/events (time-series conversion chart)
 };
 
 const measureMedian = async (fn: () => Promise<unknown>, iterations = 3) => {
   const durations: number[] = [];
+  await fn();
   for (let i = 0; i < iterations; i++) {
     const start = performance.now();
     await fn();
@@ -159,59 +160,63 @@ describe("Performance Guardrails", () => {
   });
 
   it("Service: Dashboard Overview", async () => {
-    const duration = await measureMedian(() =>
-      overviewService.getOverview({
-        projectId: PERF_PROJECT_ID,
-        range: commonRange,
-        selectedMetric: "LCP",
-        deviceType: "all",
-        topRoutesLimit: 5,
-      }),
+    const duration = await measureMedian(
+      async () =>
+        await overviewService.getOverview({
+          projectId: PERF_PROJECT_ID,
+          range: commonRange,
+          selectedMetric: "LCP",
+          deviceType: "all",
+          topRoutesLimit: 5,
+        }),
     );
 
     expect(duration).toPassBudget(BUDGETS.OVERVIEW);
   });
 
   it("Service: Routes List (Search + Pagination)", async () => {
-    const duration = await measureMedian(() =>
-      routesListService.list({
-        projectId: PERF_PROJECT_ID,
-        range: commonRange,
-        deviceType: "all",
-        search: "page",
-        metricName: "LCP",
-        percentile: "p75",
-        sort: { field: "views", direction: "desc" },
-        page: { limit: 20, offset: 0 },
-      }),
+    const duration = await measureMedian(
+      async () =>
+        await routesListService.list({
+          projectId: PERF_PROJECT_ID,
+          range: commonRange,
+          deviceType: "all",
+          search: "page",
+          metricName: "LCP",
+          percentile: "p75",
+          sort: { field: "views", direction: "desc" },
+          page: { limit: 20, offset: 0 },
+        }),
     );
 
     expect(duration).toPassBudget(BUDGETS.ROUTES_LIST);
   });
 
   it("Service: Route Detail (Deep Aggregate)", async () => {
-    const duration = await measureMedian(() =>
-      routeDetailService.getDetail({
-        projectId: PERF_PROJECT_ID,
-        route: "/blog/[slug]",
-        range: commonRange,
-        deviceType: "all",
-        selectedMetric: "LCP",
-      }),
+    const duration = await measureMedian(
+      async () =>
+        await routeDetailService.getDetail({
+          projectId: PERF_PROJECT_ID,
+          route: "/blog/[slug]",
+          range: commonRange,
+          deviceType: "all",
+          selectedMetric: "LCP",
+        }),
     );
 
     expect(duration).toPassBudget(BUDGETS.ROUTE_DETAIL);
   });
 
   it("Service: Event Overlay (Conversion Attribution)", async () => {
-    const duration = await measureMedian(() =>
-      overlayService.getOverlay({
-        projectId: PERF_PROJECT_ID,
-        route: "/blog/[slug]",
-        eventName: "search",
-        deviceType: "all",
-        range: commonRange,
-      }),
+    const duration = await measureMedian(
+      async () =>
+        await overlayService.getOverlay({
+          projectId: PERF_PROJECT_ID,
+          route: "/blog/[slug]",
+          eventName: "search",
+          deviceType: "all",
+          range: commonRange,
+        }),
     );
 
     expect(duration).toPassBudget(BUDGETS.CONVERSIONS);
@@ -233,34 +238,37 @@ describe("Performance Guardrails", () => {
   });
 
   it("Repository: Events Page Data (Conversion & Stats)", async () => {
-    const statsDuration = await measureMedian(() =>
-      fetchEventsStatsData({
-        projectId: PERF_PROJECT_ID,
-        range: "30d",
-        eventName: "search",
-        deviceType: "all",
-      }),
+    const statsDuration = await measureMedian(
+      async () =>
+        await fetchEventsStatsData({
+          projectId: PERF_PROJECT_ID,
+          range: "30d",
+          eventName: "search",
+          deviceType: "all",
+        }),
     );
 
     expect(statsDuration).toPassBudget(BUDGETS.EVENTS_STATS);
 
-    const totalStatsDuration = await measureMedian(() =>
-      fetchTotalStatsEvents({
-        projectId: PERF_PROJECT_ID,
-        range: "30d",
-        deviceType: "all",
-      }),
+    const totalStatsDuration = await measureMedian(
+      async () =>
+        await fetchTotalStatsEvents({
+          projectId: PERF_PROJECT_ID,
+          range: "30d",
+          deviceType: "all",
+        }),
     );
 
     expect(totalStatsDuration).toPassBudget(BUDGETS.EVENTS_TOTAL_STATS);
 
-    const trendDuration = await measureMedian(() =>
-      fetchConversionTrend({
-        projectId: PERF_PROJECT_ID,
-        range: "30d",
-        eventName: "search",
-        deviceType: "all",
-      }),
+    const trendDuration = await measureMedian(
+      async () =>
+        await fetchConversionTrend({
+          projectId: PERF_PROJECT_ID,
+          range: "30d",
+          eventName: "search",
+          deviceType: "all",
+        }),
     );
 
     expect(trendDuration).toPassBudget(BUDGETS.EVENTS_TREND);
