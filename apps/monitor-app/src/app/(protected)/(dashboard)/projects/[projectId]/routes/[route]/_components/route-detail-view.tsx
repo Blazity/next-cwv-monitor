@@ -22,7 +22,7 @@ import { METRIC_INFO } from "@/app/server/lib/cwv-metadata";
 import type { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import type { RouteDetail } from "@/app/server/domain/routes/detail/types";
 import type { RouteEventOverlay } from "@/app/server/domain/routes/overlay/types";
-import { DateRange, MetricName, PERCENTILES, type Percentile } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, GranularityKey, MetricName, PERCENTILES, type Percentile } from "@/app/server/domain/dashboard/overview/types";
 import { useQueryState } from "nuqs";
 
 type RouteDetailViewProps = {
@@ -36,6 +36,7 @@ type RouteDetailViewProps = {
   selectedPercentile: Percentile;
   selectedEvent: string;
   dateRange: DateRange;
+  granularity: GranularityKey;
   overlay: RouteEventOverlay | null;
 };
 
@@ -57,6 +58,7 @@ export function RouteDetailView({
   selectedPercentile: selectedPercentileProp,
   visibleEvents,
   dateRange,
+  granularity,
   overlay,
 }: RouteDetailViewProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -266,6 +268,7 @@ export function RouteDetailView({
             overlay={overlayInput}
             height={300}
             dateRange={dateRange}
+            granularity={granularity}
           />
         </CardContent>
       </Card>

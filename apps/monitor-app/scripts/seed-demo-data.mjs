@@ -20,8 +20,9 @@ function toPositiveInt(raw, fallback) {
 const DEMO_PROJECT_ID = process.env.SEED_PROJECT_ID ?? "00000000-0000-0000-0000-000000000000";
 const DEMO_PROJECT_DOMAIN = process.env.SEED_PROJECT_DOMAIN ?? "localhost";
 const DEMO_PROJECT_NAME = process.env.SEED_PROJECT_NAME ?? "Next CWV Demo";
-const DAYS_TO_GENERATE = toPositiveInt(process.env.SEED_DAYS, 14);
+const DAYS_TO_GENERATE = toPositiveInt(process.env.SEED_DAYS, 90);
 const EVENTS_PER_COMBO = toPositiveInt(process.env.SEED_EVENTS_PER_COMBO, 3);
+const EVENTS_PER_HOUR_COMBO = toPositiveInt(process.env.SEED_EVENTS_PER_HOUR, 2);
 const RESET_BEFORE_SEED = process.env.SEED_RESET === "true";
 const RANDOM_SEED = Number.parseInt(process.env.SEED_RANDOM_SEED ?? "42", 10);
 
@@ -128,12 +129,62 @@ function parseArgs(argv) {
   return { seedCwvEvents, seedCustomEvents };
 }
 
+function randomTimeInHour(hourStart) {
+  const offsetMs = Math.floor(rng() * 3_600_000); // random time within the hour (60 min in ms)
+  return new Date(hourStart.getTime() + offsetMs);
+}
+
 function buildEvents(projectId) {
   const now = new Date();
   const cwvEvents = [];
   const pageViewEvents = [];
 
-  for (let dayOffset = 0; dayOffset < DAYS_TO_GENERATE; dayOffset++) {
+  // Generate hourly data for the last 24 hours (for the hour-by-hour view)
+  for (let hourOffset = 0; hourOffset < 24; hourOffset++) {
+    const hourStart = new Date(now.getTime() - hourOffset * 3_600_000);
+
+    for (const routeDef of ROUTES) {
+      for (const device of DEVICES) {
+        for (let i = 0; i < EVENTS_PER_HOUR_COMBO; i++) {
+          const path = randomItem(routeDef.paths);
+          const recordedAt = randomTimeInHour(hourStart);
+          const sessionId = randomUUID();
+
+          pageViewEvents.push({
+            project_id: projectId,
+            session_id: sessionId,
+            route: routeDef.route,
+            path,
+            device_type: device,
+            event_name: "$page_view",
+            recorded_at: formatDateTime64Utc(recordedAt),
+            ingested_at: formatDateTime64Utc(now),
+          });
+
+          for (const metric of METRICS) {
+            const value = sampleMetricValue(metric, device);
+
+            cwvEvents.push({
+              project_id: projectId,
+              session_id: sessionId,
+              route: routeDef.route,
+              path,
+              device_type: device,
+              metric_name: metric,
+              metric_value: value,
+              rating: ratingFor(metric, value),
+              recorded_at: formatDateTime64Utc(recordedAt),
+              ingested_at: formatDateTime64Utc(now),
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Generate daily data for the remaining days (starting from day 1 to avoid duplicating today's data)
+  // Goes up to and including DAYS_TO_GENERATE to cover full 90 days back
+  for (let dayOffset = 1; dayOffset <= DAYS_TO_GENERATE; dayOffset++) {
     const dayStart = startOfDayUtc(new Date(now.getTime() - dayOffset * 86_400_000));
 
     for (const routeDef of ROUTES) {
@@ -492,7 +543,7 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
         }
 
         console.log(
-          `Seeded ${cwvEvents.length} events and ${pageViewEvents.length} page_view events over ${DAYS_TO_GENERATE} days for project ${DEMO_PROJECT_NAME} (${DEMO_PROJECT_ID}).`,
+          `Seeded ${cwvEvents.length} CWV events and ${pageViewEvents.length} page_view events over ${DAYS_TO_GENERATE + 1} days (today + ${DAYS_TO_GENERATE} days back) for project ${DEMO_PROJECT_NAME} (${DEMO_PROJECT_ID}).`,
         );
       }
     }
