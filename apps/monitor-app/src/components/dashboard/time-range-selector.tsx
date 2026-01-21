@@ -9,34 +9,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 import { parseAsString } from "nuqs";
 import { GRANULARITIES, TIME_RANGES, timeRangeToGranularities, isTimeRangeKey, getDefaultGranularity, isValidGranularityForTimeRange, getEffectiveGranularity, type TimeRangeKey, type GranularityKey } from "@/app/server/domain/dashboard/overview/types";
 
 const DEFAULT_TIME_RANGE: TimeRangeKey = "7d";
 
 export function TimeRangeSelector() {
-  const [timeRange, setTimeRange] = useQueryState(
-    "timeRange",
-    parseAsString.withDefault(DEFAULT_TIME_RANGE).withOptions({ shallow: false }),
-  );
-  const [granularityParam, setGranularity] = useQueryState(
-    "granularity",
-    parseAsString.withOptions({ shallow: false }),
+  const [{ timeRange, granularity: granularityParam }, setQueryStates] = useQueryStates(
+    {
+      timeRange: parseAsString.withDefault(DEFAULT_TIME_RANGE),
+      granularity: parseAsString,
+    },
+    { shallow: false }
   );
 
   const effectiveTimeRange = isTimeRangeKey(timeRange) ? timeRange : DEFAULT_TIME_RANGE;
   const effectiveGranularity = getEffectiveGranularity(granularityParam, effectiveTimeRange);
 
   const handleTimeRangeChange = (value: TimeRangeKey) => {
-    void setTimeRange(value);
+    const updates: { timeRange: TimeRangeKey; granularity?: string } = { timeRange: value };
     if (!isValidGranularityForTimeRange(effectiveGranularity, value)) {
-      void setGranularity(getDefaultGranularity(value));
+      updates.granularity = getDefaultGranularity(value);
     }
+    void setQueryStates(updates);
   };
 
   const handleGranularityChange = (value: string) => {
-    void setGranularity(value);
+    void setQueryStates({ granularity: value });
   };
 
   const validGranularitiesForTimeRange: readonly GranularityKey[] = timeRangeToGranularities[effectiveTimeRange];
@@ -61,8 +61,8 @@ export function TimeRangeSelector() {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Interval</DropdownMenuLabel>
-            {GRANULARITIES.map((g) => {
+        <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Interval</DropdownMenuLabel>
+        {GRANULARITIES.map((g) => {
               const isDisabled = !validGranularitiesForTimeRange.includes(g.value)
               return (
                 <DropdownMenuItem
