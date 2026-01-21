@@ -141,11 +141,11 @@ const generateHourlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateDailyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / msPerDay);
 
   for (let i = 0; i < diffDays; i++) {
-    const currentTick = new Date(start);
-    currentTick.setDate(start.getDate() + i);
+    const currentTick = new Date(start.getTime() + i * msPerDay);
     const isoDate = currentTick.toISOString().split("T")[0];
     const timeLabel = formatDateShort(currentTick);
 
