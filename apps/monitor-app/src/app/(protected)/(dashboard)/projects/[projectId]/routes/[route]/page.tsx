@@ -12,6 +12,7 @@ import { getAuthorizedSession } from "@/lib/auth-utils";
 import { getCachedProject } from "@/lib/cache";
 import { routeDetailSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
+import { getEffectiveGranularity } from "@/app/server/domain/dashboard/overview/types";
 import { ArkErrors } from "arktype";
 
 const routeDetailService = new RouteDetailService();
@@ -30,9 +31,10 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
 
   const { projectId, route: routeParam } = await params;
   const rawSearchParams = await searchParams;
-  const { timeRange, deviceType, metric, percentile, event } = routeDetailSearchParamsCache.parse(rawSearchParams);
+  const { timeRange, deviceType, metric, percentile, event, granularity } = routeDetailSearchParamsCache.parse(rawSearchParams);
 
   const dateRange = timeRangeToDateRange(timeRange);
+  const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
   const route = safeDecodeURIComponent(routeParam);
 
   const detailResult = await routeDetailService.getDetail(
@@ -110,6 +112,7 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
       selectedPercentile={percentile}
       selectedEvent={selectedEvent}
       dateRange={dateRange}
+      granularity={effectiveGranularity}
       overlay={overlayResult?.kind === "ok" ? overlayResult.data : null}
     />
   );

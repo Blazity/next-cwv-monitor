@@ -11,16 +11,16 @@ import { dashboardSearchParamsCache } from "@/lib/search-params";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { GranularityKey, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { getEffectiveGranularity } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, granularity: GranularityKey | null) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  const dateRange = timeRangeToDateRange(timeRange);
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, range: dateRange });
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, granularity: granularity ?? undefined });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -34,8 +34,11 @@ export default async function ProjectPage({
   await getAuthorizedSession();
 
   const { projectId } = await params;
-  const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
-  const overview = await getCachedOverview(projectId, deviceType, timeRange);
+  const { timeRange, deviceType, granularity } = dashboardSearchParamsCache.parse(await searchParams);
+  
+  const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
+  
+  const overview = await getCachedOverview(projectId, deviceType, timeRange, granularity);
 
   if (overview.kind === "project-not-found") {
     notFound();
@@ -61,6 +64,7 @@ export default async function ProjectPage({
         timeSeriesByMetric={timeSeriesByMetric}
         initialMetric="LCP"
         dateRange={timeRangeToDateRange(timeRange)}
+        granularity={effectiveGranularity}
       />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>
