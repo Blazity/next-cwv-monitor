@@ -8,6 +8,7 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
+  packages: write
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -15,6 +16,9 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    outputs:
+      app_new_tag: ${{ steps.app-tag.outputs.new_tag }}
+      app_version: ${{ steps.app-tag.outputs.version }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v6
@@ -63,16 +67,32 @@ jobs:
           fi
 
       - name: Create Monitor App Git Tag
+        id: app-tag
+        if: steps.changesets.outputs.hasChangesets == 'false'
         run: |
           git fetch --tags
 
           # Create tag for monitor-app if it doesn't exist for current version
-          # This runs on every push to main, not just when SDK is published
           APP_VERSION=$(jq -r '.version' apps/monitor-app/package.json)
+          echo "version=${APP_VERSION}" >> $GITHUB_OUTPUT
+
           if ! git tag -l "monitor-app-v${APP_VERSION}" | grep -q .; then
             echo "Creating tag monitor-app-v${APP_VERSION}"
             git tag "monitor-app-v${APP_VERSION}"
             git push origin "monitor-app-v${APP_VERSION}"
+            echo "new_tag=true" >> $GITHUB_OUTPUT
           else
             echo "Tag monitor-app-v${APP_VERSION} already exists, skipping"
+            echo "new_tag=false" >> $GITHUB_OUTPUT
           fi
+
+  docker:
+    name: Build Docker Images
+    needs: release
+    if: needs.release.outputs.app_new_tag == 'true'
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      tag: ${{ needs.release.outputs.app_version }}
+    permissions:
+      contents: read
+      packages: write
