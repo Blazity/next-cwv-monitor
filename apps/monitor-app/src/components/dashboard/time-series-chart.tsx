@@ -307,7 +307,7 @@ export function TimeSeriesChart({
   // Generate chart data points based on granularity
   const chartData = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
-    const generator = GRANULARITY_GENERATORS[granularity] ?? GRANULARITY_GENERATORS.day;
+    const generator = GRANULARITY_GENERATORS[granularity];
 
     return generator({
       start: new Date(dateRange.start),
@@ -396,8 +396,8 @@ export function TimeSeriesChart({
           {/* Tooltip */}
           <RechartsTooltip
             content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const point = payload[0]?.payload as ChartDataPoint | undefined;
+              if (!active || payload.length === 0) return null;
+              const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
               return <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlay={overlay} />;
             }}
