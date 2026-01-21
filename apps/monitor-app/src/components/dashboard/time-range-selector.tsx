@@ -39,7 +39,7 @@ export function TimeRangeSelector() {
     void setGranularity(value);
   };
 
-  const validGranularitiesForTimeRange = timeRangeToGranularities[effectiveTimeRange];
+  const validGranularitiesForTimeRange: readonly GranularityKey[] = timeRangeToGranularities[effectiveTimeRange];
 
   return (
     <DropdownMenu>
@@ -63,7 +63,7 @@ export function TimeRangeSelector() {
         <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Interval</DropdownMenuLabel>
             {GRANULARITIES.map((g) => {
-              const isDisabled = !validGranularitiesForTimeRange.some((opt) => opt === g.value)
+              const isDisabled = !validGranularitiesForTimeRange.includes(g.value)
               return (
                 <DropdownMenuItem
                   key={g.value}

@@ -114,7 +114,8 @@ export function getDefaultGranularity(timeRange: TimeRangeKey): GranularityKey {
 }
 
 export function isValidGranularityForTimeRange(granularity: GranularityKey, timeRange: TimeRangeKey): boolean {
-  return timeRangeToGranularities[timeRange].some((g) => g === granularity);
+  const validGranularities: readonly GranularityKey[] = timeRangeToGranularities[timeRange];
+  return validGranularities.includes(granularity);
 }
 
 /**
