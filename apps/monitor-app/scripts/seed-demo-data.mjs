@@ -129,8 +129,8 @@ function parseArgs(argv) {
   return { seedCwvEvents, seedCustomEvents };
 }
 
-function randomTimeInHour(hourStart) {
-  const offsetMs = Math.floor(rng() * 3_600_000); // random time within the hour (60 min in ms)
+function randomTimeInHour(hourStart, maxOffsetMs = 3_600_000) {
+  const offsetMs = Math.floor(rng() * maxOffsetMs);
   return new Date(hourStart.getTime() + offsetMs);
 }
 
@@ -142,12 +142,17 @@ function buildEvents(projectId) {
   // Generate hourly data for the last 24 hours (for the hour-by-hour view)
   for (let hourOffset = 0; hourOffset < 24; hourOffset++) {
     const hourStart = new Date(now.getTime() - hourOffset * 3_600_000);
+    // Floor hourStart to the top of the hour
+    hourStart.setMinutes(0, 0, 0);
+    
+    // For the current hour, clamp the offset to not exceed now
+    const maxOffset = hourOffset === 0 ? Math.min(3_600_000, now.getTime() - hourStart.getTime()) : 3_600_000;
 
     for (const routeDef of ROUTES) {
       for (const device of DEVICES) {
         for (let i = 0; i < EVENTS_PER_HOUR_COMBO; i++) {
           const path = randomItem(routeDef.paths);
-          const recordedAt = randomTimeInHour(hourStart);
+          const recordedAt = randomTimeInHour(hourStart, maxOffset);
           const sessionId = randomUUID();
 
           pageViewEvents.push({
@@ -182,16 +187,24 @@ function buildEvents(projectId) {
     }
   }
 
-  // Generate daily data for the remaining days (starting from day 1 to avoid duplicating today's data)
-  // Goes up to and including DAYS_TO_GENERATE to cover full 90 days back
-  for (let dayOffset = 1; dayOffset <= DAYS_TO_GENERATE; dayOffset++) {
-    const dayStart = startOfDayUtc(new Date(now.getTime() - dayOffset * 86_400_000));
+  // Special case: Generate daily data for yesterday (dayOffset = 1) from midnight to the hourly cutoff
+  // This ensures we don't overlap with the hourly seeding (which owns the last 24h)
+  const yesterdayMidnight = startOfDayUtc(new Date(now.getTime() - 86_400_000));
+  const hourlyCutoff = new Date(now.getTime() - 24 * 3_600_000);
 
+  // Helper function to generate events for a specific time range
+  function generateEventsForRange(dayStart, maxTime) {
     for (const routeDef of ROUTES) {
       for (const device of DEVICES) {
         for (let i = 0; i < EVENTS_PER_COMBO; i++) {
           const path = randomItem(routeDef.paths);
-          const recordedAt = randomTimeOnDay(dayStart);
+          let recordedAt = randomTimeOnDay(dayStart);
+          
+          // Clamp recordedAt to not exceed maxTime
+          if (recordedAt.getTime() > maxTime.getTime()) {
+            recordedAt = new Date(dayStart.getTime() + Math.floor(rng() * (maxTime.getTime() - dayStart.getTime())));
+          }
+          
           const sessionId = randomUUID();
 
           pageViewEvents.push({
@@ -224,6 +237,18 @@ function buildEvents(projectId) {
         }
       }
     }
+  }
+
+  // Generate partial data for yesterday (from midnight to hourly cutoff)
+  generateEventsForRange(yesterdayMidnight, hourlyCutoff);
+
+  // Generate daily data for the remaining days (starting from day 2 to avoid overlapping with hourly data)
+  // Goes up to and including DAYS_TO_GENERATE to cover full 90 days back
+  for (let dayOffset = 2; dayOffset <= DAYS_TO_GENERATE; dayOffset++) {
+    const dayStart = startOfDayUtc(new Date(now.getTime() - dayOffset * 86_400_000));
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000 - 1); // End of day
+
+    generateEventsForRange(dayStart, dayEnd);
   }
 
   return { cwvEvents, pageViewEvents };
