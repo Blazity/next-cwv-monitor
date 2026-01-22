@@ -70,9 +70,9 @@ jobs:
           CHANGELOG="${{ steps.vars.outputs.changelog }}"
 
           awk -v ver="$VERSION" '
-            $0 ~ "^## " ver "$" {in=1; print; next}
-            in && $0 ~ "^## " {exit}
-            in {print}
+            $0 ~ "^## " ver "$" {in_section=1; print; next}
+            in_section && $0 ~ "^## " {exit}
+            in_section {print}
           ' "$CHANGELOG" > changelog-section.md
 
           if [ ! -s changelog-section.md ]; then
