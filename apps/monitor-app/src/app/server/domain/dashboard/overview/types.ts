@@ -25,9 +25,9 @@ export type GranularityKey = (typeof GRANULARITIES)[number]["value"];
 
 export const timeRangeToGranularities = {
   "24h": ["hour"],
-  "7d": [ "day", "week"],
-  "30d": [ "day", "week"],
-  "90d": [ "day", "week", "month"],
+  "7d": ["hour", "day", "week"],
+  "30d": ["day", "week"],
+  "90d": ["day", "week", "month"],
 } as const satisfies Record<TimeRangeKey, GranularityKey[]>;
 
 export type DateRange = {

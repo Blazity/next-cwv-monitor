@@ -130,7 +130,8 @@ const generateHourlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
     const currentTick = new Date(start.getTime() + i * 60 * 60 * 1000);
     const nextTick = new Date(currentTick.getTime() + 60 * 60 * 1000);
     const hourKey = currentTick.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
-    const timeLabel = `${formatHour(currentTick)} - ${formatHour(nextTick)}`;
+    const dateLabel = formatDateShort(currentTick);
+    const timeLabel = `${dateLabel}, ${formatHour(currentTick)} - ${formatHour(nextTick)}`;
 
     points.push(createChartDataPoint({ timestamp: hourKey, timeLabel, ...pointParams }));
   }
