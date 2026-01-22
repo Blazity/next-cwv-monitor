@@ -95,15 +95,13 @@ export function DataRefreshControl() {
               <button
                 type="button"
                 onClick={autoRefresh.toggle}
-                className={cn("flex items-center gap-1.5 rounded-full px-2.5 h-8 transition-colors hover:bg-accent", {
-                  "bg-muted text-muted-foreground hover:bg-muted/80": autoRefresh.enabled,
-                })}
+                className="flex items-center gap-1.5 rounded-full px-2.5 h-8 transition-colors hover:bg-accent"
                 aria-pressed={autoRefresh.enabled}
                 aria-label={autoRefresh.enabled ? "Disable auto-refresh" : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`}
               >
                 {autoRefresh.enabled ? (
                   <>
-                    <Timer className="h-3.5 w-3.5 flex-shrink-0" />
+                    <Timer className="h-3.5 w-3.5 shrink-0" />
                     <span className="tabular-nums text-[0.9375rem] font-medium">{autoRefresh.formattedCountdown}</span>
                   </>
                 ) : (
