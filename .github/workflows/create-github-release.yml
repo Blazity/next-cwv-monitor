@@ -1,0 +1,133 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "monitor-app-v*"
+      - "next-cwv-monitor-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name (e.g. monitor-app-v1.1.0)"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag name (e.g. monitor-app-v1.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag metadata
+        id: vars
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          if [[ "$TAG" == monitor-app-v* ]]; then
+            VERSION="${TAG#monitor-app-v}"
+            NAME="monitor-app"
+            CHANGELOG_PATH="apps/monitor-app/CHANGELOG.md"
+            RELEASE_TITLE="Next CWV Monitor (Self-hosted) v${VERSION}"
+          elif [[ "$TAG" == next-cwv-monitor-v* ]]; then
+            VERSION="${TAG#next-cwv-monitor-v}"
+            NAME="next-cwv-monitor"
+            CHANGELOG_PATH="packages/client-sdk/CHANGELOG.md"
+            RELEASE_TITLE="Next CWV Monitor SDK v${VERSION}"
+          else
+            echo "Unsupported tag: $TAG"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "changelog=$CHANGELOG_PATH" >> "$GITHUB_OUTPUT"
+          echo "release_title=$RELEASE_TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.vars.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Build release notes
+        id: notes
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          VERSION="${{ steps.vars.outputs.version }}"
+          NAME="${{ steps.vars.outputs.name }}"
+          CHANGELOG="${{ steps.vars.outputs.changelog }}"
+
+          awk -v ver="$VERSION" '
+            $0 ~ "^## " ver "$" {in=1; print; next}
+            in && $0 ~ "^## " {exit}
+            in {print}
+          ' "$CHANGELOG" > changelog-section.md
+
+          if [ ! -s changelog-section.md ]; then
+            echo "No changelog section found for $VERSION in $CHANGELOG"
+            {
+              echo "## $VERSION"
+              echo
+              echo "- See commits for details."
+            } > changelog-section.md
+          fi
+
+          NOTES_FILE="release-notes.md"
+          {
+            echo "## Changelog"
+            echo
+            cat changelog-section.md
+            echo
+
+            if [ "$NAME" = "monitor-app" ]; then
+              MAJOR_MINOR="${VERSION%.*}"
+
+              echo "## Docker images"
+              echo
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor:${VERSION}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor:${MAJOR_MINOR}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor:latest\`"
+              echo
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-migrations:${VERSION}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-migrations:${MAJOR_MINOR}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-migrations:latest\`"
+              echo
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-seed:${VERSION}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-seed:${MAJOR_MINOR}\`"
+              echo "- \`ghcr.io/${{ github.repository_owner }}/cwv-monitor-seed:latest\`"
+            else
+              echo "## Install"
+              echo
+              echo "\`npm i next-cwv-monitor@${VERSION}\`"
+            fi
+          } > "$NOTES_FILE"
+
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release (if missing)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}"
+          TITLE="${{ steps.vars.outputs.release_title }}"
+          NOTES_FILE="${{ steps.notes.outputs.notes_file }}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release for $TAG already exists, skipping"
+            exit 0
+          fi
+
+          gh release create "$TAG" --title "$TITLE" --notes-file "$NOTES_FILE"
+
