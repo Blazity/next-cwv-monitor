@@ -1,5 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
+import { sql } from "@/app/server/lib/clickhouse/client";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 
@@ -23,6 +24,8 @@ export const INTERVALS = [
 ] as const;
 export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
+export const PAGE_VIEW_EVENT_NAME = "$page_view";
+
 export const timeRangeToIntervals = {
   "24h": ["hour"],
   "7d": ["hour", "day", "week"],
@@ -36,6 +39,18 @@ export type DateRange = {
 };
 
 export type SortDirection = "asc" | "desc";
+export type SortField = "route" | "views" | "metric";
+
+export type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
+
+export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
+export type Percentile = (typeof PERCENTILES)[number];
+
+export type BaseFilters = {
+  projectId: string;
+  range: DateRange;
+  deviceType: DeviceFilter;
+};
 
 export type GetDashboardOverviewQuery = {
   projectId: string;
@@ -132,5 +147,23 @@ export function getEffectiveInterval(
     : getDefaultInterval(timeRange);
 }
 
-export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
-export type Percentile = (typeof PERCENTILES)[number];
+export function toDateOnlyString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export function startOfDayUtc(date: Date): Date {
+  return new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
+}
+
+export function endExclusiveUtc(date: Date): Date {
+  const base = new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
+  base.setUTCDate(base.getUTCDate() + 1);
+  return base;
+}
+
+export function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date } {
+  return {
+    start: startOfDayUtc(range.start),
+    endExclusive: endExclusiveUtc(range.end),
+  };
+}

@@ -20,8 +20,8 @@ import { cn, capitalize } from "@/lib/utils";
 import { QUERY_STATE_OPTIONS, routeDetailSearchParsers, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
 import { METRIC_INFO } from "@/app/server/lib/cwv-metadata";
 import type { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
-import type { RouteDetail } from "@/app/server/domain/routes/detail/types";
-import type { RouteEventOverlay } from "@/app/server/domain/routes/overlay/types";
+import type { RouteDetail } from "@/app/server/domain/dashboard/routes/detail/types";
+import type { RouteEventOverlay } from "@/app/server/domain/dashboard/routes/overlay/types";
 import { DateRange, IntervalKey, MetricName, PERCENTILES, type Percentile } from "@/app/server/domain/dashboard/overview/types";
 import { useQueryState } from "nuqs";
 
@@ -265,7 +265,7 @@ export function RouteDetailView({
             data={data.timeSeries}
             metric={selectedMetric as unknown as Parameters<typeof TimeSeriesChart>[0]["metric"]}
             percentile={selectedPercentile}
-            overlay={overlayInput}
+            overlays={overlayInput ? [overlayInput] : []}
             height={300}
             dateRange={dateRange}
             interval={interval}

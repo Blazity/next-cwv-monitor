@@ -2,7 +2,7 @@ import { DateRange, MetricName, Percentile, SortDirection } from "@/app/server/d
 import type {
   ListRoutesQuery,
   RoutesSortField,
-} from "@/app/server/domain/routes/list/types";
+} from "@/app/server/domain/dashboard/routes/list/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;

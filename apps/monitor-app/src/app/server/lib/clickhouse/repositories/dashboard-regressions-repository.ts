@@ -1,5 +1,5 @@
-import { SortDirection } from "@/app/server/domain/dashboard/overview/types";
-import { RegressionMetricName, RegressionsMetricFilter, RegressionsSortField } from "@/app/server/domain/regressions/list/types";
+import { PAGE_VIEW_EVENT_NAME, SortDirection } from "@/app/server/domain/dashboard/overview/types";
+import { RegressionMetricName, RegressionsMetricFilter, RegressionsSortField } from "@/app/server/domain/dashboard/regressions/list/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
 
@@ -21,7 +21,6 @@ type PeriodFilters = BaseFilters & {
   search?: string;
 };
 
-const PAGE_VIEW_EVENT_NAME = "$page_view";
 const REGRESSION_METRICS = ["LCP", "INP", "CLS", "TTFB"] as const satisfies RegressionMetricName[];
 
 function toDateOnlyString(date: Date): string {

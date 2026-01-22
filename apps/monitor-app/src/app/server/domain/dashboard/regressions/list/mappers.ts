@@ -4,7 +4,7 @@ import type {
   ListRegressionsQuery,
   RegressionsMetricFilter,
   RegressionsSortField,
-} from "@/app/server/domain/regressions/list/types";
+} from "@/app/server/domain/dashboard/regressions/list/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;

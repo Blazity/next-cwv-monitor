@@ -18,7 +18,7 @@ import type {
   InsightItem,
   MetricSummary,
   StatusDistribution,
-} from "@/app/server/domain/routes/detail/types";
+} from "@/app/server/domain/dashboard/routes/detail/types";
 import { DailySeriesPoint } from "@/app/server/domain/dashboard/overview/types";
 const LOW_VIEWS_THRESHOLD = 1000;
 

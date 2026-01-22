@@ -2,15 +2,16 @@ import {
   createSearchParamsCache,
   createSerializer,
   parseAsBoolean,
+  parseAsArrayOf,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
 import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES, SortDirection, INTERVALS } from "@/app/server/domain/dashboard/overview/types";
 import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
-import { REGRESSION_METRIC_NAMES } from "@/app/server/domain/regressions/list/types";
-import type { RoutesSortField } from "@/app/server/domain/routes/list/types";
-import type { RegressionsSortField } from "@/app/server/domain/regressions/list/types";
+import { REGRESSION_METRIC_NAMES } from "@/app/server/domain/dashboard/regressions/list/types";
+import type { RoutesSortField } from "@/app/server/domain/dashboard/routes/list/types";
+import type { RegressionsSortField } from "@/app/server/domain/dashboard/regressions/list/types";
 
 export const ROUTES_SORT_FIELDS = ["route", "views", "metric"] as const satisfies RoutesSortField[];
 export const REGRESSIONS_SORT_FIELDS = ["route", "metric", "change", "views"] as const satisfies RegressionsSortField[];
@@ -44,7 +45,8 @@ export const serializeDashboardParams = createSerializer(dashboardSearchParsers)
 
 export const eventsSearchParamsCache = createSearchParamsCache({
   ...dashboardSearchParsers,
-  event: parseAsString.withDefault(""),
+  events: parseAsArrayOf(parseAsString).withDefault([]),
+  metric: parseAsStringLiteral(METRIC_NAMES).withDefault("LCP"),
 });
 
 export const routesListSearchParsers = {

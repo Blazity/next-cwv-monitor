@@ -50,6 +50,7 @@ export default async function ProjectPage({
   }
 
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
+  const currentMetric = "LCP";
 
   return (
     <div className="space-y-6">
@@ -62,8 +63,8 @@ export default async function ProjectPage({
       />
       <CoreWebVitals metricOverview={metricOverview} />
       <TrendChartByMetric
-        timeSeriesByMetric={timeSeriesByMetric}
-        initialMetric="LCP"
+        data={timeSeriesByMetric[currentMetric]}
+        metric="LCP"
         dateRange={timeRangeToDateRange(timeRange)}
         interval={effectiveInterval}
       />

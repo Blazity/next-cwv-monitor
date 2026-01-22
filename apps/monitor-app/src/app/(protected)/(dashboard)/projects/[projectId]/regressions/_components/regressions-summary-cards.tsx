@@ -4,7 +4,7 @@ import { AlertTriangle, TrendingDown } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 
-import type { RegressionsSummary } from "@/app/server/domain/regressions/list/types";
+import type { RegressionsSummary } from "@/app/server/domain/dashboard/regressions/list/types";
 
 type RegressionsSummaryCardsProps = {
   summary: RegressionsSummary;

@@ -9,7 +9,7 @@ import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thr
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
 
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
-import type { ListRoutesQuery, ListRoutesResult, StatusDistribution } from "@/app/server/domain/routes/list/types";
+import type { ListRoutesQuery, ListRoutesResult, StatusDistribution } from "@/app/server/domain/dashboard/routes/list/types";
 
 function emptyStatusDistribution(): StatusDistribution {
   return {
