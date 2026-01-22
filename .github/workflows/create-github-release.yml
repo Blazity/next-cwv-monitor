@@ -39,10 +39,12 @@ jobs:
             VERSION="${TAG#monitor-app-v}"
             NAME="monitor-app"
             CHANGELOG_PATH="apps/monitor-app/CHANGELOG.md"
+            RELEASE_TITLE="Next CWV Monitor (Self-hosted) v${VERSION}"
           elif [[ "$TAG" == next-cwv-monitor-v* ]]; then
             VERSION="${TAG#next-cwv-monitor-v}"
             NAME="next-cwv-monitor"
             CHANGELOG_PATH="packages/client-sdk/CHANGELOG.md"
+            RELEASE_TITLE="Next CWV Monitor SDK v${VERSION}"
           else
             echo "Unsupported tag: $TAG"
             exit 1
@@ -51,6 +53,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "changelog=$CHANGELOG_PATH" >> "$GITHUB_OUTPUT"
+          echo "release_title=$RELEASE_TITLE" >> "$GITHUB_OUTPUT"
 
       - name: Checkout tag
         uses: actions/checkout@v4
@@ -118,7 +121,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.vars.outputs.tag }}"
-          TITLE="${{ steps.vars.outputs.name }} v${{ steps.vars.outputs.version }}"
+          TITLE="${{ steps.vars.outputs.release_title }}"
           NOTES_FILE="${{ steps.notes.outputs.notes_file }}"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
