@@ -66,7 +66,8 @@ export function DataRefreshControl() {
   }, []);
 
   return (
-    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+   
+    <div className="text-status-good bg-status-good/10 font-bold flex items-center gap-2 text-[0.9375rem] rounded-full ps-3 h-8">
       <span>Updated {formatLastUpdated(lastUpdated)}</span>
       <TooltipProvider>
         <div className="flex items-center gap-1">
@@ -94,7 +95,7 @@ export function DataRefreshControl() {
               <button
                 type="button"
                 onClick={autoRefresh.toggle}
-                className={cn("hover:bg-accent flex items-center gap-1 rounded px-1.5 py-1 transition-colors", {
+                className={cn("flex items-center gap-1.5 rounded-full px-2.5 h-8 transition-colors hover:bg-accent", {
                   "bg-muted text-muted-foreground hover:bg-muted/80": autoRefresh.enabled,
                 })}
                 aria-pressed={autoRefresh.enabled}
@@ -102,8 +103,8 @@ export function DataRefreshControl() {
               >
                 {autoRefresh.enabled ? (
                   <>
-                    <Timer className="h-3.5 w-3.5" />
-                    <span className="tabular-nums">{autoRefresh.formattedCountdown}</span>
+                    <Timer className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="tabular-nums text-[0.9375rem] font-medium">{autoRefresh.formattedCountdown}</span>
                   </>
                 ) : (
                   <TimerOff className="h-3.5 w-3.5" />
