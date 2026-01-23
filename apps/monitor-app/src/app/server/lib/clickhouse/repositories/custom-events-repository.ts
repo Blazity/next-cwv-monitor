@@ -1,6 +1,7 @@
 import {
   BaseFilters,
   buildRecordedAtBounds,
+  IntervalKey,
   PAGE_VIEW_EVENT_NAME,
   SqlFragment,
   TimeRangeKey,
@@ -164,7 +165,7 @@ export async function fetchEventsStatsData({ range, eventNames, projectId, devic
     query.append(sql` AND device_type = ${deviceType}`);
   }
 
-  query.append(sql` GROUP BY event_name, route ORDER BY event_name, conversions_cur DESC`);
+  query.append(sql` GROUP BY route ORDER BY conversions_cur DESC`);
 
   const results = await query;
   return results.map((row) => parseClickHouseNumbers(row));
@@ -213,29 +214,34 @@ export async function fetchMultiEventOverlaySeries(
   query: BaseFilters & {
     route?: string;
     eventNames: string[];
+    interval: IntervalKey;
   },
 ): Promise<MultiEventOverlayRow[]> {
   const allEvents = [PAGE_VIEW_EVENT_NAME, ...query.eventNames];
   const where = buildCustomEventsWhereClause(query, allEvents, query.route);
 
+  const periodExpr = query.interval === "hour" 
+    ? sql.raw("toStartOfHour(recorded_at)") 
+    : sql.raw("toDate(recorded_at)");
+
   return sql<MultiEventOverlayRow>`
     SELECT
-      toString(event_date) AS event_date,
+      toString(period) AS event_date,
       event_name,
-      toString(max(daily_views) OVER (PARTITION BY event_date)) AS views,
+      toString(max(period_views) OVER (PARTITION BY period)) AS views,
       toString(conversions) AS conversions
     FROM (
       SELECT 
-        toDate(recorded_at) as event_date,
+        ${periodExpr} as period,
         event_name,
         uniqExact(session_id) as conversions,
-        uniqExactIf(session_id, event_name = ${PAGE_VIEW_EVENT_NAME}) as daily_views
+        uniqExactIf(session_id, event_name = ${PAGE_VIEW_EVENT_NAME}) as period_views
       FROM custom_events
       ${where}
-      GROUP BY event_date, event_name
+      GROUP BY period, event_name
     )
     QUALIFY event_name != ${PAGE_VIEW_EVENT_NAME}
-    ORDER BY event_date ASC
+    ORDER BY period ASC, event_name ASC
   `;
 }
 

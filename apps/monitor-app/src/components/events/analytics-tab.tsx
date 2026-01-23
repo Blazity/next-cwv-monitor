@@ -3,13 +3,12 @@ import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import { AnalyticsTable } from "@/components/events/analytics-table";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize } from "@/lib/utils";
-
 import { sumBy } from "remeda";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { BarChart3 } from "lucide-react";
 import { TimeSeriesChartProps } from "@/components/dashboard/time-series-chart";
-import { useQueryState } from "nuqs";
 import { TrendChartByMetric } from "@/components/dashboard/trend-chart-by-metric";
+import { useMemo } from "react";
 
 type Props = {
   eventStats: Awaited<ReturnType<typeof fetchEventsStatsData>> | null;
@@ -19,9 +18,17 @@ type Props = {
 };
 
 export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDisplaySettings }: Props) {
-  const [, setMetric] = useQueryState("metric");
   const hasStats = Array.isArray(eventStats) && eventStats.length > 0;
-  const hasChartData = Array.isArray(chartData?.data) && chartData.data.length > 0;
+  console.log(eventStats)
+  const hasChartData = useMemo(() => {
+    if (!chartData) return false;
+    
+    const hasPrimaryPoints = Array.isArray(chartData.data) && chartData.data.length > 0;
+    const hasOverlayPoints = Array.isArray(chartData.overlays) && 
+      chartData.overlays.some(ov => Array.isArray(ov.series) && ov.series.length > 0);
+
+    return hasPrimaryPoints || hasOverlayPoints;
+  }, [chartData]);
 
   const selectedEventName = selectedEvents
     .map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true))
@@ -39,16 +46,15 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
 
   return (
     <>
-      {hasChartData ? (
+      {chartData && hasChartData ? (
         <TrendChartByMetric
           title="Conversion Trend"
           description="Event conversion rate over time"
           dateRange={chartData.dateRange}
           interval={chartData.interval}
-          metric={chartData.metric}
+          queriedMetric={chartData.metric}
           data={chartData.data}
           multiOverlay={chartData.overlays}
-          onMetricChange={(m) => setMetric(m)}
         />
       ) : (
         <div className="text-muted-foreground flex h-full items-center justify-center text-sm italic">

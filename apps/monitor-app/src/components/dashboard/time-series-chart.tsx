@@ -18,7 +18,7 @@ import { Badge } from "@/components/badge";
 import { toISODateUTC, toUTCTimestamp, getStartOfWeekUTC, getUTCYearMonth, toHourKeyUTC } from "@/lib/utc-date";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
-import { formatMetricValue } from "@/lib/utils";
+import { cn, formatMetricValue } from "@/lib/utils";
 import type {
   DailySeriesPoint,
   IntervalKey,
@@ -215,7 +215,10 @@ type ChartTooltipProps = {
 };
 
 const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: ChartTooltipProps) => {
-  if (point.value === null) {
+  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.label]);
+  const hasPrimaryData = point.value !== null;
+
+  if (!hasPrimaryData && !hasOverlayData) {
     return (
       <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
         <p className="text-muted-foreground text-sm">{point.time}</p>
@@ -229,29 +232,34 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
       <p className="text-muted-foreground mb-2 text-sm">{point.time}</p>
       <div className="space-y-2">
         {/* Metric Value Row */}
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-foreground text-sm">
-            {metric} ({percentile.toUpperCase()})
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-foreground font-mono text-sm font-medium">
-              {formatMetricValue(metric, point.value)}
-            </span>
-            {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
-          </div>
-        </div>
+        {hasPrimaryData &&
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-foreground text-sm">
+                {metric} ({percentile.toUpperCase()})
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-mono text-sm font-medium">
+                  {formatMetricValue(metric, point.value!)}
+                </span>
+                {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
+              </div>
+            </div>
 
-        {/* Sample Count */}
-        <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+            {/* Sample Count */}
+            <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+          </>
+        }
 
         {/* Dynamic Overlays */}
         {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
           const raw = point.rawOverlays?.[ov.label];
           if (!raw) return null;
           const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
+          const showSeparator = hasPrimaryData || idx > 0;
 
           return (
-            <div key={ov.label} className="border-border mt-2 border-t pt-2">
+            <div key={ov.label} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -367,7 +375,6 @@ export function TimeSeriesChart({
             hide={isMobile}
           />
           {/* Secondary Y-Axis (Overlay) */}
-          (
           <YAxis
             yAxisId="overlay"
             orientation="right"
@@ -377,7 +384,7 @@ export function TimeSeriesChart({
             width={50}
             hide={isMobile}
           />
-          ){/* Threshold Reference Lines */}
+          {/* Threshold Reference Lines */}
           <ReferenceLine
             yAxisId="metric"
             y={thresholds.good}

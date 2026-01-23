@@ -36,6 +36,7 @@ export const dashboardSearchParsers = {
   timeRange: parseAsStringLiteral(TIME_RANGE_KEYS).withDefault("7d"),
   interval: parseAsStringLiteral(INTERVAL_KEYS), // No default - server derives from timeRange
   deviceType: parseAsStringLiteral(OVERVIEW_DEVICE_TYPES).withDefault("all"),
+  metric: parseAsStringLiteral(METRIC_NAMES).withDefault("LCP"),
   autoRefresh: autoRefreshParser,
 };
 

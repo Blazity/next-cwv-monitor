@@ -109,8 +109,8 @@ export function RouteDetailView({
   const selectedMetricSampleSize = selectedMetricSummary?.sampleSize ?? 0;
 
   const overlayLabel = selectedEvent ? getEventLabel(selectedEvent, eventDisplaySettings) : null;
-  const overlayInput: TimeSeriesOverlay | null =
-    overlayLabel && overlay ? { label: overlayLabel, series: overlay.series } : null;
+  const overlayInput: TimeSeriesOverlay[] =
+    overlayLabel && overlay ? [ { label: overlayLabel, series: overlay.series } ] : [];
 
   const showLowDataWarning = data.views > 0 && data.views < LOW_DATA_VIEWS_THRESHOLD;
 
@@ -263,9 +263,9 @@ export function RouteDetailView({
         <CardContent>
           <TimeSeriesChart
             data={data.timeSeries}
-            metric={selectedMetric as unknown as Parameters<typeof TimeSeriesChart>[0]["metric"]}
+            metric={selectedMetric}
             percentile={selectedPercentile}
-            overlays={overlayInput ? [overlayInput] : []}
+            overlays={overlayInput}
             height={300}
             dateRange={dateRange}
             interval={interval}

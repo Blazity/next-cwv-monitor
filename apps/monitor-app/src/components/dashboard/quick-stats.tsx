@@ -6,12 +6,12 @@ import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 type QuickStatsProps = {
   projectId: string;
-  selectedMetric: MetricName;
+  queriedMetric: MetricName;
   data: QuickStatsData;
   statusDistribution: StatusDistribution;
 };
 
-export function QuickStats({ projectId, selectedMetric, data, statusDistribution }: QuickStatsProps) {
+export function QuickStats({ projectId, queriedMetric: selectedMetric, data, statusDistribution }: QuickStatsProps) {
   const { timeRangeLabel, totalViews, viewTrend } = data;
 
   return (
