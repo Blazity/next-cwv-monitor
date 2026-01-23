@@ -56,6 +56,7 @@ export class EventsDashboardService {
         range: dateRange,
         deviceType: query.deviceType,
         eventNames: queriedEvents,
+        granularity: query.granularity
       }),
       fetchEventsStatsData({
         projectId: query.projectId,
