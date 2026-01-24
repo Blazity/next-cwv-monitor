@@ -136,7 +136,7 @@ pnpm --filter cwv-monitor-app clickhouse:migrate
 
 Click the button below to deploy:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor&env=AUTH_BASE_URL,BETTER_AUTH_SECRET,CLICKHOUSE_HOST,CLICKHOUSE_PORT,CLICKHOUSE_USER,CLICKHOUSE_PASSWORD,CLICKHOUSE_DB,INITIAL_USER_EMAIL,INITIAL_USER_PASSWORD,INITIAL_USER_NAME&envDescription=Required%20environment%20variables%20for%20the%20CWV%20Monitor.%20See%20deployment%20docs%20for%20details.&envLink=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor%2Fblob%2Fmain%2FDEPLOYMENT.md%23deploy-on-vercel&project-name=cwv-monitor&repository-name=next-cwv-monitor&root-directory=apps/monitor-app)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor&env=BETTER_AUTH_SECRET,CLICKHOUSE_HOST,CLICKHOUSE_PORT,CLICKHOUSE_USER,CLICKHOUSE_PASSWORD,CLICKHOUSE_DB,INITIAL_USER_EMAIL,INITIAL_USER_PASSWORD,INITIAL_USER_NAME&envDescription=Required%20environment%20variables%20for%20the%20CWV%20Monitor.%20See%20deployment%20docs%20for%20details.&envLink=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor%2Fblob%2Fmain%2FDEPLOYMENT.md%23deploy-on-vercel&project-name=cwv-monitor&repository-name=next-cwv-monitor&root-directory=apps/monitor-app)
 
 Or deploy manually:
 
