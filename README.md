@@ -22,9 +22,14 @@
 </p>
 
 <p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor&env=AUTH_BASE_URL,BETTER_AUTH_SECRET,CLICKHOUSE_HOST,CLICKHOUSE_PORT,CLICKHOUSE_USER,CLICKHOUSE_PASSWORD,CLICKHOUSE_DB,INITIAL_USER_EMAIL,INITIAL_USER_PASSWORD,INITIAL_USER_NAME&envDescription=Required%20environment%20variables%20for%20the%20CWV%20Monitor.%20See%20deployment%20docs%20for%20details.&envLink=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor%2Fblob%2Fmain%2FDEPLOYMENT.md%23deploy-on-vercel&project-name=cwv-monitor&repository-name=next-cwv-monitor&root-directory=apps/monitor-app"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
+</p>
+
+<p align="center">
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-features">Features</a> •
   <a href="#-installation">Installation</a> •
+  <a href="#-deploy-on-vercel">Deploy on Vercel</a> •
   <a href="#-faq">FAQ</a> •
   <a href="#-contributing">Contributing</a>
 </p>
@@ -125,6 +130,37 @@ curl -fsSL https://raw.githubusercontent.com/Blazity/next-cwv-monitor/main/setup
 The wizard downloads Docker Compose files, guides you through configuration (including optional SSL), and generates secure secrets automatically.
 
 > 📖 For complete deployment options, see [`DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+## ▲ Deploy on Vercel
+
+Want to skip infrastructure setup? Deploy the monitor app directly to Vercel and connect it to an external ClickHouse instance (self-hosted or [ClickHouse Cloud](https://clickhouse.com/cloud)).
+
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor&env=AUTH_BASE_URL,BETTER_AUTH_SECRET,CLICKHOUSE_HOST,CLICKHOUSE_PORT,CLICKHOUSE_USER,CLICKHOUSE_PASSWORD,CLICKHOUSE_DB,INITIAL_USER_EMAIL,INITIAL_USER_PASSWORD,INITIAL_USER_NAME&envDescription=Required%20environment%20variables%20for%20the%20CWV%20Monitor.%20See%20deployment%20docs%20for%20details.&envLink=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor%2Fblob%2Fmain%2FDEPLOYMENT.md%23deploy-on-vercel&project-name=cwv-monitor&repository-name=next-cwv-monitor&root-directory=apps/monitor-app"><img src="https://vercel.com/button" alt="Deploy with Vercel"/></a>
+</p>
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          VERCEL                                 │
+│                    ┌─────────────────┐                          │
+│                    │   Monitor App   │                          │
+│                    │  (Next.js 16)   │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │ HTTPS
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    EXTERNAL CLICKHOUSE                          │
+│             (Self-hosted or ClickHouse Cloud)                   │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  CWV Events  │  │  Page Views  │  │ Custom Events│          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> ⚠️ **Note:** ClickHouse cannot run on Vercel — you need an external instance. See the [Vercel deployment guide](./DEPLOYMENT.md#deploy-on-vercel) for detailed setup instructions, including how to deploy the demo client app.
 
 ## ❓ FAQ
 
