@@ -221,7 +221,7 @@ Ensure Vercel's install command runs at the workspace root:
 <summary><strong>ClickHouse connection refused</strong></summary>
 
 - Verify your ClickHouse instance is accessible from the internet
-- Check firewall rules allow inbound connections on port 8123/8443
+- Check firewall rules allow inbound connections on the HTTPS port (for example, 8443) used by your ClickHouse service; if you expose the HTTP port 8123, restrict it to internal/private networks only
 - For ClickHouse Cloud, ensure your service is running and not paused
 - Verify the host, port, username, and password are correct
 
