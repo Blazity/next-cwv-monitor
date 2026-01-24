@@ -145,7 +145,7 @@ Or deploy manually:
 3. Configure the project:
    - **Root Directory:** `apps/monitor-app`
    - **Framework Preset:** Next.js (auto-detected)
-   - **Build Command:** `pnpm build` (auto-detected)
+   - **Build Command:** `cd ../.. && pnpm build --filter=cwv-monitor-app` (from `apps/monitor-app/vercel.json`, usually auto-detected)
    - **Install Command:** `pnpm install`
 
 ### Step 4: Configure Environment Variables
