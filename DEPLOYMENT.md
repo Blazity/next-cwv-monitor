@@ -129,7 +129,7 @@ export CLICKHOUSE_PASSWORD=your-password
 export CLICKHOUSE_DB=cwv_monitor
 
 # Run migrations
-pnpm --filter monitor-app migrate
+pnpm --filter cwv-monitor-app clickhouse:migrate
 ```
 
 ### Step 3: Deploy to Vercel
