@@ -118,8 +118,12 @@ cd next-cwv-monitor
 pnpm install
 
 # Set your ClickHouse connection details
-export CLICKHOUSE_HOST=your-clickhouse-host
-export CLICKHOUSE_PORT=8443  # or 8123 for HTTP
+# For ClickHouse Cloud (HTTPS, default port 8443), include the protocol, e.g.:
+# export CLICKHOUSE_HOST=https://your-instance.clickhouse.cloud
+# For self-hosted HTTP on port 8123 you can omit the protocol, e.g.:
+# export CLICKHOUSE_HOST=your-clickhouse-host
+export CLICKHOUSE_HOST=https://your-clickhouse-host
+export CLICKHOUSE_PORT=8443  # or 8123 for HTTP (with http:// or no protocol)
 export CLICKHOUSE_USER=default
 export CLICKHOUSE_PASSWORD=your-password
 export CLICKHOUSE_DB=cwv_monitor
