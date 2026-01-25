@@ -347,11 +347,13 @@ export async function fetchConversionTrend({ projectId, eventNames, range, devic
   const startUnix = Math.floor(currentStart.getTime() / 1000);
   const endUnix = Math.floor(now.getTime() / 1000);
 
+  const allEventNames = [...eventNames, PAGE_VIEW_EVENT_NAME];
+
   const innerWhere = sql`
     WHERE ce.project_id = ${projectId}
       AND ce.recorded_at >= toDateTime64(${startUnix}, 3)
       AND ce.recorded_at <= toDateTime64(${endUnix}, 3)
-      AND ce.event_name IN (${eventNames}, ${PAGE_VIEW_EVENT_NAME})
+      AND ce.event_name IN (${allEventNames})
   `;
 
   if (deviceType && deviceType !== "all") {
