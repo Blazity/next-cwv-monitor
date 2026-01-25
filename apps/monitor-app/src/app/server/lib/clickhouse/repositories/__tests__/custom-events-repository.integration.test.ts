@@ -219,7 +219,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "target_event" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"] });
 
       expect(stats[0].conversions_cur).toBe(1);
     });
@@ -256,7 +256,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "subscribe" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"] });
       const pricing = stats.find((s) => s.route === "/pricing");
 
       expect(pricing?.conversion_rate).toBe(50);
@@ -275,7 +275,7 @@ describe("custom-events-repository integration", () => {
       const expectedStartTimestamp = now.getTime() - days * 24 * 60 * 60 * 1000;
       const expectedStartDate = new Date(expectedStartTimestamp);
 
-      const trend = await fetchConversionTrend({ projectId, range, eventName: "any" });
+      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"] });
       const firstEntryDate = new Date(trend[0].day);
 
       expect(format(firstEntryDate)).toBe(format(expectedStartDate));

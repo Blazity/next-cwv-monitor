@@ -23,7 +23,6 @@ type TrendChartByMetricProps = {
 
 export function TrendChartByMetric({
   data,
-  queriedMetric = "LCP",
   title = "Trend Over Time",
   description,
   dateRange,
