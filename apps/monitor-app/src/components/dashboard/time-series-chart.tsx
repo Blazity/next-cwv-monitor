@@ -34,6 +34,7 @@ export type TimeSeriesOverlayPoint = {
 };
 
 export type TimeSeriesOverlay = {
+  id: string;
   label: string;
   series: TimeSeriesOverlayPoint[];
 };

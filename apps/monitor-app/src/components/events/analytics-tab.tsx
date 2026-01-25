@@ -19,16 +19,19 @@ type Props = {
 
 export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDisplaySettings }: Props) {
   const hasStats = Array.isArray(eventStats) && eventStats.length > 0;
-  console.log(eventStats)
+
+  const visibleOverlays = useMemo(() => {
+    return chartData?.overlays?.filter(ov => !eventDisplaySettings?.[ov.id]?.isHidden) || [];
+  }, [chartData?.overlays, eventDisplaySettings]);
+
   const hasChartData = useMemo(() => {
     if (!chartData) return false;
     
     const hasPrimaryPoints = Array.isArray(chartData.data) && chartData.data.length > 0;
-    const hasOverlayPoints = Array.isArray(chartData.overlays) && 
-      chartData.overlays.some(ov => Array.isArray(ov.series) && ov.series.length > 0);
+    const hasOverlayPoints = visibleOverlays.some(ov => ov.series.length > 0);
 
     return hasPrimaryPoints || hasOverlayPoints;
-  }, [chartData]);
+  }, [chartData, visibleOverlays]);
 
   const selectedEventName = selectedEvents
     .map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true))
