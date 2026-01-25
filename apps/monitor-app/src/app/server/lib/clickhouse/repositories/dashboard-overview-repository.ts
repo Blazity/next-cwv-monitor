@@ -88,10 +88,21 @@ export async function fetchWorstRoutes(
   const where = buildDailyWhereClause(filters, metricName);
 
   return sql<WorstRouteRow>`
-    SELECT route, percentiles, toString(sample_count) AS sample_size FROM (
-      SELECT route, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, countMerge(sample_size) AS sample_count
-      FROM cwv_daily_aggregates ${where} GROUP BY route
-    ) ORDER BY percentiles[1] DESC LIMIT ${limit}
+    SELECT
+      route,
+      percentiles,
+      toString(sample_count) AS sample_size
+    FROM (
+      SELECT
+        route,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        countMerge(sample_size) AS sample_count
+      FROM cwv_daily_aggregates
+      ${where}
+      GROUP BY route
+    )
+    ORDER BY percentiles[2] DESC
+    LIMIT ${limit}
   `;
 }
 

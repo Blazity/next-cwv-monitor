@@ -29,7 +29,9 @@ export class EventsDashboardService {
     const eventNames = names.map((v) => v.event_name);
 
     const defaultEvent = eventNames.find((e) => !displaySettings?.[e]?.isHidden) || eventNames[0];
-    const queriedEvents = query.selectedEvents || [defaultEvent];
+    const queriedEvents = (query.selectedEvents || [defaultEvent]).filter(
+      (e) => !displaySettings?.[e]?.isHidden
+    );
 
     const mostActiveEvent = activity.find((e) => {
       if (!e?.event_name) return false;
@@ -82,6 +84,7 @@ export class EventsDashboardService {
           metric: query.metric,
           dateRange,
           interval: query.interval,
+          displaySettings
         }),
         eventStats,
       },

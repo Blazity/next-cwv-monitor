@@ -16,6 +16,8 @@ import { toQuantileSummary } from "@/app/server/lib/quantiles";
 import { getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { MetricSeriesRow } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
 import { GetEventsDashboardQuery } from "@/app/server/domain/dashboard/events/types";
+import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
+import { capitalize } from "@/lib/utils";
 
 export type BuildEventsDashboardQueryInput = {
   projectId: string;
@@ -34,7 +36,7 @@ export function buildEventsDashboardQuery(input: BuildEventsDashboardQueryInput)
   };
 }
 
-function mapOverlaySeries(rows: MultiEventOverlayRow[], eventNames: string[]): TimeSeriesOverlay[] {
+function mapOverlaySeries(rows: MultiEventOverlayRow[], eventNames: string[], displaySettings: EventDisplaySettings): TimeSeriesOverlay[] {
   const eventsMap: Record<string, TimeSeriesOverlayPoint[]> = {};
   for (const name of eventNames) {
     if (name !== PAGE_VIEW_EVENT_NAME) {
@@ -56,10 +58,15 @@ function mapOverlaySeries(rows: MultiEventOverlayRow[], eventNames: string[]): T
     });
   }
 
-  return Object.entries(eventsMap).map(([name, series]) => ({
-    label: name,
-    series,
-  }));
+  return Object.entries(eventsMap).map(([id, series]) => {
+    const customName = displaySettings?.[id]?.customName;
+    const label = capitalize(customName || id, true)!;
+    return{
+      id,
+      label,
+      series,
+    }
+  });
 }
 
 type MapToTimeSeriesChartPropsInput = {
@@ -69,6 +76,7 @@ type MapToTimeSeriesChartPropsInput = {
   metric: MetricName;
   dateRange: { start: Date; end: Date };
   interval: IntervalKey;
+  displaySettings: EventDisplaySettings
 };
 
 export function mapToTimeSeriesChartProps({
@@ -78,8 +86,9 @@ export function mapToTimeSeriesChartProps({
   metric,
   dateRange,
   interval,
+  displaySettings
 }: MapToTimeSeriesChartPropsInput): TimeSeriesChartProps {
-  const multiOverlay = mapOverlaySeries(overlayRows, eventNames);
+  const multiOverlay = mapOverlaySeries(overlayRows, eventNames, displaySettings);
   const filteredRows = seriesRows.filter((row) => row.metric_name === metric);
 
   const timeSeries: DailySeriesPoint[] = filteredRows.map((row) => {

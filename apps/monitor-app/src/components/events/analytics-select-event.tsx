@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ChevronDown, ListFilter } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { parseAsArrayOf, parseAsString } from "nuqs/server";
+import { capitalize } from "@/lib/utils";
 
 type Props = {
   events: string[];
@@ -13,13 +14,16 @@ type Props = {
 };
 
 export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
-  const filteredEvents = events.filter((e) => !eventDisplaySettings?.[e]?.isHidden);
-  const hasEvents = filteredEvents.length > 0;
-
   const [selectedEvents, setSelectedEvents] = useQueryState(
     "events",
     parseAsArrayOf(parseAsString).withDefault([]).withOptions({ shallow: false }),
   );
+
+  const filteredEvents = events.filter((e) => !eventDisplaySettings?.[e]?.isHidden);
+  const visibleSelectedEvents = selectedEvents.filter(id => 
+    events.includes(id) && !eventDisplaySettings?.[id]?.isHidden
+  );
+  const hasEvents = filteredEvents.length > 0;
 
   const toggleEvent = (event: string) => {
     const current = selectedEvents;
@@ -50,9 +54,9 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
             <div className="flex items-center gap-2">
               <ListFilter className="text-muted-foreground h-4 w-4" />
               <span className="capitalize">
-                {selectedEvents.length === 1
-                  ? eventDisplaySettings?.[selectedEvents[0]]?.customName || selectedEvents[0].replaceAll("_", " ")
-                  : `${selectedEvents.length} events selected`}
+                {visibleSelectedEvents.length === 1
+                  ? eventDisplaySettings?.[visibleSelectedEvents[0]]?.customName || visibleSelectedEvents[0].replaceAll("_", " ")
+                  : `${visibleSelectedEvents.length} events selected`}
               </span>
             </div>
             <ChevronDown className="h-4 w-4 opacity-50" />
@@ -61,7 +65,7 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
         <PopoverContent className="w-56 p-1" align="start">
           {filteredEvents.map((event) => {
             const isSelected = selectedEvents.includes(event);
-            const eventName = eventDisplaySettings?.[event]?.customName || event.replaceAll("_", " ");
+            const eventName = eventDisplaySettings?.[event]?.customName || capitalize(event, true);
 
             return (
               <div
@@ -75,7 +79,7 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
                 <input
                   type="checkbox"
                   checked={isSelected}
-                  onChange={() => toggleEvent(event)}
+                  readOnly
                   className="text-primary focus:ring-primary mr-3 h-4 w-4 rounded border-gray-300"
                 />
                 <span className="truncate capitalize">{eventName}</span>
