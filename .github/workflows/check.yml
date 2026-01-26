@@ -87,6 +87,12 @@ jobs:
           CI: true
         run: pnpm --filter cwv-monitor-app test:integration
 
+      - name: Run monitor performance guardrails
+        if: steps.changes.outputs.monitor_changed == 'true'
+        env:
+          CI: true
+        run: pnpm --filter cwv-monitor-app test:perf
+        
         # SDK can destroy client build, so let's verify it here too
       - name: Check demo (Build)
         if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'

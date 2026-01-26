@@ -120,6 +120,7 @@ const eslintConfig = defineConfig([
     files: ["src/env.ts", "next.config.ts", "scripts/**", "vitest.*", "src/test/**"],
     rules: {
       "no-restricted-properties": "off",
+      "no-restricted-imports": "off",
     },
   },
   // Override default ignores of eslint-config-next.
