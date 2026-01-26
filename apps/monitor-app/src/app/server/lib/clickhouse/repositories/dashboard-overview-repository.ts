@@ -60,8 +60,13 @@ export async function fetchMetricsOverview(filters: BaseFilters): Promise<Metric
   const where = buildDailyWhereClause(filters);
 
   return sql<MetricsOverviewRow>`
-    SELECT metric_name, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
-    FROM cwv_daily_aggregates ${where} GROUP BY metric_name
+    SELECT
+      metric_name,
+      quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+      toString(countMerge(sample_size)) AS sample_size
+    FROM cwv_daily_aggregates
+    ${where}
+    GROUP BY metric_name
   `;
 }
 
@@ -79,10 +84,21 @@ export async function fetchWorstRoutes(
   const where = buildDailyWhereClause(filters, metricName);
 
   return sql<WorstRouteRow>`
-    SELECT route, percentiles, toString(sample_count) AS sample_size FROM (
-      SELECT route, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, countMerge(sample_size) AS sample_count
-      FROM cwv_daily_aggregates ${where} GROUP BY route
-    ) ORDER BY percentiles[1] DESC LIMIT ${limit}
+    SELECT
+      route,
+      percentiles,
+      toString(sample_count) AS sample_size
+    FROM (
+      SELECT
+        route,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        countMerge(sample_size) AS sample_count
+      FROM cwv_daily_aggregates
+      ${where}
+      GROUP BY route
+    )
+    ORDER BY percentiles[1] DESC
+    LIMIT ${limit}
   `;
 }
 
@@ -98,8 +114,15 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
   if (filters.interval === "hour") {
     const where = buildEventsWhereClause(filters);
     return sql<MetricSeriesRow>`
-      SELECT metric_name, toString(toStartOfHour(recorded_at)) AS period, quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles, toString(count()) AS sample_size
-      FROM cwv_events ${where} GROUP BY metric_name, period ORDER BY metric_name, period ASC
+      SELECT
+        metric_name,
+        toString(toStartOfHour(recorded_at)) AS period,
+        quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
+        toString(count()) AS sample_size
+      FROM cwv_events
+      ${where}
+      GROUP BY metric_name, period
+      ORDER BY metric_name, period ASC
     `;
   }
 
@@ -107,21 +130,56 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
 
   if (filters.interval === "week") {
     return sql<MetricSeriesRow>`
-      SELECT metric_name, toString(week_period) AS period, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
-      FROM (SELECT metric_name, toStartOfWeek(event_date) AS week_period, quantiles, sample_size FROM cwv_daily_aggregates ${where}) GROUP BY metric_name, week_period ORDER BY metric_name, week_period ASC
+      SELECT
+        metric_name,
+        toString(week_period) AS period,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        toString(countMerge(sample_size)) AS sample_size
+      FROM (
+        SELECT
+          metric_name,
+          toStartOfWeek(event_date) AS week_period,
+          quantiles,
+          sample_size
+        FROM cwv_daily_aggregates
+        ${where}
+      )
+      GROUP BY metric_name, week_period
+      ORDER BY metric_name, week_period ASC
     `;
   }
 
   if (filters.interval === "month") {
     return sql<MetricSeriesRow>`
-      SELECT metric_name, toString(month_period) AS period, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
-      FROM (SELECT metric_name, toStartOfMonth(event_date) AS month_period, quantiles, sample_size FROM cwv_daily_aggregates ${where}) GROUP BY metric_name, month_period ORDER BY metric_name, month_period ASC
+      SELECT
+        metric_name,
+        toString(month_period) AS period,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        toString(countMerge(sample_size)) AS sample_size
+      FROM (
+        SELECT
+          metric_name,
+          toStartOfMonth(event_date) AS month_period,
+          quantiles,
+          sample_size
+        FROM cwv_daily_aggregates
+        ${where}
+      )
+      GROUP BY metric_name, month_period
+      ORDER BY metric_name, month_period ASC
     `;
   }
 
   return sql<MetricSeriesRow>`
-    SELECT metric_name, toString(event_date) AS period, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
-    FROM cwv_daily_aggregates ${where} GROUP BY metric_name, event_date ORDER BY metric_name, event_date ASC
+    SELECT
+      metric_name,
+      toString(event_date) AS period,
+      quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+      toString(countMerge(sample_size)) AS sample_size
+    FROM cwv_daily_aggregates
+    ${where}
+    GROUP BY metric_name, event_date
+    ORDER BY metric_name, event_date ASC
   `;
 }
 
@@ -138,9 +196,20 @@ export async function fetchRouteStatusDistribution(
   const where = buildDailyWhereClause(filters, metricName);
 
   return sql<RouteStatusDistributionRow>`
-    WITH toFloat64(${thresholds.good}) AS good_threshold, toFloat64(${thresholds.needsImprovement}) AS needs_threshold
-    SELECT multiIf(p75 <= good_threshold, 'good', p75 <= needs_threshold, 'needs-improvement', 'poor') AS status, toString(count()) AS route_count
-    FROM (SELECT route, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles)[1] AS p75 FROM cwv_daily_aggregates ${where} GROUP BY route)
+    WITH
+      toFloat64(${thresholds.good}) AS good_threshold,
+      toFloat64(${thresholds.needsImprovement}) AS needs_threshold
+    SELECT
+      multiIf(p75 <= good_threshold, 'good', p75 <= needs_threshold, 'needs-improvement', 'poor') AS status,
+      toString(count()) AS route_count
+    FROM (
+      SELECT
+        route,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles)[1] AS p75
+      FROM cwv_daily_aggregates
+      ${where}
+      GROUP BY route
+    )
     GROUP BY status
   `;
 }
