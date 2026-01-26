@@ -7,7 +7,7 @@ import type { DeviceFilter } from "@/app/server/lib/device-types";
  * - Hour interval in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown
  * - All other queries: Use pre-aggregated `cwv_daily_aggregates` table for performance
  *
- * Quantile indices: [0]=p50, [1]=p75, [2]=p90, [3]=p95, [4]=p99
+ * Quantile indices (1-based): [1]=p50, [2]=p75, [3]=p90, [4]=p95, [5]=p99
  */
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
@@ -97,7 +97,7 @@ export async function fetchWorstRoutes(
       ${where}
       GROUP BY route
     )
-    ORDER BY percentiles[1] DESC
+    ORDER BY percentiles[2] DESC
     LIMIT ${limit}
   `;
 }
@@ -205,7 +205,7 @@ export async function fetchRouteStatusDistribution(
     FROM (
       SELECT
         route,
-        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles)[1] AS p75
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles)[2] AS p75
       FROM cwv_daily_aggregates
       ${where}
       GROUP BY route

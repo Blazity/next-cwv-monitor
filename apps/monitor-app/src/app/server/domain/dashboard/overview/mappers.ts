@@ -4,9 +4,9 @@ import {
   MetricName,
   TimeRangeKey,
   getEffectiveInterval,
-  parseTimeRange,
 } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
+import { timeRangeToDateRange } from "@/lib/utils";
 
 const DEFAULT_TIME_RANGE: TimeRangeKey = "7d";
 const DEFAULT_TOP_ROUTES_LIMIT = 5;
@@ -31,7 +31,7 @@ export type BuildDashboardOverviewQueryInput = {
  */
 export function buildDashboardOverviewQuery(input: BuildDashboardOverviewQueryInput): GetDashboardOverviewQuery {
   const timeRange = input.timeRange ?? DEFAULT_TIME_RANGE;
-  const { start, end } = parseTimeRange(timeRange);
+  const { start, end } = timeRangeToDateRange(timeRange);
   const interval = getEffectiveInterval(input.interval, timeRange);
 
   return {
