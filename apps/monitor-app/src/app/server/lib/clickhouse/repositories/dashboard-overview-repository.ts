@@ -1,10 +1,10 @@
-import { GranularityKey, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { IntervalKey, MetricName } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 /**
  * Data source strategy:
- * - Hour granularity in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown
+ * - Hour interval in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown
  * - All other queries: Use pre-aggregated `cwv_daily_aggregates` table for performance
  *
  * Quantile indices: [0]=p50, [1]=p75, [2]=p90, [3]=p95, [4]=p99
@@ -16,7 +16,7 @@ type BaseFilters = {
   projectId: string;
   start: string; // YYYY-MM-DD for day/week/month, ISO timestamp for hour
   end: string; // YYYY-MM-DD for day/week/month, ISO timestamp for hour
-  granularity: GranularityKey;
+  interval: IntervalKey;
   deviceType: DeviceFilter;
 };
 
@@ -35,7 +35,7 @@ function buildDailyWhereClause(filters: BaseFilters, metricName?: MetricName): S
   return where;
 }
 
-/** WHERE clause for cwv_events (timestamp-based filtering for hour granularity) */
+/** WHERE clause for cwv_events (timestamp-based filtering for hour interval) */
 function buildEventsWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
   const where = sql`WHERE project_id = ${filters.projectId} AND recorded_at >= parseDateTimeBestEffort(${filters.start}) AND recorded_at <= parseDateTimeBestEffort(${filters.end})`;
 
@@ -95,7 +95,7 @@ export type MetricSeriesRow = {
 
 export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<MetricSeriesRow[]> {
 
-  if (filters.granularity === "hour") {
+  if (filters.interval === "hour") {
     const where = buildEventsWhereClause(filters);
     return sql<MetricSeriesRow>`
       SELECT metric_name, toString(toStartOfHour(recorded_at)) AS period, quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles, toString(count()) AS sample_size
@@ -105,14 +105,14 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
 
   const where = buildDailyWhereClause(filters);
 
-  if (filters.granularity === "week") {
+  if (filters.interval === "week") {
     return sql<MetricSeriesRow>`
       SELECT metric_name, toString(week_period) AS period, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
       FROM (SELECT metric_name, toStartOfWeek(event_date) AS week_period, quantiles, sample_size FROM cwv_daily_aggregates ${where}) GROUP BY metric_name, week_period ORDER BY metric_name, week_period ASC
     `;
   }
 
-  if (filters.granularity === "month") {
+  if (filters.interval === "month") {
     return sql<MetricSeriesRow>`
       SELECT metric_name, toString(month_period) AS period, quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles, toString(countMerge(sample_size)) AS sample_size
       FROM (SELECT metric_name, toStartOfMonth(event_date) AS month_period, quantiles, sample_size FROM cwv_daily_aggregates ${where}) GROUP BY metric_name, month_period ORDER BY metric_name, month_period ASC

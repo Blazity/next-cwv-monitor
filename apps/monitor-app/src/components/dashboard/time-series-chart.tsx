@@ -12,12 +12,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { format, startOfWeek, startOfMonth } from "date-fns";
 
 import { Badge } from "@/components/badge";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { formatMetricValue } from "@/lib/utils";
-import type { DailySeriesPoint, GranularityKey, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
+import type { DailySeriesPoint, IntervalKey, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
@@ -40,7 +41,7 @@ type TimeSeriesChartProps = {
   overlay?: TimeSeriesOverlay | null;
   height?: number;
   dateRange: { start: Date; end: Date };
-  granularity: GranularityKey;
+  interval: IntervalKey;
 };
 
 type ChartDataPoint = {
@@ -56,26 +57,6 @@ type ChartDataPoint = {
 };
 
 
-const getStartOfWeek = (date: Date): Date => {
-  const d = new Date(date);
-  const day = d.getUTCDay();
-  d.setUTCDate(d.getUTCDate() - day);
-  d.setUTCHours(0, 0, 0, 0);
-  return d;
-};
-
-const getStartOfMonth = (date: Date): Date => {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-};
-
-const formatHour = (date: Date): string =>
-  date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true }).replace(":00", "");
-
-const formatDateShort = (date: Date): string =>
-  date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-const formatMonthYear = (date: Date): string =>
-  date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 
 type CreateChartPointParams = {
   timestamp: string;
@@ -124,14 +105,14 @@ type GeneratorContext = {
 const generateHourlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  const diffHours = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60));
+  const diffHours = Math.floor(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60));
 
-  for (let i = 0; i < diffHours; i++) {
+  for (let i = 0; i <= diffHours; i++) {
     const currentTick = new Date(start.getTime() + i * 60 * 60 * 1000);
     const nextTick = new Date(currentTick.getTime() + 60 * 60 * 1000);
     const hourKey = currentTick.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
-    const dateLabel = formatDateShort(currentTick);
-    const timeLabel = `${dateLabel}, ${formatHour(currentTick)} - ${formatHour(nextTick)}`;
+    const dateLabel = format(currentTick, "MMM d");
+    const timeLabel = `${dateLabel}, ${format(currentTick, "h a")} - ${format(nextTick, "h a")}`;
 
     points.push(createChartDataPoint({ timestamp: hourKey, timeLabel, ...pointParams }));
   }
@@ -143,12 +124,12 @@ const generateDailyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
   const msPerDay = 24 * 60 * 60 * 1000;
-  const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / msPerDay);
+  const diffDays = Math.floor(Math.abs(end.getTime() - start.getTime()) / msPerDay);
 
-  for (let i = 0; i < diffDays; i++) {
+  for (let i = 0; i <= diffDays; i++) {
     const currentTick = new Date(start.getTime() + i * msPerDay);
     const isoDate = currentTick.toISOString().split("T")[0];
-    const timeLabel = formatDateShort(currentTick);
+    const timeLabel = format(currentTick, "MMM d");
 
     points.push(createChartDataPoint({ timestamp: isoDate, timeLabel, ...pointParams }));
   }
@@ -159,13 +140,13 @@ const generateDailyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateWeeklyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  let currentTick = getStartOfWeek(start);
+  let currentTick = startOfWeek(start, { weekStartsOn: 0 });
 
   while (currentTick.getTime() <= end.getTime()) {
     const weekKey = currentTick.toISOString().split("T")[0];
     const weekEnd = new Date(currentTick);
     weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
-    const timeLabel = `${formatDateShort(currentTick)} - ${formatDateShort(weekEnd)}`;
+    const timeLabel = `${format(currentTick, "MMM d")} - ${format(weekEnd, "MMM d")}`;
 
     points.push(createChartDataPoint({ timestamp: weekKey, timeLabel, ...pointParams }));
 
@@ -179,11 +160,11 @@ const generateWeeklyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateMonthlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  let currentTick = getStartOfMonth(start);
+  let currentTick = startOfMonth(start);
 
   while (currentTick.getTime() <= end.getTime()) {
     const monthKey = currentTick.toISOString().split("T")[0];
-    const timeLabel = formatMonthYear(currentTick);
+    const timeLabel = format(currentTick, "MMM yyyy");
 
     points.push(createChartDataPoint({ timestamp: monthKey, timeLabel, ...pointParams }));
 
@@ -193,7 +174,7 @@ const generateMonthlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   return points;
 };
 
-const GRANULARITY_GENERATORS: Record<GranularityKey, (ctx: GeneratorContext) => ChartDataPoint[]> = {
+const INTERVAL_GENERATORS: Record<IntervalKey, (ctx: GeneratorContext) => ChartDataPoint[]> = {
   hour: generateHourlyPoints,
   day: generateDailyPoints,
   week: generateWeeklyPoints,
@@ -295,7 +276,7 @@ export function TimeSeriesChart({
   overlay,
   height = 300,
   dateRange,
-  granularity,
+  interval,
 }: TimeSeriesChartProps) {
   const isMobile = useMediaQuery("(max-width: 640px)");
 
@@ -305,10 +286,10 @@ export function TimeSeriesChart({
     return new Map(overlay.series.map((point) => [point.date, point]));
   }, [overlay]);
 
-  // Generate chart data points based on granularity
+  // Generate chart data points based on interval
   const chartData = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
-    const generator = GRANULARITY_GENERATORS[granularity];
+    const generator = INTERVAL_GENERATORS[interval];
 
     return generator({
       start: new Date(dateRange.start),
@@ -318,7 +299,7 @@ export function TimeSeriesChart({
       percentile,
       metric,
     });
-  }, [data, metric, overlayByDate, percentile, dateRange, granularity]);
+  }, [data, metric, overlayByDate, percentile, dateRange, interval]);
 
   // Calculate Y-axis domains
   const thresholds = getMetricThresholds(metric);

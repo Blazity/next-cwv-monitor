@@ -15,20 +15,20 @@ export const TIME_RANGES = [
 ] as const;
 export type TimeRangeKey = (typeof TIME_RANGES)[number]["value"];
 
-export const GRANULARITIES = [
+export const INTERVALS = [
   { value: "hour", label: "Hour" },
   { value: "day", label: "Day" },
   { value: "week", label: "Week" },
   { value: "month", label: "Month" },
 ] as const;
-export type GranularityKey = (typeof GRANULARITIES)[number]["value"];
+export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
-export const timeRangeToGranularities = {
+export const timeRangeToIntervals = {
   "24h": ["hour"],
   "7d": ["hour", "day", "week"],
   "30d": ["day", "week"],
   "90d": ["day", "week", "month"],
-} as const satisfies Record<TimeRangeKey, GranularityKey[]>;
+} as const satisfies Record<TimeRangeKey, IntervalKey[]>;
 
 export type DateRange = {
   start: Date;
@@ -40,7 +40,7 @@ export type SortDirection = "asc" | "desc";
 export type GetDashboardOverviewQuery = {
   projectId: string;
   range: DateRange;
-  granularity: GranularityKey;
+  interval: IntervalKey;
   selectedMetric: MetricName;
   deviceType: DeviceFilter;
   topRoutesLimit: number;
@@ -109,27 +109,27 @@ export function parseTimeRange(key: unknown): DateRange {
   return { start, end };
 }
 
-export function getDefaultGranularity(timeRange: TimeRangeKey): GranularityKey {
-  return timeRangeToGranularities[timeRange][0];
+export function getDefaultInterval(timeRange: TimeRangeKey): IntervalKey {
+  return timeRangeToIntervals[timeRange][0];
 }
 
-export function isValidGranularityForTimeRange(granularity: GranularityKey, timeRange: TimeRangeKey): boolean {
-  const validGranularities: readonly GranularityKey[] = timeRangeToGranularities[timeRange];
-  return validGranularities.includes(granularity);
+export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: TimeRangeKey): boolean {
+  const validIntervals: readonly IntervalKey[] = timeRangeToIntervals[timeRange];
+  return validIntervals.includes(interval);
 }
 
 /**
- * Returns the effective granularity for a given time range.
- * If the provided granularity is valid for the time range, it is returned.
- * Otherwise, the default granularity for the time range is returned.
+ * Returns the effective interval for a given time range.
+ * If the provided interval is valid for the time range, it is returned.
+ * Otherwise, the default interval for the time range is returned.
  */
-export function getEffectiveGranularity(
-  granularity: GranularityKey | string | null | undefined,
+export function getEffectiveInterval(
+  interval: IntervalKey | string | null | undefined,
   timeRange: TimeRangeKey,
-): GranularityKey {
-  return granularity && isValidGranularityForTimeRange(granularity as GranularityKey, timeRange)
-    ? (granularity as GranularityKey)
-    : getDefaultGranularity(timeRange);
+): IntervalKey {
+  return interval && isValidIntervalForTimeRange(interval as IntervalKey, timeRange)
+    ? (interval as IntervalKey)
+    : getDefaultInterval(timeRange);
 }
 
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;

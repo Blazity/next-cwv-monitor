@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { TimeSeriesChart } from "@/components/dashboard/time-series-chart";
 import { MetricSelector } from "@/components/dashboard/metric-selector";
-import type { DashboardOverview, DateRange, GranularityKey } from "@/app/server/domain/dashboard/overview/types";
+import type { DashboardOverview, DateRange, IntervalKey } from "@/app/server/domain/dashboard/overview/types";
 import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
 
 type TrendChartByMetricProps = {
@@ -12,7 +12,7 @@ type TrendChartByMetricProps = {
   initialMetric?: MetricName;
   title?: string;
   dateRange: DateRange;
-  granularity: GranularityKey;
+  interval: IntervalKey;
 };
 
 export function TrendChartByMetric({
@@ -20,7 +20,7 @@ export function TrendChartByMetric({
   initialMetric = "LCP",
   title = "Trend Over Time",
   dateRange,
-  granularity,
+  interval,
 }: TrendChartByMetricProps) {
   const [selectedMetric, setSelectedMetric] = useState<MetricName>(initialMetric);
   const data = timeSeriesByMetric[selectedMetric];
@@ -34,7 +34,7 @@ export function TrendChartByMetric({
         </div>
       </CardHeader>
       <CardContent>
-        <TimeSeriesChart data={data} metric={selectedMetric} height={300} dateRange={dateRange} granularity={granularity} />
+        <TimeSeriesChart data={data} metric={selectedMetric} height={300} dateRange={dateRange} interval={interval} />
         <div className="text-muted-foreground mt-4 flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div

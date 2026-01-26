@@ -11,16 +11,16 @@ import { dashboardSearchParamsCache } from "@/lib/search-params";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { GranularityKey, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { getEffectiveGranularity } from "@/app/server/domain/dashboard/overview/types";
+import type { IntervalKey, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { getEffectiveInterval } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, granularity: GranularityKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, granularity });
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -34,11 +34,11 @@ export default async function ProjectPage({
   await getAuthorizedSession();
 
   const { projectId } = await params;
-  const { timeRange, deviceType, granularity } = dashboardSearchParamsCache.parse(await searchParams);
+  const { timeRange, deviceType, interval } = dashboardSearchParamsCache.parse(await searchParams);
   
-  const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
+  const effectiveInterval = getEffectiveInterval(interval, timeRange);
   
-  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveGranularity);
+  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveInterval);
 
   if (overview.kind === "project-not-found") {
     notFound();
@@ -64,7 +64,7 @@ export default async function ProjectPage({
         timeSeriesByMetric={timeSeriesByMetric}
         initialMetric="LCP"
         dateRange={timeRangeToDateRange(timeRange)}
-        granularity={effectiveGranularity}
+        interval={effectiveInterval}
       />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>

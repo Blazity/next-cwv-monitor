@@ -72,14 +72,14 @@ export class DashboardOverviewService {
       projectId: query.projectId,
       start: toDateOnlyString(query.range.start),
       end: toDateOnlyString(query.range.end),
-      granularity: query.granularity,
+      interval: query.interval,
       deviceType: query.deviceType,
     } as const;
 
     // Filters for Time Series Chart
-    // For hour granularity, use ISO timestamps for precise filtering on cwv_events
-    // For other granularities, use date-only strings
-    const toSeriesFilterString = query.granularity === "hour"
+    // For hour interval, use ISO timestamps for precise filtering on cwv_events
+    // For other intervals, use date-only strings
+    const toSeriesFilterString = query.interval === "hour"
       ? (date: Date) => date.toISOString()
       : toDateOnlyString;
 
