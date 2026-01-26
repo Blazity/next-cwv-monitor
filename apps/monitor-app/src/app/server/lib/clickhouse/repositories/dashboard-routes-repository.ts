@@ -1,40 +1,16 @@
-import { DateRange, MetricName, SortDirection } from "@/app/server/domain/dashboard/overview/types";
-import { Percentile } from "@/app/server/domain/dashboard/overview/types";
+import {
+  BaseFilters,
+  buildRecordedAtBounds,
+  MetricName,
+  PAGE_VIEW_EVENT_NAME,
+  Percentile,
+  SortDirection,
+  SortField,
+  SqlFragment,
+  toDateOnlyString,
+} from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
-import { DeviceFilter } from "@/app/server/lib/device-types";
-
-export type SortField = "route" | "views" | "metric";
-
-type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
-
-type BaseFilters = {
-  projectId: string;
-  range: DateRange;
-  deviceType: DeviceFilter;
-};
-
-const PAGE_VIEW_EVENT_NAME = "$page_view";
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function startOfDayUtc(date: Date): Date {
-  return new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
-}
-
-function endExclusiveUtc(date: Date): Date {
-  const base = new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
-  base.setUTCDate(base.getUTCDate() + 1);
-  return base;
-}
-
-function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date } {
-  return {
-    start: startOfDayUtc(range.start),
-    endExclusive: endExclusiveUtc(range.end),
-  };
-}
+import { buildCustomEventsWhereClause } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 
 function buildPageViewsWhereClause(filters: BaseFilters, search?: string): SqlFragment {
   const { start, endExclusive } = buildRecordedAtBounds(filters.range);
@@ -51,38 +27,6 @@ function buildPageViewsWhereClause(filters: BaseFilters, search?: string): SqlFr
 
   if (search) {
     where.append(sql` AND positionCaseInsensitive(route, ${search}) > 0`);
-  }
-
-  return where;
-}
-
-function buildCustomEventsWhereClause(filters: BaseFilters, eventNames: string[], route?: string): SqlFragment {
-  const { start, endExclusive } = buildRecordedAtBounds(filters.range);
-  const where = sql`
-    WHERE project_id = ${filters.projectId}
-      AND recorded_at >= ${start}
-      AND recorded_at < ${endExclusive}
-  `;
-
-  if (eventNames.length > 0) {
-    where.append(sql` AND (`);
-    let isFirst = true;
-    for (const name of eventNames) {
-      if (!isFirst) {
-        where.append(sql` OR `);
-      }
-      where.append(sql` event_name = ${name}`);
-      isFirst = false;
-    }
-    where.append(sql`)`);
-  }
-
-  if (filters.deviceType !== "all") {
-    where.append(sql` AND device_type = ${filters.deviceType}`);
-  }
-
-  if (route) {
-    where.append(sql` AND route = ${route}`);
   }
 
   return where;
