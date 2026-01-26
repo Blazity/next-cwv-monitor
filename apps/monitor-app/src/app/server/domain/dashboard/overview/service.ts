@@ -1,7 +1,7 @@
 import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import {
   fetchMetricsOverview,
-  fetchAllMetricsDailySeries,
+  fetchAllMetricsSeries,
   fetchRouteStatusDistribution,
   fetchWorstRoutes,
 } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
@@ -66,12 +66,28 @@ export class DashboardOverviewService {
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
 
+    // Filters for daily-aggregated queries (Metrics Overview, Worst Routes, Status Distribution)
+    // always use date-only strings (YYYY-MM-DD) compatible with cwv_daily_aggregates
     const filters = {
       projectId: query.projectId,
       start: toDateOnlyString(query.range.start),
       end: toDateOnlyString(query.range.end),
+      interval: query.interval,
       deviceType: query.deviceType,
     } as const;
+
+    // Filters for Time Series Chart
+    // For hour interval, use ISO timestamps for precise filtering on cwv_events
+    // For other intervals, use date-only strings
+    const toSeriesFilterString = query.interval === "hour"
+      ? (date: Date) => date.toISOString()
+      : toDateOnlyString;
+
+    const seriesFilters = {
+      ...filters,
+      start: toSeriesFilterString(query.range.start),
+      end: toSeriesFilterString(query.range.end),
+    };
 
     const previousRange = getPreviousPeriod(query.range.start, query.range.end);
     const previousFilters = {
@@ -86,7 +102,7 @@ export class DashboardOverviewService {
         fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
         fetchMetricsOverview(previousFilters),
         fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-        fetchAllMetricsDailySeries(filters),
+        fetchAllMetricsSeries(seriesFilters),
       ]);
 
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
@@ -111,7 +127,7 @@ export class DashboardOverviewService {
       const quantiles = toQuantileSummary(row.percentiles);
 
       timeSeriesByMetric.get(metric)?.push({
-        date: row.event_date,
+        date: row.period,
         sampleSize: Number(row.sample_size || 0),
         quantiles,
       });
