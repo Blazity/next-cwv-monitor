@@ -138,7 +138,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
       FROM (
         SELECT
           metric_name,
-          toStartOfWeek(event_date) AS week_period,
+          toStartOfWeek(event_date, 0) AS week_period,
           quantiles,
           sample_size
         FROM cwv_daily_aggregates

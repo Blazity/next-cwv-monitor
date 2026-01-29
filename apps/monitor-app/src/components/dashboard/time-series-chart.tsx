@@ -12,13 +12,19 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { format, startOfWeek, startOfMonth } from "date-fns";
+import { format, addDays, addHours } from "date-fns";
 
 import { Badge } from "@/components/badge";
+import { toISODateUTC, toUTCTimestamp, getStartOfWeekUTC, getUTCYearMonth, toHourKeyUTC } from "@/lib/utc-date";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { formatMetricValue } from "@/lib/utils";
-import type { DailySeriesPoint, IntervalKey, MetricName, Percentile } from "@/app/server/domain/dashboard/overview/types";
+import type {
+  DailySeriesPoint,
+  IntervalKey,
+  MetricName,
+  Percentile,
+} from "@/app/server/domain/dashboard/overview/types";
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
@@ -56,8 +62,6 @@ type ChartDataPoint = {
   hoverTarget?: number;
 };
 
-
-
 type CreateChartPointParams = {
   timestamp: string;
   timeLabel: string;
@@ -92,7 +96,6 @@ const createChartDataPoint = ({
   };
 };
 
-
 type GeneratorContext = {
   start: Date;
   end: Date;
@@ -105,16 +108,17 @@ type GeneratorContext = {
 const generateHourlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  const diffHours = Math.floor(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60));
 
-  for (let i = 0; i <= diffHours; i++) {
-    const currentTick = new Date(start.getTime() + i * 60 * 60 * 1000);
-    const nextTick = new Date(currentTick.getTime() + 60 * 60 * 1000);
-    const hourKey = currentTick.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
-    const dateLabel = format(currentTick, "MMM d");
-    const timeLabel = `${dateLabel}, ${format(currentTick, "h a")} - ${format(nextTick, "h a")}`;
+  let currentHour = start;
+  while (currentHour <= end) {
+    const nextHour = addHours(currentHour, 1);
+    const hourKey = toHourKeyUTC(currentHour);
+    const dateLabel = format(currentHour, "MMM d");
+    const timeLabel = `${dateLabel}, ${format(currentHour, "h a")} - ${format(nextHour, "h a")}`;
 
     points.push(createChartDataPoint({ timestamp: hourKey, timeLabel, ...pointParams }));
+
+    currentHour = nextHour;
   }
 
   return points;
@@ -123,15 +127,15 @@ const generateHourlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateDailyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const diffDays = Math.floor(Math.abs(end.getTime() - start.getTime()) / msPerDay);
 
-  for (let i = 0; i <= diffDays; i++) {
-    const currentTick = new Date(start.getTime() + i * msPerDay);
-    const isoDate = currentTick.toISOString().split("T")[0];
-    const timeLabel = format(currentTick, "MMM d");
+  let currentDay = start;
+  while (currentDay <= end) {
+    const isoDate = toISODateUTC(currentDay);
+    const timeLabel = format(currentDay, "MMM d");
 
     points.push(createChartDataPoint({ timestamp: isoDate, timeLabel, ...pointParams }));
+
+    currentDay = addDays(currentDay, 1);
   }
 
   return points;
@@ -140,18 +144,22 @@ const generateDailyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateWeeklyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  let currentTick = startOfWeek(start, { weekStartsOn: 0 });
 
-  while (currentTick.getTime() <= end.getTime()) {
-    const weekKey = currentTick.toISOString().split("T")[0];
-    const weekEnd = new Date(currentTick);
-    weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
-    const timeLabel = `${format(currentTick, "MMM d")} - ${format(weekEnd, "MMM d")}`;
+  const startUTC = toUTCTimestamp(start);
+  const endUTC = toUTCTimestamp(end);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const msPerWeek = 7 * msPerDay;
+  let currentTick = getStartOfWeekUTC(startUTC);
+
+  while (currentTick <= endUTC) {
+    const weekStart = new Date(currentTick);
+    const weekEnd = addDays(weekStart, 6);
+    const weekKey = toISODateUTC(weekStart);
+    const timeLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`;
 
     points.push(createChartDataPoint({ timestamp: weekKey, timeLabel, ...pointParams }));
 
-    currentTick = new Date(currentTick);
-    currentTick.setUTCDate(currentTick.getUTCDate() + 7);
+    currentTick += msPerWeek;
   }
 
   return points;
@@ -160,15 +168,25 @@ const generateWeeklyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
 const generateMonthlyPoints = (ctx: GeneratorContext): ChartDataPoint[] => {
   const { start, end, ...pointParams } = ctx;
   const points: ChartDataPoint[] = [];
-  let currentTick = startOfMonth(start);
 
-  while (currentTick.getTime() <= end.getTime()) {
-    const monthKey = currentTick.toISOString().split("T")[0];
-    const timeLabel = format(currentTick, "MMM yyyy");
+  const { year: startYear, month: startMonth } = getUTCYearMonth(start);
+  const { year: endYear, month: endMonth } = getUTCYearMonth(end);
+
+  let currentYear = startYear;
+  let currentMonth = startMonth;
+
+  while (currentYear < endYear || (currentYear === endYear && currentMonth <= endMonth)) {
+    const monthStart = new Date(Date.UTC(currentYear, currentMonth, 1));
+    const monthKey = toISODateUTC(monthStart);
+    const timeLabel = format(monthStart, "MMM yyyy");
 
     points.push(createChartDataPoint({ timestamp: monthKey, timeLabel, ...pointParams }));
 
-    currentTick = new Date(Date.UTC(currentTick.getUTCFullYear(), currentTick.getUTCMonth() + 1, 1));
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
   }
 
   return points;
@@ -237,7 +255,6 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay }: ChartToolti
   );
 };
 
-
 const CHART_MARGINS = { top: 10, right: 10, left: 0, bottom: 0 };
 
 const AXIS_STYLES = {
@@ -267,7 +284,6 @@ const ChartGradients = () => (
     </linearGradient>
   </defs>
 );
-
 
 export function TimeSeriesChart({
   data,
@@ -305,17 +321,13 @@ export function TimeSeriesChart({
   const thresholds = getMetricThresholds(metric);
 
   const maxMetricValue = useMemo(() => {
-    const values = data
-      .map((d) => d.quantiles?.[percentile] ?? null)
-      .filter((v): v is number => v !== null);
+    const values = data.map((d) => d.quantiles?.[percentile] ?? null).filter((v): v is number => v !== null);
     return Math.max(...values, thresholds.needsImprovement * 1.1);
   }, [data, percentile, thresholds.needsImprovement]);
 
   const overlayDomainMax = useMemo(() => {
     if (!overlay) return 0;
-    const rates = overlay.series
-      .map((p) => p.conversionRatePct)
-      .filter((v): v is number => v !== null);
+    const rates = overlay.series.map((p) => p.conversionRatePct).filter((v): v is number => v !== null);
     const maxRate = Math.max(1, ...rates);
     return Math.min(100, maxRate * 1.1);
   }, [overlay]);
@@ -333,7 +345,9 @@ export function TimeSeriesChart({
             dataKey="time"
             {...AXIS_STYLES}
             interval="preserveStartEnd"
-            minTickGap={30}
+            minTickGap={isMobile ? 40 : 60}
+            angle={0}
+            allowDuplicatedCategory={false}
           />
 
           {/* Primary Y-Axis (Metric) */}
