@@ -18,7 +18,7 @@ const formatLastUpdated = (date: Date) => {
   const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
   if (diffInSeconds < 10) {
-    return "a couple seconds ago";
+    return "a couple of seconds ago";
   }
   if (diffInSeconds < 30) {
     return "less than 30 seconds ago";
@@ -66,7 +66,7 @@ export function DataRefreshControl() {
   }, []);
 
   return (
-    <div className="text-muted-foreground flex items-center gap-2 text-xs">
+    <div className="text-status-good bg-status-good/10 flex h-8 items-center gap-2 rounded-full ps-3 text-[0.9375rem] font-bold">
       <span>Updated {formatLastUpdated(lastUpdated)}</span>
       <TooltipProvider>
         <div className="flex items-center gap-1">
@@ -94,16 +94,18 @@ export function DataRefreshControl() {
               <button
                 type="button"
                 onClick={autoRefresh.toggle}
-                className={cn("hover:bg-accent flex items-center gap-1 rounded px-1.5 py-1 transition-colors", {
-                  "bg-muted text-muted-foreground hover:bg-muted/80": autoRefresh.enabled,
-                })}
+                className="hover:bg-accent flex h-8 items-center gap-1.5 rounded-full px-2.5 transition-colors"
                 aria-pressed={autoRefresh.enabled}
-                aria-label={autoRefresh.enabled ? "Disable auto-refresh" : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`}
+                aria-label={
+                  autoRefresh.enabled
+                    ? "Disable auto-refresh"
+                    : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`
+                }
               >
                 {autoRefresh.enabled ? (
                   <>
-                    <Timer className="h-3.5 w-3.5" />
-                    <span className="tabular-nums">{autoRefresh.formattedCountdown}</span>
+                    <Timer className="h-3.5 w-3.5 shrink-0" />
+                    <span className="text-[0.9375rem] font-medium tabular-nums">{autoRefresh.formattedCountdown}</span>
                   </>
                 ) : (
                   <TimerOff className="h-3.5 w-3.5" />
