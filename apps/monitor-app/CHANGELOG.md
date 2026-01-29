@@ -1,5 +1,11 @@
 # cwv-monitor-app
 
+## 1.1.1
+
+### Patch Changes
+
+- f0dd992: Change text color in metric selector to improve contrast
+
 ## 1.1.0
 
 ### Minor Changes
