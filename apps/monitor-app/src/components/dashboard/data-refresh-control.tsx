@@ -18,7 +18,7 @@ const formatLastUpdated = (date: Date) => {
   const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
   if (diffInSeconds < 10) {
-    return "a couple seconds ago";
+    return "a couple of seconds ago";
   }
   if (diffInSeconds < 30) {
     return "less than 30 seconds ago";
@@ -66,8 +66,7 @@ export function DataRefreshControl() {
   }, []);
 
   return (
-   
-    <div className="text-status-good bg-status-good/10 font-bold flex items-center gap-2 text-[0.9375rem] rounded-full ps-3 h-8">
+    <div className="text-status-good bg-status-good/10 flex h-8 items-center gap-2 rounded-full ps-3 text-[0.9375rem] font-bold">
       <span>Updated {formatLastUpdated(lastUpdated)}</span>
       <TooltipProvider>
         <div className="flex items-center gap-1">
@@ -95,14 +94,18 @@ export function DataRefreshControl() {
               <button
                 type="button"
                 onClick={autoRefresh.toggle}
-                className="flex items-center gap-1.5 rounded-full px-2.5 h-8 transition-colors hover:bg-accent"
+                className="hover:bg-accent flex h-8 items-center gap-1.5 rounded-full px-2.5 transition-colors"
                 aria-pressed={autoRefresh.enabled}
-                aria-label={autoRefresh.enabled ? "Disable auto-refresh" : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`}
+                aria-label={
+                  autoRefresh.enabled
+                    ? "Disable auto-refresh"
+                    : `Enable auto-refresh (${formatCountdown(AUTO_REFRESH_INTERVAL_SECONDS)})`
+                }
               >
                 {autoRefresh.enabled ? (
                   <>
                     <Timer className="h-3.5 w-3.5 shrink-0" />
-                    <span className="tabular-nums text-[0.9375rem] font-medium">{autoRefresh.formattedCountdown}</span>
+                    <span className="text-[0.9375rem] font-medium tabular-nums">{autoRefresh.formattedCountdown}</span>
                   </>
                 ) : (
                   <TimerOff className="h-3.5 w-3.5" />
