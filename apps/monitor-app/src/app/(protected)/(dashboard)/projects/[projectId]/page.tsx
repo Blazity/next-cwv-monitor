@@ -11,16 +11,16 @@ import { dashboardSearchParamsCache } from "@/lib/search-params";
 import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { GranularityKey, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { getEffectiveGranularity } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, granularity: GranularityKey, selectedMetric: MetricName) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  const dateRange = timeRangeToDateRange(timeRange);
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, range: dateRange });
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, granularity, selectedMetric });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -34,8 +34,11 @@ export default async function ProjectPage({
   await getAuthorizedSession();
 
   const { projectId } = await params;
-  const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
-  const overview = await getCachedOverview(projectId, deviceType, timeRange);
+  const { timeRange, deviceType, granularity, metric } = dashboardSearchParamsCache.parse(await searchParams);
+  
+  const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
+  
+  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveGranularity, metric);
 
   if (overview.kind === "project-not-found") {
     notFound();
@@ -52,17 +55,18 @@ export default async function ProjectPage({
       <PageHeader title="Overview" description="Monitor Core Web Vitals across all routes" />
       <QuickStats
         projectId={projectId}
-        selectedMetric="LCP"
+        queriedMetric={metric}
         data={quickStats}
         statusDistribution={statusDistribution}
       />
       <CoreWebVitals metricOverview={metricOverview} />
       <TrendChartByMetric
-        timeSeriesByMetric={timeSeriesByMetric}
-        initialMetric="LCP"
+        data={timeSeriesByMetric[metric]}
+        queriedMetric={metric}
         dateRange={timeRangeToDateRange(timeRange)}
+        granularity={effectiveGranularity}
       />
-      <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
+      <WorstRoutesByMetric projectId={projectId} queriedMetric={metric} routes={worstRoutes} />
     </div>
   );
 }

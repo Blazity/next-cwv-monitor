@@ -5,7 +5,7 @@ import { subDays } from "date-fns";
 
 import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { daysToNumber } from "@/lib/utils";
+import { timeRangeToDays } from "@/lib/utils";
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
@@ -80,7 +80,7 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should correctly separate current and previous periods at the boundary", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
       const now = new Date();
 
       const boundaryDate = subDays(now, days);
@@ -112,7 +112,7 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should calculate percentage change correctly and handle zero-division", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
       const now = new Date();
       const prev = subDays(now, days + 1);
 
@@ -219,7 +219,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "target_event" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"] });
 
       expect(stats[0].conversions_cur).toBe(1);
     });
@@ -256,7 +256,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "subscribe" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"] });
       const pricing = stats.find((s) => s.route === "/pricing");
 
       expect(pricing?.conversion_rate).toBe(50);
@@ -267,7 +267,7 @@ describe("custom-events-repository integration", () => {
 
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
 
       const format = (d: Date) => d.toISOString().split("T")[0];
 
@@ -275,7 +275,7 @@ describe("custom-events-repository integration", () => {
       const expectedStartTimestamp = now.getTime() - days * 24 * 60 * 60 * 1000;
       const expectedStartDate = new Date(expectedStartTimestamp);
 
-      const trend = await fetchConversionTrend({ projectId, range, eventName: "any" });
+      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"] });
       const firstEntryDate = new Date(trend[0].day);
 
       expect(format(firstEntryDate)).toBe(format(expectedStartDate));

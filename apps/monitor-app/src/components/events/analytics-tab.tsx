@@ -1,46 +1,41 @@
-import {
-  fetchConversionTrend,
-  fetchEventsStatsData,
-} from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
+import { fetchEventsStatsData } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
-import { AnalyticsChart } from "@/components/events/analytics-chart";
 import { AnalyticsTable } from "@/components/events/analytics-table";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { capitalize } from "@/lib/utils";
-
 import { sumBy } from "remeda";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { BarChart3 } from "lucide-react";
+import { TimeSeriesChartProps } from "@/components/dashboard/time-series-chart";
+import { TrendChartByMetric } from "@/components/dashboard/trend-chart-by-metric";
+import { useMemo } from "react";
 
 type Props = {
   eventStats: Awaited<ReturnType<typeof fetchEventsStatsData>> | null;
-  chartData: Awaited<ReturnType<typeof fetchConversionTrend>> | null;
-  selectedEvent: string | null;
+  chartData: TimeSeriesChartProps | null;
+  selectedEvents: string[];
   eventDisplaySettings: EventDisplaySettings;
 };
 
-export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDisplaySettings }: Props) {
+export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDisplaySettings }: Props) {
   const hasStats = Array.isArray(eventStats) && eventStats.length > 0;
-  const hasChartData = Array.isArray(chartData) && chartData.length > 0;
 
-  if (!selectedEvent || (selectedEvent && eventDisplaySettings?.[selectedEvent]?.isHidden)) {
-    return (
-      <Empty className="border-2 border-dashed py-20">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <BarChart3 />
-          </EmptyMedia>
-          <EmptyTitle>No events found</EmptyTitle>
-          <EmptyDescription>Start sending custom events to your project to see analytics here.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
+  const visibleOverlays = useMemo(() => {
+    return chartData?.overlays?.filter(ov => !eventDisplaySettings?.[ov.id]?.isHidden) || [];
+  }, [chartData?.overlays, eventDisplaySettings]);
 
-  const selectedEventName = capitalize(
-    eventDisplaySettings?.[selectedEvent]?.customName || selectedEvent.replaceAll("_", " "),
-    true,
-  );
+  const hasChartData = useMemo(() => {
+    if (!chartData) return false;
+    
+    const hasPrimaryPoints = Array.isArray(chartData.data) && chartData.data.length > 0;
+    const hasOverlayPoints = visibleOverlays.some(ov => ov.series.length > 0);
+
+    return hasPrimaryPoints || hasOverlayPoints;
+  }, [chartData, visibleOverlays]);
+
+  const selectedEventName = selectedEvents
+    .map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true))
+    .join(", ");
 
   const totalConversionsForEvent = hasStats ? sumBy(eventStats, (v) => v.conversions_cur) : 0;
 
@@ -54,24 +49,21 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvent, eventDispla
 
   return (
     <>
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Conversion Trend</CardTitle>
-          <CardDescription>Event conversion rate over time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 w-full">
-            {hasChartData ? (
-              <AnalyticsChart chartData={chartData} />
-            ) : (
-              <div className="text-muted-foreground flex h-full items-center justify-center text-sm italic">
-                No trend data available for the selected period
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
+      {chartData && hasChartData ? (
+        <TrendChartByMetric
+          title="Conversion Trend"
+          description="Event conversion rate over time"
+          dateRange={chartData.dateRange}
+          granularity={chartData.granularity}
+          queriedMetric={chartData.metric}
+          data={chartData.data}
+          multiOverlay={chartData.overlays}
+        />
+      ) : (
+        <div className="text-muted-foreground flex h-full items-center justify-center text-sm italic">
+          No trend data available for the selected period
+        </div>
+      )}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle>

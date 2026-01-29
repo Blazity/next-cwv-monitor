@@ -1,15 +1,15 @@
-import type { GetRouteEventOverlayQuery } from "@/app/server/domain/routes/overlay/types";
-import { DateRange } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import type { GetRouteDetailQuery } from "@/app/server/domain/dashboard/routes/detail/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
 
-export type BuildRouteEventOverlayQueryInput = {
+export type BuildRouteDetailQueryInput = {
   projectId: string;
   route: string;
-  eventName: string;
   range?: Partial<DateRange>;
   deviceType?: DeviceFilter;
+  selectedMetric?: MetricName;
 };
 
 function defaultRange(): DateRange {
@@ -19,11 +19,12 @@ function defaultRange(): DateRange {
   return { start, end };
 }
 
-function normalizeEventName(value: string): string {
-  return value.trim();
-}
-
-export function buildRouteEventOverlayQuery(input: BuildRouteEventOverlayQueryInput): GetRouteEventOverlayQuery {
+/**
+ * Builds a normalized query DTO for route detail.
+ *
+ * Centralizes defaults and keeps call sites small.
+ */
+export function buildRouteDetailQuery(input: BuildRouteDetailQueryInput): GetRouteDetailQuery {
   const fallback = defaultRange();
   const end = input.range?.end ?? fallback.end;
   const start = input.range?.start ?? fallback.start;
@@ -31,8 +32,8 @@ export function buildRouteEventOverlayQuery(input: BuildRouteEventOverlayQueryIn
   return {
     projectId: input.projectId,
     route: input.route,
-    eventName: normalizeEventName(input.eventName),
     deviceType: input.deviceType ?? "all",
     range: { start, end },
+    selectedMetric: input.selectedMetric ?? "LCP",
   };
 }

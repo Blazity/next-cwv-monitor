@@ -1,8 +1,15 @@
-import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import {
+  BaseFilters,
+  buildRecordedAtBounds,
+  GranularityKey,
+  PAGE_VIEW_EVENT_NAME,
+  SqlFragment,
+  TimeRangeKey,
+} from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
 import { DeviceFilter } from "@/app/server/lib/device-types";
-import { chunkGenerator, daysToNumber, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
+import { chunkGenerator, timeRangeToDays, getPeriodDates, parseClickHouseNumbers } from "@/lib/utils";
 import { coerceClickHouseDateTime } from "@/lib/utils";
 
 type CustomEventFilters = {
@@ -102,15 +109,15 @@ export async function fetchCustomEvents(filters: CustomEventFilters): Promise<Cu
   return query;
 }
 
-
 type FetchEventsStatsData = {
   range: TimeRangeKey;
   projectId: string;
-  eventName: string;
+  eventNames: string[];
   deviceType?: DeviceFilter;
 };
 
 type FetchEventsStatsDataResult = {
+  event_name: string;
   route: string;
   conversions_cur: number;
   views_cur: number;
@@ -122,8 +129,8 @@ type FetchEventsStatsDataResult = {
   conversion_rate: number | null;
 };
 
-export async function fetchEventsStatsData({ range, eventName, projectId, deviceType }: FetchEventsStatsData) {
-  if (!eventName) return [];
+export async function fetchEventsStatsData({ range, eventNames, projectId, deviceType }: FetchEventsStatsData) {
+  if (eventNames.length === 0) return [];
 
   const { currentStart, prevStart } = getPeriodDates(range);
 
@@ -133,10 +140,10 @@ export async function fetchEventsStatsData({ range, eventName, projectId, device
       if(views_prev = 0, NULL, (conversions_prev / views_prev) * 100) AS conversion_rate_prev
     SELECT
       route,
-      uniqExact(session_id) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = '$page_view') as views_cur,
-      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = ${eventName}) as conversions_cur,
-      uniqExact(session_id) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') as views_prev,
-      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${eventName}) as conversions_prev,
+      uniqExact(session_id) FILTER (WHERE recorded_at >= ${currentStart} AND event_name = ${PAGE_VIEW_EVENT_NAME}) as views_cur,
+      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${currentStart} AND event_name IN (${eventNames})) as conversions_cur,
+      uniqExact(session_id) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${PAGE_VIEW_EVENT_NAME}) as views_prev,
+      uniqExact(session_id, event_name) FILTER (WHERE recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name IN (${eventNames})) as conversions_prev,
 
       conversion_rate,
       conversion_rate_prev,
@@ -151,7 +158,7 @@ export async function fetchEventsStatsData({ range, eventName, projectId, device
     FROM custom_events
     WHERE project_id = ${projectId}
       AND recorded_at >= ${prevStart}
-      AND (event_name = ${eventName} OR event_name = '$page_view')
+      AND (event_name IN (${eventNames}) OR event_name = ${PAGE_VIEW_EVENT_NAME})
   `;
 
   if (deviceType && deviceType !== "all") {
@@ -164,13 +171,87 @@ export async function fetchEventsStatsData({ range, eventName, projectId, device
   return results.map((row) => parseClickHouseNumbers(row));
 }
 
+export function buildCustomEventsWhereClause(filters: BaseFilters, eventNames: string[], route?: string): SqlFragment {
+  const { start, endExclusive } = buildRecordedAtBounds(filters.range);
+  const where = sql`
+    WHERE project_id = ${filters.projectId}
+      AND recorded_at >= ${start}
+      AND recorded_at < ${endExclusive}
+  `;
+
+  if (eventNames.length > 0) {
+    where.append(sql` AND (`);
+    let isFirst = true;
+    for (const name of eventNames) {
+      if (!isFirst) {
+        where.append(sql` OR `);
+      }
+      where.append(sql` event_name = ${name}`);
+      isFirst = false;
+    }
+    where.append(sql`)`);
+  }
+
+  if (filters.deviceType !== "all") {
+    where.append(sql` AND device_type = ${filters.deviceType}`);
+  }
+
+  if (route) {
+    where.append(sql` AND route = ${route}`);
+  }
+
+  return where;
+}
+
+export type MultiEventOverlayRow = {
+  event_date: string;
+  event_name: string;
+  views: string;
+  conversions: string;
+};
+
+export async function fetchMultiEventOverlaySeries(
+  query: BaseFilters & {
+    route?: string;
+    eventNames: string[];
+    granularity: GranularityKey;
+  },
+): Promise<MultiEventOverlayRow[]> {
+  const allEvents = [PAGE_VIEW_EVENT_NAME, ...query.eventNames];
+  const where = buildCustomEventsWhereClause(query, allEvents, query.route);
+
+  const periodExpr = query.granularity === "hour" 
+    ? sql.raw("toStartOfHour(recorded_at)") 
+    : sql.raw("toDate(recorded_at)");
+
+  return sql<MultiEventOverlayRow>`
+    SELECT
+      toString(period) AS event_date,
+      event_name,
+      toString(max(period_views) OVER (PARTITION BY period)) AS views,
+      toString(conversions) AS conversions
+    FROM (
+      SELECT 
+        ${periodExpr} as period,
+        event_name,
+        uniqExact(session_id) as conversions,
+        uniqExactIf(session_id, event_name = ${PAGE_VIEW_EVENT_NAME}) as period_views
+      FROM custom_events
+      ${where}
+      GROUP BY period, event_name
+    )
+    QUALIFY event_name != ${PAGE_VIEW_EVENT_NAME}
+    ORDER BY period ASC, event_name ASC
+  `;
+}
+
 type FetchTotalStatsEvents = {
   range: TimeRangeKey;
   projectId: string;
   deviceType?: DeviceFilter;
 };
 
-type FetchTotalStatsEventsResult = {
+export type FetchEventsTotalStatsResult = {
   total_conversions_cur: number;
   total_views_cur: number;
   total_events_cur: number;
@@ -186,15 +267,15 @@ type FetchTotalStatsEventsResult = {
 export async function fetchTotalStatsEvents({ projectId, range, deviceType }: FetchTotalStatsEvents) {
   const { now, currentStart, prevStart } = getPeriodDates(range);
 
-  const query = sql<FetchTotalStatsEventsResult>`
+  const query = sql<FetchEventsTotalStatsResult>`
     SELECT
-      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${currentStart} AND event_name != '$page_view') AS total_conversions_cur,
-      uniqExactIf(session_id, recorded_at >= ${currentStart} AND event_name = '$page_view') AS total_views_cur,
-      uniqExactIf(event_name, recorded_at >= ${currentStart} AND event_name != '$page_view') AS total_events_cur,
+      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${currentStart} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_conversions_cur,
+      uniqExactIf(session_id, recorded_at >= ${currentStart} AND event_name = ${PAGE_VIEW_EVENT_NAME}) AS total_views_cur,
+      uniqExactIf(event_name, recorded_at >= ${currentStart} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_events_cur,
 
-      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != '$page_view') AS total_conversions_prev,
-      uniqExactIf(session_id, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = '$page_view') AS total_views_prev,
-      uniqExactIf(event_name, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != '$page_view') AS total_events_prev,
+      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_conversions_prev,
+      uniqExactIf(session_id, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name = ${PAGE_VIEW_EVENT_NAME}) AS total_views_prev,
+      uniqExactIf(event_name, recorded_at >= ${prevStart} AND recorded_at < ${currentStart} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_events_prev,
 
       if(total_conversions_prev = 0, NULL, ((total_conversions_cur - total_conversions_prev) / total_conversions_prev) * 100) AS total_conversion_change_pct,
       if(total_views_prev = 0, NULL, ((total_views_cur - total_views_prev) / total_views_prev) * 100) AS total_views_change_pct
@@ -219,14 +300,14 @@ type FetchEvents = {
   limit?: number;
 };
 
-type FetchMostActiveEventResult = {
+export type FetchEventResult = {
   event_name: string;
   records_count: number;
 };
 
 export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
-  const negativeRange = daysToNumber[range] * -1;
-  const query = sql<FetchMostActiveEventResult | undefined>`
+  const negativeRange = timeRangeToDays[range] * -1;
+  const query = sql<FetchEventResult | undefined>`
     SELECT
       ce.event_name,
       count() AS records_count
@@ -234,7 +315,7 @@ export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
     WHERE ce.project_id = ${projectId}
       AND ce.recorded_at >= addDays(now(), ${negativeRange})
       AND ce.recorded_at < now()
-      AND ce.event_name NOT LIKE '$page_view'
+      AND ce.event_name NOT LIKE ${PAGE_VIEW_EVENT_NAME}
       GROUP BY ce.event_name
     ORDER BY records_count DESC
   `;
@@ -247,29 +328,32 @@ export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
 type FetchConversionTrend = {
   range: TimeRangeKey;
   projectId: string;
-  eventName: string;
+  eventNames: string[];
   deviceType?: DeviceFilter;
 };
 
 type FetchConversionTrendResult = {
+  event_name: string;
   day: string;
   views: string;
   events: string;
   conversion_rate: number | null;
 };
 
-export async function fetchConversionTrend({ projectId, eventName, range, deviceType }: FetchConversionTrend) {
-  if (!eventName) return [];
+export async function fetchConversionTrend({ projectId, eventNames, range, deviceType }: FetchConversionTrend) {
+  if (eventNames.length === 0) return [];
 
   const { now, currentStart } = getPeriodDates(range);
   const startUnix = Math.floor(currentStart.getTime() / 1000);
   const endUnix = Math.floor(now.getTime() / 1000);
 
+  const allEventNames = [...eventNames, PAGE_VIEW_EVENT_NAME];
+
   const innerWhere = sql`
     WHERE ce.project_id = ${projectId}
       AND ce.recorded_at >= toDateTime64(${startUnix}, 3)
       AND ce.recorded_at <= toDateTime64(${endUnix}, 3)
-      AND ce.event_name IN (${eventName}, '$page_view')
+      AND ce.event_name IN (${allEventNames})
   `;
 
   if (deviceType && deviceType !== "all") {
@@ -285,8 +369,8 @@ export async function fetchConversionTrend({ projectId, eventName, range, device
     FROM (
       SELECT
         toDate(ce.recorded_at) AS day,
-        uniqExactIf(ce.session_id, ce.event_name = '$page_view') AS views,
-        uniqExactIf(tuple(ce.session_id, ce.event_name), ce.event_name = ${eventName}) AS events
+        uniqExactIf(ce.session_id, ce.event_name = ${PAGE_VIEW_EVENT_NAME}) AS views,
+        uniqExact(ce.session_id, ce.event_name) AS events
       FROM
         custom_events AS ce
       ${innerWhere}
@@ -314,7 +398,7 @@ export async function fetchProjectEventNames({ projectId }: FetchProjectEventNam
   const query = sql<FetchProjectEventNamesResult>`
     SELECT event_name
     FROM custom_events
-    WHERE project_id = ${projectId} AND event_name NOT LIKE '$page_view'
+    WHERE project_id = ${projectId} AND event_name NOT LIKE ${PAGE_VIEW_EVENT_NAME}
     GROUP BY event_name
     ORDER BY event_name ASC
   `;

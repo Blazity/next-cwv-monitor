@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { RouteDetailService } from "@/app/server/domain/routes/detail/service";
-import { buildRouteDetailQuery } from "@/app/server/domain/routes/detail/mappers";
-import { RouteEventOverlayService } from "@/app/server/domain/routes/overlay/service";
-import { buildRouteEventOverlayQuery } from "@/app/server/domain/routes/overlay/mappers";
+import { RouteDetailService } from "@/app/server/domain/dashboard/routes/detail/service";
+import { buildRouteDetailQuery } from "@/app/server/domain/dashboard/routes/detail/mappers";
+import { RouteEventOverlayService } from "@/app/server/domain/dashboard/routes/overlay/service";
+import { buildRouteEventOverlayQuery } from "@/app/server/domain/dashboard/routes/overlay/mappers";
 import { fetchProjectEventNames } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
 import { RouteDetailErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-detail-error-state";
@@ -12,6 +12,7 @@ import { getAuthorizedSession } from "@/lib/auth-utils";
 import { getCachedProject } from "@/lib/cache";
 import { routeDetailSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
+import { getEffectiveGranularity } from "@/app/server/domain/dashboard/overview/types";
 import { ArkErrors } from "arktype";
 
 const routeDetailService = new RouteDetailService();
@@ -30,9 +31,10 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
 
   const { projectId, route: routeParam } = await params;
   const rawSearchParams = await searchParams;
-  const { timeRange, deviceType, metric, percentile, event } = routeDetailSearchParamsCache.parse(rawSearchParams);
+  const { timeRange, deviceType, metric, percentile, event, granularity } = routeDetailSearchParamsCache.parse(rawSearchParams);
 
   const dateRange = timeRangeToDateRange(timeRange);
+  const effectiveGranularity = getEffectiveGranularity(granularity, timeRange);
   const route = safeDecodeURIComponent(routeParam);
 
   const detailPromise = routeDetailService.getDetail(
@@ -115,6 +117,7 @@ export default async function RoutePage({ params, searchParams }: PageProps<"/pr
       selectedPercentile={percentile}
       selectedEvent={selectedEvent}
       dateRange={dateRange}
+      granularity={effectiveGranularity}
       overlay={overlayResult?.kind === "ok" ? overlayResult.data : null}
     />
   );

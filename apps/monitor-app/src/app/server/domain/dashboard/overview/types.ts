@@ -1,5 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
+import { sql } from "@/app/server/lib/clickhouse/client";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 
@@ -8,11 +9,29 @@ export type MetricName = (typeof METRIC_NAMES)[number];
 
 export type TimeRange = (typeof TIME_RANGES)[number];
 export const TIME_RANGES = [
+  { value: "24h", label: "Last 24 hours", days: 1 },
   { value: "7d", label: "Last 7 days", days: 7 },
   { value: "30d", label: "Last 30 days", days: 30 },
   { value: "90d", label: "Last 90 days", days: 90 },
 ] as const;
 export type TimeRangeKey = (typeof TIME_RANGES)[number]["value"];
+
+export const GRANULARITIES = [
+  { value: "hour", label: "Hour" },
+  { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
+] as const;
+export type GranularityKey = (typeof GRANULARITIES)[number]["value"];
+
+export const PAGE_VIEW_EVENT_NAME = "$page_view";
+
+export const timeRangeToGranularities = {
+  "24h": ["hour"],
+  "7d": ["hour", "day", "week"],
+  "30d": ["day", "week"],
+  "90d": ["day", "week", "month"],
+} as const satisfies Record<TimeRangeKey, GranularityKey[]>;
 
 export type DateRange = {
   start: Date;
@@ -20,10 +39,23 @@ export type DateRange = {
 };
 
 export type SortDirection = "asc" | "desc";
+export type SortField = "route" | "views" | "metric";
+
+export type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
+
+export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
+export type Percentile = (typeof PERCENTILES)[number];
+
+export type BaseFilters = {
+  projectId: string;
+  range: DateRange;
+  deviceType: DeviceFilter;
+};
 
 export type GetDashboardOverviewQuery = {
   projectId: string;
   range: DateRange;
+  granularity: GranularityKey;
   selectedMetric: MetricName;
   deviceType: DeviceFilter;
   topRoutesLimit: number;
@@ -92,5 +124,47 @@ export function parseTimeRange(key: unknown): DateRange {
   return { start, end };
 }
 
-export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
-export type Percentile = (typeof PERCENTILES)[number];
+export function toDateOnlyString(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function startOfDayUtc(date: Date): Date {
+  return new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
+}
+
+function endExclusiveUtc(date: Date): Date {
+  const base = new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
+  base.setUTCDate(base.getUTCDate() + 1);
+  return base;
+}
+
+export function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date; } {
+  return {
+    start: startOfDayUtc(range.start),
+    endExclusive: endExclusiveUtc(range.end),
+  };
+}
+
+export function getDefaultGranularity(timeRange: TimeRangeKey): GranularityKey {
+  return timeRangeToGranularities[timeRange][0];
+}
+
+export function isValidGranularityForTimeRange(granularity: GranularityKey, timeRange: TimeRangeKey): boolean {
+  const validGranularities: readonly GranularityKey[] = timeRangeToGranularities[timeRange];
+  return validGranularities.includes(granularity);
+}
+
+/**
+ * Returns the effective granularity for a given time range.
+ * If the provided granularity is valid for the time range, it is returned.
+ * Otherwise, the default granularity for the time range is returned.
+ */
+export function getEffectiveGranularity(
+  granularity: GranularityKey | string | null | undefined,
+  timeRange: TimeRangeKey,
+): GranularityKey {
+  return granularity && isValidGranularityForTimeRange(granularity as GranularityKey, timeRange)
+    ? (granularity as GranularityKey)
+    : getDefaultGranularity(timeRange);
+}
+
