@@ -86,12 +86,12 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{info.name}</span>
                     {!info.isCoreWebVital && (
-                      <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px]">
+                      <span className="bg-muted text-secondary-foreground rounded px-1.5 py-0.5 text-[10px]">
                         Not a CWV
                       </span>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-xs">{info.description}</p>
+                  <p className="text-background/80 text-xs">{info.description}</p>
                 </div>
               </TooltipContent>
             </Tooltip>
