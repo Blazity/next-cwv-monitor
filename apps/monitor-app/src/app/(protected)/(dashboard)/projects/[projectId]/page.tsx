@@ -5,10 +5,10 @@ import { TrendChartByMetric } from "@/components/dashboard/trend-chart-by-metric
 import { QuickStats } from "@/components/dashboard/quick-stats";
 import { CoreWebVitals } from "@/components/dashboard/core-web-vitals";
 import { buildDashboardOverviewQuery } from "@/app/server/domain/dashboard/overview/mappers";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { timeRangeToDateRange } from "@/lib/utils";
 import { dashboardSearchParamsCache } from "@/lib/search-params";
-import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
+import { CACHE_LIFE_DEFAULT, updateTags } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
 import type { IntervalKey, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
@@ -20,6 +20,7 @@ const dashboardOverviewService = new DashboardOverviewService();
 async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
+  cacheTag(updateTags.dashboardOverview(projectId, deviceType, timeRange, interval));
   const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval });
   return await dashboardOverviewService.getOverview(query);
 }
