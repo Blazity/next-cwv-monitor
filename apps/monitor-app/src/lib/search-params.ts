@@ -6,7 +6,7 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES, SortDirection } from "@/app/server/domain/dashboard/overview/types";
+import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES, SortDirection, INTERVALS } from "@/app/server/domain/dashboard/overview/types";
 import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
 import { REGRESSION_METRIC_NAMES } from "@/app/server/domain/regressions/list/types";
 import type { RoutesSortField } from "@/app/server/domain/routes/list/types";
@@ -16,6 +16,7 @@ export const ROUTES_SORT_FIELDS = ["route", "views", "metric"] as const satisfie
 export const REGRESSIONS_SORT_FIELDS = ["route", "metric", "change", "views"] as const satisfies RegressionsSortField[];
 export const SORT_DIRECTIONS = ["asc", "desc"] as const satisfies SortDirection[];
 const TIME_RANGE_KEYS = TIME_RANGES.map((range) => range.value);
+const INTERVAL_KEYS = INTERVALS.map((interval) => interval.value);
 
 export const QUERY_STATE_OPTIONS = {
   shallow: false,
@@ -32,6 +33,7 @@ export const autoRefreshParser = parseAsBoolean.withDefault(false);
 
 export const dashboardSearchParsers = {
   timeRange: parseAsStringLiteral(TIME_RANGE_KEYS).withDefault("7d"),
+  interval: parseAsStringLiteral(INTERVAL_KEYS), // No default - server derives from timeRange
   deviceType: parseAsStringLiteral(OVERVIEW_DEVICE_TYPES).withDefault("all"),
   autoRefresh: autoRefreshParser,
 };
