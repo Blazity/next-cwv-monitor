@@ -4,8 +4,12 @@ import type { DeviceFilter } from "@/app/server/lib/device-types";
 
 /**
  * Data source strategy:
- * - Hour interval in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown
+ * - Hour interval in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown (UTC)
  * - All other queries: Use pre-aggregated `cwv_daily_aggregates` table for performance
+ *
+ * Timezone handling:
+ * - Hourly queries use toStartOfHour(recorded_at, 'UTC') to match client-side UTC hour keys
+ * - Weekly queries use toStartOfWeek(event_date, 0) where 0 = Sunday to match client expectations
  *
  * Quantile indices (1-based): [1]=p50, [2]=p75, [3]=p90, [4]=p95, [5]=p99
  */
@@ -116,7 +120,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
     return sql<MetricSeriesRow>`
       SELECT
         metric_name,
-        toString(toStartOfHour(recorded_at)) AS period,
+        toString(toStartOfHour(recorded_at, 'UTC')) AS period,
         quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
         toString(count()) AS sample_size
       FROM cwv_events

@@ -11,7 +11,7 @@
  * Convert a Date to UTC timestamp at start of day (00:00:00)
  */
 export function toUTCTimestamp(date: Date): number {
-  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 }
 
 /**
