@@ -5,7 +5,7 @@ import { subDays } from "date-fns";
 
 import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { daysToNumber } from "@/lib/utils";
+import { timeRangeToDays } from "@/lib/utils";
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
@@ -80,7 +80,7 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should correctly separate current and previous periods at the boundary", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
       const now = new Date();
 
       const boundaryDate = subDays(now, days);
@@ -112,7 +112,7 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should calculate percentage change correctly and handle zero-division", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
       const now = new Date();
       const prev = subDays(now, days + 1);
 
@@ -267,7 +267,7 @@ describe("custom-events-repository integration", () => {
 
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
-      const days = daysToNumber[range];
+      const days = timeRangeToDays[range];
 
       const format = (d: Date) => d.toISOString().split("T")[0];
 

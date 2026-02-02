@@ -5,22 +5,23 @@ import { TrendChartByMetric } from "@/components/dashboard/trend-chart-by-metric
 import { QuickStats } from "@/components/dashboard/quick-stats";
 import { CoreWebVitals } from "@/components/dashboard/core-web-vitals";
 import { buildDashboardOverviewQuery } from "@/app/server/domain/dashboard/overview/mappers";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { timeRangeToDateRange } from "@/lib/utils";
 import { dashboardSearchParamsCache } from "@/lib/search-params";
-import { CACHE_LIFE_DEFAULT } from "@/lib/cache";
+import { CACHE_LIFE_DEFAULT, updateTags } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { IntervalKey, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import { getEffectiveInterval } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  const dateRange = timeRangeToDateRange(timeRange);
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, range: dateRange });
+  cacheTag(updateTags.dashboardOverview(projectId, deviceType, timeRange, interval));
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -34,8 +35,11 @@ export default async function ProjectPage({
   await getAuthorizedSession();
 
   const { projectId } = await params;
-  const { timeRange, deviceType } = dashboardSearchParamsCache.parse(await searchParams);
-  const overview = await getCachedOverview(projectId, deviceType, timeRange);
+  const { timeRange, deviceType, interval } = dashboardSearchParamsCache.parse(await searchParams);
+  
+  const effectiveInterval = getEffectiveInterval(interval, timeRange);
+  
+  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveInterval);
 
   if (overview.kind === "project-not-found") {
     notFound();
@@ -61,6 +65,7 @@ export default async function ProjectPage({
         timeSeriesByMetric={timeSeriesByMetric}
         initialMetric="LCP"
         dateRange={timeRangeToDateRange(timeRange)}
+        interval={effectiveInterval}
       />
       <WorstRoutesByMetric projectId={projectId} metricName="LCP" routes={worstRoutes} />
     </div>

@@ -1,21 +1,47 @@
-import { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { IntervalKey, MetricName } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
+
+/**
+ * Data source strategy:
+ * - Hour interval in fetchAllMetricsSeries: Query raw `cwv_events` table for hourly breakdown (UTC)
+ * - All other queries: Use pre-aggregated `cwv_daily_aggregates` table for performance
+ *
+ * Timezone handling:
+ * - Hourly queries use toStartOfHour(recorded_at, 'UTC') to match client-side UTC hour keys
+ * - Weekly queries use toStartOfWeek(event_date, 0) where 0 = Sunday to match client expectations
+ *
+ * Quantile indices (1-based): [1]=p50, [2]=p75, [3]=p90, [4]=p95, [5]=p99
+ */
 
 type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
 
 type BaseFilters = {
   projectId: string;
-  start: string; // YYYY-MM-DD
-  end: string; // YYYY-MM-DD
+  start: string; // YYYY-MM-DD for day/week/month, ISO timestamp for hour
+  end: string; // YYYY-MM-DD for day/week/month, ISO timestamp for hour
+  interval: IntervalKey;
   deviceType: DeviceFilter;
 };
 
-function buildWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
-  const where = sql`
-    WHERE project_id = ${filters.projectId}
-      AND event_date BETWEEN toDate(${filters.start}) AND toDate(${filters.end})
-  `;
+/** WHERE clause for cwv_daily_aggregates (date-based filtering) */
+function buildDailyWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
+  const where = sql`WHERE project_id = ${filters.projectId} AND event_date BETWEEN toDate(${filters.start}) AND toDate(${filters.end})`;
+
+  if (filters.deviceType !== "all") {
+    where.append(sql` AND device_type = ${filters.deviceType}`);
+  }
+
+  if (metricName) {
+    where.append(sql` AND metric_name = ${metricName}`);
+  }
+
+  return where;
+}
+
+/** WHERE clause for cwv_events (timestamp-based filtering for hour interval) */
+function buildEventsWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
+  const where = sql`WHERE project_id = ${filters.projectId} AND recorded_at >= parseDateTimeBestEffort(${filters.start}) AND recorded_at <= parseDateTimeBestEffort(${filters.end})`;
 
   if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
@@ -35,10 +61,10 @@ export type MetricsOverviewRow = {
 };
 
 export async function fetchMetricsOverview(filters: BaseFilters): Promise<MetricsOverviewRow[]> {
-  const where = buildWhereClause(filters);
+  const where = buildDailyWhereClause(filters);
 
   return sql<MetricsOverviewRow>`
-    SELECT 
+    SELECT
       metric_name,
       quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
       toString(countMerge(sample_size)) AS sample_size
@@ -59,7 +85,7 @@ export async function fetchWorstRoutes(
   metricName: MetricName,
   limit: number,
 ): Promise<WorstRouteRow[]> {
-  const where = buildWhereClause(filters, metricName);
+  const where = buildDailyWhereClause(filters, metricName);
 
   return sql<WorstRouteRow>`
     SELECT
@@ -80,38 +106,78 @@ export async function fetchWorstRoutes(
   `;
 }
 
-export type MetricDailySeriesRow = {
+export type MetricSeriesRow = {
   metric_name: MetricName;
-  event_date: string;
+  period: string;
   percentiles: number[];
   sample_size: string;
 };
 
-export async function fetchMetricDailySeries(
-  filters: BaseFilters,
-  metricName: MetricName,
-): Promise<Omit<MetricDailySeriesRow, "metric_name">[]> {
-  const where = buildWhereClause(filters, metricName);
+export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<MetricSeriesRow[]> {
 
-  return sql<Omit<MetricDailySeriesRow, "metric_name">>`
-    SELECT
-      event_date,
-      quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
-      toString(countMerge(sample_size)) AS sample_size
-    FROM cwv_daily_aggregates
-    ${where}
-    GROUP BY event_date
-    ORDER BY event_date ASC
-  `;
-}
+  if (filters.interval === "hour") {
+    const where = buildEventsWhereClause(filters);
+    return sql<MetricSeriesRow>`
+      SELECT
+        metric_name,
+        toString(toStartOfHour(recorded_at, 'UTC')) AS period,
+        quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
+        toString(count()) AS sample_size
+      FROM cwv_events
+      ${where}
+      GROUP BY metric_name, period
+      ORDER BY metric_name, period ASC
+    `;
+  }
 
-export async function fetchAllMetricsDailySeries(filters: BaseFilters): Promise<MetricDailySeriesRow[]> {
-  const where = buildWhereClause(filters);
+  const where = buildDailyWhereClause(filters);
 
-  return sql<MetricDailySeriesRow>`
+  if (filters.interval === "week") {
+    return sql<MetricSeriesRow>`
+      SELECT
+        metric_name,
+        toString(week_period) AS period,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        toString(countMerge(sample_size)) AS sample_size
+      FROM (
+        SELECT
+          metric_name,
+          toStartOfWeek(event_date, 0) AS week_period,
+          quantiles,
+          sample_size
+        FROM cwv_daily_aggregates
+        ${where}
+      )
+      GROUP BY metric_name, week_period
+      ORDER BY metric_name, week_period ASC
+    `;
+  }
+
+  if (filters.interval === "month") {
+    return sql<MetricSeriesRow>`
+      SELECT
+        metric_name,
+        toString(month_period) AS period,
+        quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
+        toString(countMerge(sample_size)) AS sample_size
+      FROM (
+        SELECT
+          metric_name,
+          toStartOfMonth(event_date) AS month_period,
+          quantiles,
+          sample_size
+        FROM cwv_daily_aggregates
+        ${where}
+      )
+      GROUP BY metric_name, month_period
+      ORDER BY metric_name, month_period ASC
+    `;
+  }
+
+  return sql<MetricSeriesRow>`
     SELECT
       metric_name,
-      event_date,
+      toString(event_date) AS period,
       quantilesMerge(0.5, 0.75, 0.9, 0.95, 0.99)(quantiles) AS percentiles,
       toString(countMerge(sample_size)) AS sample_size
     FROM cwv_daily_aggregates
@@ -131,13 +197,12 @@ export async function fetchRouteStatusDistribution(
   metricName: MetricName,
   thresholds: { good: number; needsImprovement: number },
 ): Promise<RouteStatusDistributionRow[]> {
-  const where = buildWhereClause(filters, metricName);
+  const where = buildDailyWhereClause(filters, metricName);
 
   return sql<RouteStatusDistributionRow>`
     WITH
       toFloat64(${thresholds.good}) AS good_threshold,
       toFloat64(${thresholds.needsImprovement}) AS needs_threshold
-
     SELECT
       multiIf(p75 <= good_threshold, 'good', p75 <= needs_threshold, 'needs-improvement', 'poor') AS status,
       toString(count()) AS route_count

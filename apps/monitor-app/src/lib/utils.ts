@@ -15,7 +15,8 @@ export const isObject = (value: unknown): value is object => {
   return typeof value === "object" && value !== null;
 };
 
-export const daysToNumber = {
+export const timeRangeToDays = {
+  "24h": 1,
   "7d": 7,
   "30d": 30,
   "90d": 90,
@@ -56,15 +57,23 @@ export function formatCompactNumber(value: number): string {
 }
 
 export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
+  const now = new Date();
+
+  // For 24h view, use exact "now - 24h" to "now" for precise hourly filtering
+  if (timeRange === "24h") {
+    const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    return { start, end: now };
+  }
+
+  // For other ranges, use day-based filtering
   // Set end date to the end of the current day (23:59:59.999)
-  // This ensures we include all data from today
-  const end = new Date();
+  const end = new Date(now);
   end.setHours(23, 59, 59, 999);
 
   // Calculate start date by subtracting the time range days from the end date
   // Set to the beginning of that day (00:00:00.000) to include the full day
   const start = new Date(end);
-  const days = daysToNumber[timeRange];
+  const days = timeRangeToDays[timeRange];
   start.setDate(start.getDate() - (days - 1));
   start.setHours(0, 0, 0, 0);
 
@@ -187,7 +196,7 @@ export function parseClickHouseNumbers<T extends object>(row: T): T {
 }
 
 export const getPeriodDates = (range: TimeRangeKey) => {
-  const days = daysToNumber[range];
+  const days = timeRangeToDays[range];
   const now = new Date();
 
   const currentStart = subDays(now, days);
