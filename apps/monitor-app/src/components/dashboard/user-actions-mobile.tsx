@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "@/app/server/actions/sign-out";
 import { cn, hasAnyRoleOf } from "@/lib/utils";
 import { ADMIN_ROLES } from "@/lib/auth-shared";
-import { SessionData } from "@/lib/auth";
+import { SessionData } from "@/lib/auth-client";
 
 export function UserActionsMobile({
   setMobileMenuOpen,
