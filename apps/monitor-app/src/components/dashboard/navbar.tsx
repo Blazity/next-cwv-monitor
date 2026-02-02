@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Activity, Users } from "lucide-react";
+import { Activity } from "lucide-react";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { type ListProjectsResult } from "@/app/server/domain/projects/list/types";
@@ -11,7 +11,6 @@ import { MobileSheet } from "@/components/dashboard/mobile-sheet";
 import { getNavItems } from "@/components/dashboard/nav-items";
 import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 import { UserDropdown } from "@/components/dashboard/user-dropdown";
-import { ADMIN_ROLES } from "@/lib/auth-shared";
 import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 type NavbarProps = {
