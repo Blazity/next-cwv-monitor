@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { Menu, Users, Activity } from "lucide-react";
-import Link from "next/link";
-import { cn, hasAnyRoleOf } from "@/lib/utils";
+import { Menu, Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/app/hooks/use-session";
 import { NavItem } from "@/components/dashboard/nav-items";
 import { UserActionsMobile } from "@/components/dashboard/user-actions-mobile";
-import { ADMIN_ROLES } from "@/lib/auth-shared";
 import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
@@ -57,24 +55,6 @@ export function MobileSheet({ navItems }: { navItems: NavItem[] }) {
                 </PersistParamsLink>
               );
             })}
-            {hasAnyRoleOf(user.role, ADMIN_ROLES) && (
-              <>
-                <div className="bg-border my-2 h-px" />
-                <Link
-                  href="/users"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                    pathname === "/users"
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
-                  )}
-                >
-                  <Users className="h-4 w-4" />
-                  Users
-                </Link>
-              </>
-            )}
           </nav>
           <UserActionsMobile setMobileMenuOpen={setMobileMenuOpen} user={user} />
         </div>

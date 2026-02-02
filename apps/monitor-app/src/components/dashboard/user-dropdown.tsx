@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import type { SessionData } from "@/lib/auth";
+import type { SessionData } from "@/lib/auth-client";
 import { signOut } from "@/app/server/actions/sign-out";
 import Link from "next/link";
 import { hasAnyRoleOf } from "@/lib/utils";
