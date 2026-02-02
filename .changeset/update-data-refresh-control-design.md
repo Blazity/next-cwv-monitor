@@ -1,5 +1,5 @@
 ---
-"monitor-app": patch
+"cwv-monitor-app": patch
 ---
 
 Update DataRefreshControl component design
