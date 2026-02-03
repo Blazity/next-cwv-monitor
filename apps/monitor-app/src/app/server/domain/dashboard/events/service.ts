@@ -68,7 +68,6 @@ export class EventsDashboardService {
       }),
       fetchAllMetricsSeries(seriesFilters),
     ]);
-
     return {
       kind: "ok",
       data: {

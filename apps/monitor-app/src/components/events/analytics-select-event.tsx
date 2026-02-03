@@ -62,15 +62,18 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
             <ChevronDown className="h-4 w-4 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-56 p-1" align="start">
+        <PopoverContent className="w-56 p-1" align="start" role="menu">
           {filteredEvents.map((event) => {
             const isSelected = selectedEvents.includes(event);
             const eventName = eventDisplaySettings?.[event]?.customName || capitalize(event, true);
 
             return (
-              <div
+              <button
+                type="button"
                 key={event}
-                className="hover:bg-accent hover:text-accent-foreground relative flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none"
+                role="menuitemcheckbox"
+                aria-checked={isSelected}
+                className="hover:bg-accent focus:bg-accent hover:text-accent-foreground relative flex w-full cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none select-none text-left"
                 onClick={(e) => {
                   e.preventDefault();
                   toggleEvent(event);
@@ -79,11 +82,13 @@ export function AnalyticsSelectEvent({ events, eventDisplaySettings }: Props) {
                 <input
                   type="checkbox"
                   checked={isSelected}
+                  tabIndex={-1}
+                  aria-hidden="true" 
                   readOnly
-                  className="text-primary focus:ring-primary mr-3 h-4 w-4 rounded border-gray-300"
+                  className="text-primary focus:ring-primary mr-3 h-4 w-4 rounded border-gray-300 pointer-events-none"
                 />
                 <span className="truncate capitalize">{eventName}</span>
-              </div>
+              </button>
             );
           })}
         </PopoverContent>

@@ -33,19 +33,15 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
     return hasPrimaryPoints || hasOverlayPoints;
   }, [chartData, visibleOverlays]);
 
-  const selectedEventName = selectedEvents
-    .map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true))
-    .join(", ");
+  const hasSelectedEvents = selectedEvents.length > 0;
 
+  const selectedEventName = selectedEvents.map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true)).join(", ");
+  
   const totalConversionsForEvent = hasStats ? sumBy(eventStats, (v) => v.conversions_cur) : 0;
 
   const overallRateForEvent = hasStats
-    ? (() => {
-        const rates = eventStats.map((v) => v.conversion_rate).filter((v): v is number => v !== null);
-        if (rates.length === 0) return null;
-        return rates.reduce((sum, v) => sum + v, 0) / rates.length;
-      })()
-    : null;
+  ? (sumBy(eventStats, s => s.conversions_cur) / sumBy(eventStats, s => s.views_cur)) * 100
+  : null;
 
   return (
     <>
@@ -55,9 +51,8 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
           description="Event conversion rate over time"
           dateRange={chartData.dateRange}
           interval={chartData.interval}
-          queriedMetric={chartData.metric}
           data={chartData.data}
-          multiOverlay={chartData.overlays}
+          multiOverlay={visibleOverlays}
         />
       ) : (
         <div className="text-muted-foreground flex h-full items-center justify-center text-sm italic">
@@ -70,7 +65,9 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
             Conversion by Route
             <span className="text-muted-foreground ml-2 font-normal">{selectedEventName}</span>
           </CardTitle>
-          <CardDescription>How "{selectedEventName}" converts across routes where it's tracked</CardDescription>
+          <CardDescription>{hasSelectedEvents 
+      ? `How "${selectedEventName}" converts across routes where it's tracked`
+      : "How events convert across routes"}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {hasStats ? (
@@ -83,9 +80,9 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
                 <EmptyMedia variant="icon">
                   <BarChart3 className="text-muted-foreground" />
                 </EmptyMedia>
-                <EmptyTitle>No data for this event</EmptyTitle>
+                <EmptyTitle>{hasSelectedEvents ? "No data for this event" : "No events selected"}</EmptyTitle>
                 <EmptyDescription>
-                  We haven't tracked any "{selectedEventName}" conversions in the selected time range.
+                  {hasSelectedEvents && `We haven't tracked any "${selectedEventName}" conversions in the selected time range.`}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

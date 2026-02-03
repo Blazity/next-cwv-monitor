@@ -63,7 +63,6 @@ export default async function ProjectPage({
       <CoreWebVitals metricOverview={metricOverview} />
       <TrendChartByMetric
         data={timeSeriesByMetric[metric]}
-        queriedMetric={metric}
         dateRange={timeRangeToDateRange(timeRange)}
         interval={effectiveInterval}
       />

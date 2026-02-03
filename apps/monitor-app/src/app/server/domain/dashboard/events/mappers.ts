@@ -36,8 +36,13 @@ export function buildEventsDashboardQuery(input: BuildEventsDashboardQueryInput)
   };
 }
 
-function mapOverlaySeries(rows: MultiEventOverlayRow[], eventNames: string[], displaySettings: EventDisplaySettings): TimeSeriesOverlay[] {
+function mapOverlaySeries(
+  rows: MultiEventOverlayRow[], 
+  eventNames: string[], 
+  displaySettings: EventDisplaySettings
+): TimeSeriesOverlay[] {
   const eventsMap: Record<string, TimeSeriesOverlayPoint[]> = {};
+  
   for (const name of eventNames) {
     if (name !== PAGE_VIEW_EVENT_NAME) {
       eventsMap[name] = [];
@@ -46,26 +51,27 @@ function mapOverlaySeries(rows: MultiEventOverlayRow[], eventNames: string[], di
 
   for (const row of rows) {
     if (row.event_name === PAGE_VIEW_EVENT_NAME) continue;
+    if (row.event_name in eventsMap) {
+      const views = Number(row.views || 0);
+      const conversions = Number(row.conversions || 0);
 
-    const views = Number(row.views || 0);
-    const conversions = Number(row.conversions || 0);
-
-    eventsMap[row.event_name].push({
-      date: row.event_date,
-      views,
-      conversions,
-      conversionRatePct: views > 0 ? (conversions / views) * 100 : 0,
-    });
+      eventsMap[row.event_name].push({
+        date: row.event_date,
+        views,
+        conversions,
+        conversionRatePct: views > 0 ? (conversions / views) * 100 : 0,
+      });
+    }
   }
 
   return Object.entries(eventsMap).map(([id, series]) => {
     const customName = displaySettings?.[id]?.customName;
     const label = capitalize(customName || id, true)!;
-    return{
+    return {
       id,
       label,
       series,
-    }
+    };
   });
 }
 

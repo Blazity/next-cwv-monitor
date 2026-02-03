@@ -266,7 +266,9 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
                   <span className="text-foreground text-sm">{ov.label}</span>
                 </div>
-                <span className="text-foreground font-mono text-sm">{raw.conversionRatePct?.toFixed(2)}%</span>
+                <span className="text-foreground font-mono text-sm">
+                  {raw.conversionRatePct == null ? "—" : `${raw.conversionRatePct.toFixed(2)}%`}
+                </span>
               </div>
               <div className="text-muted-foreground mt-1 text-xs">
                 {raw.conversions.toLocaleString()} ev / {raw.views.toLocaleString()} views

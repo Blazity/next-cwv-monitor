@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 
 type TrendChartByMetricProps = {
   data: DailySeriesPoint[];
-  queriedMetric?: MetricName;
   title?: string;
   description?: string;
   dateRange: DateRange;
