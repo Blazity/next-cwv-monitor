@@ -163,7 +163,7 @@ export function endExclusiveUtc(date: Date): Date {
 
 export function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date } {
   return {
-    start: startOfDayUtc(range.start),
-    endExclusive: endExclusiveUtc(range.end),
+    start: range.start,
+    endExclusive: range.end,
   };
 }

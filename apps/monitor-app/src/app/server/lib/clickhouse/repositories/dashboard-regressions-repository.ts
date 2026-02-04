@@ -1,4 +1,4 @@
-import { PAGE_VIEW_EVENT_NAME, SortDirection } from "@/app/server/domain/dashboard/overview/types";
+import { PAGE_VIEW_EVENT_NAME, SortDirection, toDateOnlyString } from "@/app/server/domain/dashboard/overview/types";
 import { RegressionMetricName, RegressionsMetricFilter, RegressionsSortField } from "@/app/server/domain/dashboard/regressions/list/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
@@ -22,10 +22,6 @@ type PeriodFilters = BaseFilters & {
 };
 
 const REGRESSION_METRICS = ["LCP", "INP", "CLS", "TTFB"] as const satisfies RegressionMetricName[];
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function startOfDayUtc(date: Date): Date {
   return new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);

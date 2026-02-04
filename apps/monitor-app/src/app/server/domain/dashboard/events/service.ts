@@ -39,18 +39,6 @@ export class EventsDashboardService {
     });
 
     const dateRange = timeRangeToDateRange(query.range);
-    const toSeriesFilterString =
-      query.interval === "hour"
-        ? (date: Date) => date.toISOString()
-        : (date: Date) => date.toISOString().slice(0, 10);
-
-    const seriesFilters = {
-      projectId: query.projectId,
-      start: toSeriesFilterString(dateRange.start),
-      end: toSeriesFilterString(dateRange.end),
-      interval: query.interval,
-      deviceType: query.deviceType,
-    };
 
     const [overlayRows, eventStats, metricSeriesRows] = await Promise.all([
       fetchMultiEventOverlaySeries({
@@ -66,7 +54,13 @@ export class EventsDashboardService {
         eventNames: queriedEvents,
         deviceType: query.deviceType,
       }),
-      fetchAllMetricsSeries(seriesFilters),
+      fetchAllMetricsSeries({
+        projectId: query.projectId,
+        start: dateRange.start.toISOString(),
+        end: dateRange.end.toISOString(),
+        interval: query.interval,
+        deviceType: query.deviceType
+      }),
     ]);
     return {
       kind: "ok",

@@ -1,5 +1,6 @@
 import {
   DailySeriesPoint,
+  DateRange,
   getEffectiveInterval,
   IntervalKey,
   MetricName,
@@ -80,7 +81,7 @@ type MapToTimeSeriesChartPropsInput = {
   overlayRows: MultiEventOverlayRow[];
   eventNames: string[];
   metric: MetricName;
-  dateRange: { start: Date; end: Date };
+  dateRange: DateRange;
   interval: IntervalKey;
   displaySettings: EventDisplaySettings
 };

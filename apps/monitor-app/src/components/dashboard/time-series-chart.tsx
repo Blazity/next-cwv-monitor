@@ -11,6 +11,7 @@ import {
   Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
+  DotItemDotProps,
 } from "recharts";
 import { format, addDays, addHours } from "date-fns";
 
@@ -311,6 +312,25 @@ const ChartGradients = () => (
   </defs>
 );
 
+type IslandDotProps = {
+  index?: number;
+  visibilityArray: boolean[];
+  color: string;
+} & Partial<DotItemDotProps>
+
+const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
+  if (index === undefined || !visibilityArray[index]) return null;
+  
+  return (
+    <circle 
+      cx={cx} 
+      cy={cy} 
+      r={2} 
+      fill={color}
+    />
+  );
+};
+
 export function TimeSeriesChart({
   data,
   metric,
@@ -338,8 +358,36 @@ export function TimeSeriesChart({
     });
   }, [data, metric, overlays, percentile, dateRange, interval]);
 
-  // Calculate Y-axis domains
   const thresholds = getMetricThresholds(metric);
+  const dotVisibility = useMemo(() => {
+    const len = chartData.length;
+    const primary = Array.from<boolean>({length: len});
+    const overlaysMap: Record<string, boolean[]> = {};
+  
+    for (const ov of overlays) {
+      overlaysMap[ov.label] = Array.from<boolean>({length: len});
+    }
+  
+    for (let i = 0; i < len; i++) {
+      const curr = chartData[i];
+      
+      const prev = i > 0 ? chartData[i - 1] : undefined;
+      const next = i < len - 1 ? chartData[i + 1] : undefined;
+  
+      const hasVal = curr.value != null;
+      primary[i] = hasVal && prev?.value == null && next?.value == null;
+  
+      for (const ov of overlays) {
+        const key = `overlay_${ov.label}` as keyof ChartDataPoint;
+        const hasOverlayVal = curr[key] != null;
+        
+        overlaysMap[ov.label][i] = 
+          hasOverlayVal && prev?.[key] == null && next?.[key] == null;
+      }
+    }
+  
+    return { primary, overlays: overlaysMap };
+  }, [chartData, overlays]);
 
   const maxMetricValue = useMemo(() => {
     const values = data.map((d) => d.quantiles?.[percentile] ?? null).filter((v): v is number => v !== null);
@@ -422,23 +470,27 @@ export function TimeSeriesChart({
             strokeWidth={2}
             fill="url(#metricGradient)"
             connectNulls={false}
-            dot={false}
+            dot={<IslandDot visibilityArray={dotVisibility.primary} color="var(--chart-1)" />}
             activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
           />
-          {overlays.map((ov, idx) => (
-            <Area
-              key={ov.label}
-              yAxisId="overlay"
-              type="monotone"
-              dataKey={`overlay_${ov.label}`}
-              stroke={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]}
-              strokeWidth={2}
-              fill="url(#overlayGradient)"
-              connectNulls={false}
-              dot={false}
-              activeDot={ACTIVE_DOT_CONFIG("var(--chart-5)")}
-            />
-          ))}
+          {overlays.map((ov, idx) => {
+            const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
+            
+            return (
+              <Area
+                key={ov.label}
+                yAxisId="overlay"
+                type="monotone"
+                dataKey={`overlay_${ov.label}`}
+                stroke={color}
+                strokeWidth={2}
+                fill="url(#overlayGradient)"
+                connectNulls={false}
+                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.label]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                activeDot={ACTIVE_DOT_CONFIG(color)}
+              />
+            );
+          })}
           {/* Invisible scatter for tooltip on empty data points */}
           <Scatter yAxisId="metric" dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />
         </ComposedChart>

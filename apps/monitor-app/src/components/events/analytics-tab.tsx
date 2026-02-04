@@ -24,15 +24,6 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
     return chartData?.overlays?.filter(ov => !eventDisplaySettings?.[ov.id]?.isHidden) || [];
   }, [chartData?.overlays, eventDisplaySettings]);
 
-  const hasChartData = useMemo(() => {
-    if (!chartData) return false;
-    
-    const hasPrimaryPoints = Array.isArray(chartData.data) && chartData.data.length > 0;
-    const hasOverlayPoints = visibleOverlays.some(ov => ov.series.length > 0);
-
-    return hasPrimaryPoints || hasOverlayPoints;
-  }, [chartData, visibleOverlays]);
-
   const hasSelectedEvents = selectedEvents.length > 0;
 
   const selectedEventName = selectedEvents.map((id) => capitalize(eventDisplaySettings?.[id]?.customName || id.replaceAll("_", " "), true)).join(", ");
@@ -45,7 +36,7 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
 
   return (
     <>
-      {chartData && hasChartData ? (
+      {chartData ? (
         <TrendChartByMetric
           title="Conversion Trend"
           description="Event conversion rate over time"
