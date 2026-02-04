@@ -20,9 +20,9 @@ export function ProjectList({ initialProjects }: { initialProjects: ProjectWithV
           </Link>
 
           <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
+            <div className="flex w-full min-w-0 items-start justify-between">
+              <div className="flex w-full min-w-0 items-center gap-3">
+                <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
                   <FolderKanban className="text-primary h-5 w-5" />
                 </div>
                 <div className="min-w-0">
