@@ -30,8 +30,10 @@ export function AnalyticsTab({ eventStats, chartData, selectedEvents, eventDispl
   
   const totalConversionsForEvent = hasStats ? sumBy(eventStats, (v) => v.conversions_cur) : 0;
 
-  const overallRateForEvent = hasStats
-  ? (sumBy(eventStats, s => s.conversions_cur) / sumBy(eventStats, s => s.views_cur)) * 100
+  const totalViewsForEvent = hasStats ? sumBy(eventStats, s => s.views_cur) : 0;
+
+  const overallRateForEvent = hasStats && totalViewsForEvent > 0
+  ? (totalConversionsForEvent / totalViewsForEvent) * 100
   : null;
 
   return (

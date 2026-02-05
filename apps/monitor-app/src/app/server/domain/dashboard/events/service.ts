@@ -21,7 +21,7 @@ export class EventsDashboardService {
     const [names, totalStats, activity] = await Promise.all([
       fetchProjectEventNames({ projectId: query.projectId }),
       fetchTotalStatsEvents({ projectId: query.projectId, range: query.range, deviceType: query.deviceType }),
-      fetchEvents({ projectId: query.projectId, range: query.range }),
+      fetchEvents({ projectId: query.projectId, range: query.range, deviceType: query.deviceType }),
     ]);
 
     const out = eventDisplaySettingsSchema(project.events_display_settings);
@@ -34,7 +34,7 @@ export class EventsDashboardService {
     );
 
     const mostActiveEvent = activity.find((e) => {
-      if (!e?.event_name) return false;
+      if (!e.event_name) return false;
       return displaySettings?.[e.event_name] ? !displaySettings[e.event_name].isHidden : true;
     });
 

@@ -4,11 +4,12 @@ import {
   PAGE_VIEW_EVENT_NAME,
   SqlFragment,
   TimeRangeKey,
+  toDateOnlyString,
 } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { CustomEventRow, InsertableCustomEventRow } from "@/app/server/lib/clickhouse/schema";
 import { DeviceFilter } from "@/app/server/lib/device-types";
-import { chunkGenerator, timeRangeToDays, parseClickHouseNumbers, timeRangeToDateRange } from "@/lib/utils";
+import { chunkGenerator, parseClickHouseNumbers, timeRangeToDateRange } from "@/lib/utils";
 import { coerceClickHouseDateTime } from "@/lib/utils";
 
 type CustomEventFilters = {
@@ -221,22 +222,18 @@ export async function fetchMultiEventOverlaySeries(
   let periodExpr = sql.raw("toDate(recorded_at)");
   
   switch (query.interval) {
-  case "hour": {
-    periodExpr = sql.raw("toStartOfHour(recorded_at, 'UTC')");
-  
-  break;
-  }
-  case "week": {
-    periodExpr = sql.raw("toStartOfWeek(toDate(recorded_at), 0)");
-  
-  break;
-  }
-  case "month": {
-    periodExpr = sql.raw("toStartOfMonth(toDate(recorded_at))");
-  
-  break;
-  }
-  // No default
+    case "hour": {
+      periodExpr = sql.raw("toStartOfHour(recorded_at, 'UTC')");
+      break;
+    }
+    case "week": {
+      periodExpr = sql.raw("toStartOfWeek(toDate(recorded_at), 0)");
+      break;
+    }
+    case "month": {
+      periodExpr = sql.raw("toStartOfMonth(toDate(recorded_at))");
+      break;
+    }
   }
 
   return sql<MultiEventOverlayRow>`
@@ -284,9 +281,9 @@ export async function fetchTotalStatsEvents({ projectId, range, deviceType }: Fe
 
   const query = sql<FetchEventsTotalStatsResult>`
     SELECT
-      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${start} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_conversions_cur,
-      uniqExactIf(session_id, recorded_at >= ${start} AND event_name = ${PAGE_VIEW_EVENT_NAME}) AS total_views_cur,
-      uniqExactIf(event_name, recorded_at >= ${start} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_events_cur,
+      uniqExactIf(tuple(session_id, event_name), recorded_at >= ${start} AND recorded_at < ${end} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_conversions_cur,
+      uniqExactIf(session_id, recorded_at >= ${start} AND recorded_at < ${end} AND event_name = ${PAGE_VIEW_EVENT_NAME}) AS total_views_cur,
+      uniqExactIf(event_name, recorded_at >= ${start} AND recorded_at < ${end} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_events_cur,
 
       uniqExactIf(tuple(session_id, event_name), recorded_at >= ${prevStart} AND recorded_at < ${start} AND event_name != ${PAGE_VIEW_EVENT_NAME}) AS total_conversions_prev,
       uniqExactIf(session_id, recorded_at >= ${prevStart} AND recorded_at < ${start} AND event_name = ${PAGE_VIEW_EVENT_NAME}) AS total_views_prev,
@@ -297,7 +294,7 @@ export async function fetchTotalStatsEvents({ projectId, range, deviceType }: Fe
     FROM custom_events
     WHERE 
       project_id = ${projectId} 
-      AND recorded_at >= ${prevStart} AND recorded_at <= ${end}
+      AND recorded_at >= ${prevStart} AND recorded_at < ${end}
   `;
 
   if (deviceType && deviceType !== "all") {
@@ -313,6 +310,7 @@ type FetchEvents = {
   range: TimeRangeKey;
   projectId: string;
   limit?: number;
+  deviceType?: DeviceFilter;
 };
 
 export type FetchEventResult = {
@@ -320,23 +318,30 @@ export type FetchEventResult = {
   records_count: number;
 };
 
-export async function fetchEvents({ projectId, range, limit }: FetchEvents) {
-  const negativeRange = timeRangeToDays[range] * -1;
-  const query = sql<FetchEventResult | undefined>`
+export async function fetchEvents({ projectId, range, limit, deviceType }: FetchEvents) {
+  const { start, end } = timeRangeToDateRange(range);
+
+  const query = sql<FetchEventResult>`
     SELECT
       ce.event_name,
       count() AS records_count
     FROM custom_events AS ce
     WHERE ce.project_id = ${projectId}
-      AND ce.recorded_at >= addDays(now(), ${negativeRange})
-      AND ce.recorded_at < now()
-      AND ce.event_name NOT LIKE ${PAGE_VIEW_EVENT_NAME}
-      GROUP BY ce.event_name
-    ORDER BY records_count DESC
+      AND ce.recorded_at >= ${start}
+      AND ce.recorded_at < ${end}
+      AND ce.event_name != ${PAGE_VIEW_EVENT_NAME}
   `;
-  if (limit) {
-    query.append(sql`LIMIT ${limit}`);
+
+  if (deviceType && deviceType !== "all") {
+    query.append(sql` AND ce.device_type = ${deviceType}`);
   }
+
+  query.append(sql` GROUP BY ce.event_name ORDER BY records_count DESC`);
+
+  if (limit) {
+    query.append(sql` LIMIT ${limit}`);
+  }
+
   return query;
 }
 
@@ -359,15 +364,13 @@ export async function fetchConversionTrend({ projectId, eventNames, range, devic
   if (eventNames.length === 0) return [];
 
   const { end, start } = timeRangeToDateRange(range);
-  const startUnix = Math.floor(start.getTime() / 1000);
-  const endUnix = Math.floor(end.getTime() / 1000);
 
   const allEventNames = [...eventNames, PAGE_VIEW_EVENT_NAME];
 
   const innerWhere = sql`
     WHERE ce.project_id = ${projectId}
-      AND ce.recorded_at >= toDateTime64(${startUnix}, 3)
-      AND ce.recorded_at <= toDateTime64(${endUnix}, 3)
+      AND ce.recorded_at >= ${start}
+      AND ce.recorded_at < ${end}
       AND ce.event_name IN (${allEventNames})
   `;
 
@@ -393,8 +396,8 @@ export async function fetchConversionTrend({ projectId, eventNames, range, devic
     )
     ORDER BY day
     WITH FILL
-      FROM toDate(toDateTime64(${startUnix}, 3))
-      TO toDate(toDateTime64(${endUnix}, 3))
+      FROM toDate(${toDateOnlyString(start)})
+      TO toDate(${toDateOnlyString(end)})
       STEP 1;
   `;
 

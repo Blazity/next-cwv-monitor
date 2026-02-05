@@ -147,6 +147,8 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
   const deviceFilter = filters.deviceType === "all" 
     ? sql`` 
     : sql` AND device_type = ${filters.deviceType}`;
+  
+  const endDateString = filters.end.slice(0, 10);
 
   return sql<MetricSeriesRow>`
     SELECT
@@ -163,7 +165,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
       FROM cwv_daily_aggregates
       WHERE project_id = ${filters.projectId}
         AND event_date >= toDate(${filters.start.slice(0, 10)})
-        AND event_date < toDate(now())
+        AND event_date < toDate(${endDateString})
         ${deviceFilter}
 
       UNION ALL
@@ -179,7 +181,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
         countState() AS sample_size_state
       FROM cwv_events
       WHERE project_id = ${filters.projectId}
-        AND recorded_at >= toStartOfDay(now()) 
+        AND recorded_at >= toStartOfDay(toDate(${endDateString}))
         AND recorded_at <= parseDateTimeBestEffort(${filters.end})
         ${deviceFilter}
       GROUP BY metric_name, period

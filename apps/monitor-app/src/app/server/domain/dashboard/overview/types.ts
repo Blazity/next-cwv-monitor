@@ -150,20 +150,3 @@ export function getEffectiveInterval(
 export function toDateOnlyString(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
-
-export function startOfDayUtc(date: Date): Date {
-  return new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
-}
-
-export function endExclusiveUtc(date: Date): Date {
-  const base = new Date(`${toDateOnlyString(date)}T00:00:00.000Z`);
-  base.setUTCDate(base.getUTCDate() + 1);
-  return base;
-}
-
-export function buildRecordedAtBounds(range: DateRange): { start: Date; endExclusive: Date } {
-  return {
-    start: range.start,
-    endExclusive: range.end,
-  };
-}

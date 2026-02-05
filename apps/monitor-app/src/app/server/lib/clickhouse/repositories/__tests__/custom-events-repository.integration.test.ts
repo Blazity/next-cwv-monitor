@@ -5,7 +5,7 @@ import { subDays } from "date-fns";
 
 import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { timeRangeToDays } from "@/lib/utils";
+import { timeRangeToDateRange, timeRangeToDays } from "@/lib/utils";
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
@@ -80,17 +80,14 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should correctly separate current and previous periods at the boundary", async () => {
-      const days = timeRangeToDays[range];
-      const now = new Date();
-
-      const boundaryDate = subDays(now, days);
+      const { start } = timeRangeToDateRange(range);
 
       await insertCustomEvents([
         {
           project_id: projectId,
           event_name: "$page_view",
           session_id: "cur",
-          recorded_at: now,
+          recorded_at: start,
           route: "/",
           path: "/",
           device_type: "desktop",
@@ -99,7 +96,7 @@ describe("custom-events-repository integration", () => {
           project_id: projectId,
           event_name: "$page_view",
           session_id: "prev",
-          recorded_at: boundaryDate,
+          recorded_at: new Date(start.getTime() - 1),
           route: "/",
           path: "/",
           device_type: "desktop",
@@ -267,18 +264,13 @@ describe("custom-events-repository integration", () => {
 
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
-      const days = timeRangeToDays[range];
-
+      const { start } = timeRangeToDateRange(range);
       const format = (d: Date) => d.toISOString().split("T")[0];
-
-      const now = new Date();
-      const expectedStartTimestamp = now.getTime() - days * 24 * 60 * 60 * 1000;
-      const expectedStartDate = new Date(expectedStartTimestamp);
-
+    
       const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"] });
       const firstEntryDate = new Date(trend[0].day);
-
-      expect(format(firstEntryDate)).toBe(format(expectedStartDate));
+    
+      expect(format(firstEntryDate)).toBe(format(start));
     });
   });
 });

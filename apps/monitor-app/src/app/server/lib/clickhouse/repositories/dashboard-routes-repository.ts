@@ -1,6 +1,5 @@
 import {
   BaseFilters,
-  buildRecordedAtBounds,
   MetricName,
   PAGE_VIEW_EVENT_NAME,
   Percentile,
@@ -13,11 +12,10 @@ import { sql } from "@/app/server/lib/clickhouse/client";
 import { buildCustomEventsWhereClause } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 
 function buildPageViewsWhereClause(filters: BaseFilters, search?: string): SqlFragment {
-  const { start, endExclusive } = buildRecordedAtBounds(filters.range);
   const where = sql`
     WHERE project_id = ${filters.projectId}
-      AND recorded_at >= ${start}
-      AND recorded_at < ${endExclusive}
+      AND recorded_at >= ${filters.range.start}
+      AND recorded_at < ${filters.range.end}
       AND event_name = ${PAGE_VIEW_EVENT_NAME}
   `;
 
@@ -81,13 +79,12 @@ function buildDailyAggregatesBaseWhereClause(filters: BaseFilters, search?: stri
 }
 
 function buildCwvEventsWhereClause(filters: BaseFilters, metricName: MetricName, route: string): SqlFragment {
-  const { start, endExclusive } = buildRecordedAtBounds(filters.range);
   const where = sql`
     WHERE project_id = ${filters.projectId}
       AND route = ${route}
       AND metric_name = ${metricName}
-      AND recorded_at >= ${start}
-      AND recorded_at < ${endExclusive}
+      AND recorded_at >= ${filters.range.start}
+      AND recorded_at < ${filters.range.end}
   `;
 
   if (filters.deviceType !== "all") {

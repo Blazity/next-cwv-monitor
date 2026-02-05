@@ -42,21 +42,22 @@ function mapOverlaySeries(
   eventNames: string[], 
   displaySettings: EventDisplaySettings
 ): TimeSeriesOverlay[] {
-  const eventsMap: Record<string, TimeSeriesOverlayPoint[]> = {};
+  const eventsMap = new Map<string, TimeSeriesOverlayPoint[]>();
   
   for (const name of eventNames) {
     if (name !== PAGE_VIEW_EVENT_NAME) {
-      eventsMap[name] = [];
+      eventsMap.set(name, []);
     }
   }
 
   for (const row of rows) {
     if (row.event_name === PAGE_VIEW_EVENT_NAME) continue;
-    if (row.event_name in eventsMap) {
+    const series = eventsMap.get(row.event_name);
+    if (series) {
       const views = Number(row.views || 0);
       const conversions = Number(row.conversions || 0);
 
-      eventsMap[row.event_name].push({
+      series.push({
         date: row.event_date,
         views,
         conversions,
@@ -65,7 +66,7 @@ function mapOverlaySeries(
     }
   }
 
-  return Object.entries(eventsMap).map(([id, series]) => {
+  return [...eventsMap.entries()].map(([id, series]) => {
     const customName = displaySettings?.[id]?.customName;
     const label = capitalize(customName || id, true)!;
     return {
