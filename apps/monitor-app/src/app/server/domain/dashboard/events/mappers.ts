@@ -25,11 +25,16 @@ export type BuildEventsDashboardQueryInput = {
 } & ReturnType<typeof eventsSearchParamsCache.all>;
 
 export function buildEventsDashboardQuery(input: BuildEventsDashboardQueryInput): GetEventsDashboardQuery {
-  const interval = getEffectiveInterval(input.interval, input.timeRange);
+  const interval = getEffectiveInterval(input.interval, input.timeRange, { 
+    from: input.from, 
+    to: input.to 
+  });
 
   return {
     projectId: input.projectId,
     range: input.timeRange,
+    customStart: input.from,
+    customEnd: input.to,
     metric: input.metric,
     deviceType: input.deviceType,
     selectedEvents: input.events,

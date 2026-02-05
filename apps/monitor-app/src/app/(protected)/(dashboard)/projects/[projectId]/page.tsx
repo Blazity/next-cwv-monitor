@@ -17,11 +17,11 @@ import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const dashboardOverviewService = new DashboardOverviewService();
 
-async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey, selectedMetric: MetricName) {
+async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey, selectedMetric: MetricName, customStart: Date | null, customEnd: Date | null) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
   cacheTag(updateTags.dashboardOverview(projectId, deviceType, timeRange, interval, selectedMetric));
-  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval, selectedMetric });
+  const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval, selectedMetric, customStart, customEnd });
   return await dashboardOverviewService.getOverview(query);
 }
 
@@ -35,11 +35,27 @@ export default async function ProjectPage({
   await getAuthorizedSession();
 
   const { projectId } = await params;
-  const { timeRange, deviceType, interval, metric } = dashboardSearchParamsCache.parse(await searchParams);
+  const parsedParams = dashboardSearchParamsCache.parse(await searchParams);
+  const { 
+    timeRange, 
+    deviceType, 
+    interval, 
+    metric, 
+    from: customStart, 
+    to: customEnd 
+  } = parsedParams;
   
-  const effectiveInterval = getEffectiveInterval(interval, timeRange);
+  const effectiveInterval = getEffectiveInterval(interval, timeRange, {from: customStart, to: customEnd});
   
-  const overview = await getCachedOverview(projectId, deviceType, timeRange, effectiveInterval, metric);
+  const overview = await getCachedOverview(
+    projectId, 
+    deviceType, 
+    timeRange, 
+    effectiveInterval, 
+    metric, 
+    customStart, 
+    customEnd
+  );
 
   if (overview.kind === "project-not-found") {
     notFound();
@@ -50,6 +66,10 @@ export default async function ProjectPage({
   }
 
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
+
+  const actualDateRange = (customStart && customEnd) 
+    ? { start: customStart, end: customEnd }
+    : timeRangeToDateRange(timeRange);
 
   return (
     <div className="space-y-6">
@@ -63,7 +83,7 @@ export default async function ProjectPage({
       <CoreWebVitals metricOverview={metricOverview} />
       <TrendChartByMetric
         data={timeSeriesByMetric[metric]}
-        dateRange={timeRangeToDateRange(timeRange)}
+        dateRange={actualDateRange}
         interval={effectiveInterval}
       />
       <WorstRoutesByMetric projectId={projectId} queriedMetric={metric} routes={worstRoutes} />

@@ -62,7 +62,6 @@ export class DashboardOverviewService {
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
-
     // Filters for daily-aggregated queries (Metrics Overview, Worst Routes, Status Distribution)
     // always use date-only strings (YYYY-MM-DD) compatible with cwv_daily_aggregates
     const filters = {

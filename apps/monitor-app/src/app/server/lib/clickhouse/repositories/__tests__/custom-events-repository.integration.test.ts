@@ -1,11 +1,23 @@
-import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from "vitest";
+import { describe, beforeAll, afterAll, beforeEach, it, expect, vi, afterEach } from "vitest";
 import type { StartedTestContainer } from "testcontainers";
 import { randomUUID } from "node:crypto";
 import { subDays } from "date-fns";
 
 import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
-import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { timeRangeToDateRange, timeRangeToDays } from "@/lib/utils";
+import { DateRangeWithPrev, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+
+const timeRangeKey: TimeRangeKey = "7d"
+const startOfUtcDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+const getMockedRange = (_timeRange: TimeRangeKey, now: Date): DateRangeWithPrev => {
+  const days = 7;
+  const currentStart = subDays(startOfUtcDay(now), days);
+  const prevStart = subDays(currentStart, days);
+  return {
+    start: currentStart,
+    end: now,
+    prevStart,
+  };
+};
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
@@ -16,7 +28,8 @@ let fetchConversionTrend: typeof import("@/app/server/lib/clickhouse/repositorie
 let createProject: typeof import("@/app/server/lib/clickhouse/repositories/projects-repository").createProject;
 
 let projectId: string;
-const range: TimeRangeKey = "7d";
+const MOCK_NOW = new Date("2026-02-04T12:00:00Z");
+const activeRange = getMockedRange(timeRangeKey, MOCK_NOW);
 
 describe("custom-events-repository integration", () => {
   beforeAll(async () => {
@@ -37,6 +50,10 @@ describe("custom-events-repository integration", () => {
 
   beforeEach(async () => {
     await sql`TRUNCATE TABLE custom_events`.command();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("insertCustomEvents", () => {
@@ -64,6 +81,7 @@ describe("custom-events-repository integration", () => {
           route: "/",
           path: "/",
           device_type: "mobile",
+          recorded_at: activeRange.start,
         },
         {
           project_id: otherProjectId,
@@ -72,15 +90,16 @@ describe("custom-events-repository integration", () => {
           route: "/",
           path: "/",
           device_type: "mobile",
+          recorded_at: activeRange.start,
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
+      const data = await fetchTotalStatsEvents({ projectId, range: activeRange, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
     });
 
     it("should correctly separate current and previous periods at the boundary", async () => {
-      const { start } = timeRangeToDateRange(range);
+      const { start } = activeRange;
 
       await insertCustomEvents([
         {
@@ -103,22 +122,18 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
+      const data = await fetchTotalStatsEvents({ projectId, range: activeRange, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
       expect(data.total_views_prev).toBe(1);
     });
 
     it("should calculate percentage change correctly and handle zero-division", async () => {
-      const days = timeRangeToDays[range];
-      const now = new Date();
-      const prev = subDays(now, days + 1);
-
       await insertCustomEvents([
         {
           project_id: projectId,
           event_name: "signup",
           session_id: "s1",
-          recorded_at: prev,
+          recorded_at: activeRange.prevStart,
           route: "/",
           path: "/",
           device_type: "desktop",
@@ -127,7 +142,7 @@ describe("custom-events-repository integration", () => {
           project_id: projectId,
           event_name: "signup",
           session_id: "s2",
-          recorded_at: now,
+          recorded_at: activeRange.start,
           route: "/",
           path: "/",
           device_type: "desktop",
@@ -136,14 +151,14 @@ describe("custom-events-repository integration", () => {
           project_id: projectId,
           event_name: "signup",
           session_id: "s3",
-          recorded_at: now,
+          recorded_at: activeRange.start,
           route: "/",
           path: "/",
           device_type: "desktop",
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
+      const data = await fetchTotalStatsEvents({ projectId, range: activeRange, deviceType: "all" });
 
       expect(data.total_conversion_change_pct).toBe(100);
       expect(data.total_conversions_cur).toBe(2);
@@ -151,7 +166,7 @@ describe("custom-events-repository integration", () => {
     });
 
     it("should deduplicate conversions based on (session_id, event_name)", async () => {
-      const now = new Date();
+      const now = activeRange.start;
       await insertCustomEvents([
         {
           project_id: projectId,
@@ -182,7 +197,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
+      const data = await fetchTotalStatsEvents({ projectId, range: activeRange, deviceType: "all" });
       expect(data.total_conversions_cur).toBe(2);
     });
   });
@@ -197,6 +212,7 @@ describe("custom-events-repository integration", () => {
           route: "/a",
           path: "/a",
           device_type: "desktop",
+          recorded_at: activeRange.start,
         },
         {
           project_id: projectId,
@@ -205,6 +221,7 @@ describe("custom-events-repository integration", () => {
           route: "/a",
           path: "/a",
           device_type: "desktop",
+          recorded_at: activeRange.start,
         },
         {
           project_id: projectId,
@@ -213,16 +230,17 @@ describe("custom-events-repository integration", () => {
           route: "/a",
           path: "/a",
           device_type: "desktop",
+          recorded_at: activeRange.start,
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"], deviceType: "all" });
+      const stats = await fetchEventsStatsData({ projectId, range: activeRange, eventNames: ["target_event"], deviceType: "all" });
 
       expect(stats[0].conversions_cur).toBe(1);
     });
 
     it("should calculate conversion rate as (unique_converters / unique_viewers)", async () => {
-      const now = new Date();
+      const now = activeRange.start;
       await insertCustomEvents([
         {
           project_id: projectId,
@@ -253,7 +271,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"], deviceType: "all" });
+      const stats = await fetchEventsStatsData({ projectId, range: activeRange, eventNames: ["subscribe"], deviceType: "all" });
       const pricing = stats.find((s) => s.route === "/pricing");
 
       expect(pricing?.conversion_rate).toBe(50);
@@ -264,10 +282,10 @@ describe("custom-events-repository integration", () => {
 
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
-      const { start } = timeRangeToDateRange(range);
+      const { start } = activeRange;
       const format = (d: Date) => d.toISOString().split("T")[0];
     
-      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"], deviceType: "all" });
+      const trend = await fetchConversionTrend({ projectId, range: activeRange, eventNames: ["any"], deviceType: "all" });
       const firstEntryDate = new Date(trend[0].day);
     
       expect(format(firstEntryDate)).toBe(format(start));

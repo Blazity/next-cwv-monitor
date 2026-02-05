@@ -54,6 +54,16 @@ function buildEventsWhereClause(filters: BaseFilters, metricName?: MetricName): 
   return where;
 }
 
+function isHighPrecisionRequired(filters: BaseFilters): boolean {
+  if (filters.interval === "hour") return true;
+  
+  const start = new Date(filters.start).getTime();
+  const end = new Date(filters.end).getTime();
+  const diffHours = (end - start) / (1000 * 60 * 60);
+  
+  return diffHours < 48;
+}
+
 export type MetricsOverviewRow = {
   metric_name: MetricName;
   percentiles: number[];
@@ -61,8 +71,20 @@ export type MetricsOverviewRow = {
 };
 
 export async function fetchMetricsOverview(filters: BaseFilters): Promise<MetricsOverviewRow[]> {
-  const where = buildDailyWhereClause(filters);
+  if (isHighPrecisionRequired(filters)) {
+    const where = buildEventsWhereClause(filters);
+    return sql<MetricsOverviewRow>`
+      SELECT
+        metric_name,
+        quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
+        toString(count()) AS sample_size
+      FROM cwv_events
+      ${where}
+      GROUP BY metric_name
+    `;
+  }
 
+  const where = buildDailyWhereClause(filters);
   return sql<MetricsOverviewRow>`
     SELECT
       metric_name,
@@ -85,6 +107,21 @@ export async function fetchWorstRoutes(
   metricName: MetricName,
   limit: number,
 ): Promise<WorstRouteRow[]> {
+  if (isHighPrecisionRequired(filters)) {
+    const where = buildEventsWhereClause(filters, metricName);
+    return sql<WorstRouteRow>`
+      SELECT
+        route,
+        quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
+        toString(count()) AS sample_size
+      FROM cwv_events
+      ${where}
+      GROUP BY route
+      ORDER BY percentiles[2] DESC
+      LIMIT ${limit}
+    `;
+  }
+
   const where = buildDailyWhereClause(filters, metricName);
 
   return sql<WorstRouteRow>`
@@ -128,7 +165,7 @@ const EVENT_INTERVAL_TO_PERIOD_EXPR: Record<IntervalKey, ReturnType<typeof sql.r
 };
 
 export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<MetricSeriesRow[]> {
-  if (filters.interval === "hour") {
+  if (filters.interval === "hour" || isHighPrecisionRequired(filters)) {
     const where = buildEventsWhereClause(filters);
     return sql<MetricSeriesRow>`
       SELECT
@@ -200,12 +237,35 @@ export async function fetchRouteStatusDistribution(
   metricName: MetricName,
   thresholds: { good: number; needsImprovement: number },
 ): Promise<RouteStatusDistributionRow[]> {
-  const where = buildDailyWhereClause(filters, metricName);
-
-  return sql<RouteStatusDistributionRow>`
+  const thresholdsFragment = sql`
     WITH
       toFloat64(${thresholds.good}) AS good_threshold,
       toFloat64(${thresholds.needsImprovement}) AS needs_threshold
+  `;
+
+  if (isHighPrecisionRequired(filters)) {
+    const where = buildEventsWhereClause(filters, metricName);
+    return sql<RouteStatusDistributionRow>`
+      ${thresholdsFragment}
+      SELECT
+        multiIf(p75 <= good_threshold, 'good', p75 <= needs_threshold, 'needs-improvement', 'poor') AS status,
+        toString(count()) AS route_count
+      FROM (
+        SELECT
+          route,
+          quantile(0.75)(metric_value) AS p75
+        FROM cwv_events
+        ${where}
+        GROUP BY route
+      )
+      GROUP BY status
+    `;
+  }
+
+  const where = buildDailyWhereClause(filters, metricName);
+
+  return sql<RouteStatusDistributionRow>`
+    ${thresholdsFragment}
     SELECT
       multiIf(p75 <= good_threshold, 'good', p75 <= needs_threshold, 'needs-improvement', 'poor') AS status,
       toString(count()) AS route_count

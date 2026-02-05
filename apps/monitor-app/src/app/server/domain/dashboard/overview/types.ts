@@ -24,18 +24,32 @@ export const INTERVALS = [
 ] as const;
 export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
+export const isValidInterval = (key: string): key is IntervalKey => 
+  INTERVALS.some(i => i.value === key);
+
 export const PAGE_VIEW_EVENT_NAME = "$page_view";
 
 export const timeRangeToIntervals = {
   "24h": ["hour"],
-  "7d": ["hour", "day", "week"],
+  "7d": ["hour", "day"],
   "30d": ["day", "week"],
   "90d": ["day", "week", "month"],
 } as const satisfies Record<TimeRangeKey, IntervalKey[]>;
 
+export function getDefaultIntervalForRange(timeRange: TimeRangeKey): IntervalKey {
+  const intervals = timeRangeToIntervals[timeRange];
+  return intervals.at(-1) ?? "day";
+}
+
 export type DateRange = {
   start: Date;
   end: Date;
+};
+
+export type DateRangeWithPrev = {
+  start: Date;
+  end: Date;
+  prevStart: Date;
 };
 
 export type SortDirection = "asc" | "desc";
@@ -133,6 +147,14 @@ export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: Ti
   return validIntervals.includes(interval);
 }
 
+export function getValidIntervalsForCustomRange(from: Date, to: Date): readonly IntervalKey[] {
+  const diffHours = Math.abs(to.getTime() - from.getTime()) / (1000 * 60 * 60);
+  if (diffHours <= 24) return ["hour"];
+  if (diffHours <= 24 * 8) return ["hour", "day"];
+  if (diffHours <= 24 * 35) return ["day", "week"];
+  return ["day", "week", "month"];
+}
+
 /**
  * Returns the effective interval for a given time range.
  * If the provided interval is valid for the time range, it is returned.
@@ -141,10 +163,27 @@ export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: Ti
 export function getEffectiveInterval(
   interval: IntervalKey | string | null | undefined,
   timeRange: TimeRangeKey,
+  customRange?: { from: Date | null; to: Date | null }
 ): IntervalKey {
-  return interval && isValidIntervalForTimeRange(interval as IntervalKey, timeRange)
-    ? (interval as IntervalKey)
-    : getDefaultInterval(timeRange);
+  if (customRange?.from && customRange.to) {
+    const validIntervals = getValidIntervalsForCustomRange(customRange.from, customRange.to);
+    
+    const isRequestedValid = interval && 
+      isValidInterval(interval) && 
+      validIntervals.includes(interval as IntervalKey);
+
+    return isRequestedValid 
+      ? (interval as IntervalKey) 
+      : (validIntervals.at(-1) ?? "day");
+  }
+
+  const isRequestedValid = interval && 
+    isValidInterval(interval) && 
+    isValidIntervalForTimeRange(interval, timeRange);
+
+  return isRequestedValid 
+    ? (interval as IntervalKey) 
+    : getDefaultIntervalForRange(timeRange);
 }
 
 export function toDateOnlyString(
