@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { DemoShell } from '../components/shared/demo-shell';
-import CustomEventButton from '../components/app-router/custom-event-button';
+import SubscribeButton from '../components/app-router/subscribe-button';
 
 export default function Home() {
   return (
@@ -46,7 +46,7 @@ export default function Home() {
               CWV docs
             </a>
 
-            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
+            <SubscribeButton name="subscribe">Subscribe</SubscribeButton>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">

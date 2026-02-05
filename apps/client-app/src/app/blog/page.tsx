@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DemoShell } from '../../components/shared/demo-shell';
 import { BLOG_POSTS } from './_posts';
-import CustomEventButton from '@/src/components/app-router/custom-event-button';
+import SubscribeButton from '@/src/components/app-router/subscribe-button';
 
 export default function BlogIndexPage() {
   return (
@@ -15,9 +15,9 @@ export default function BlogIndexPage() {
                 Home
               </Link>
 
-              <CustomEventButton eventName="Subscribe" name="subscribe">
+              <SubscribeButton name="subscribe">
                 Subscribe
-              </CustomEventButton>
+              </SubscribeButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">Blog</span>
             </div>

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { DemoShell } from '../../../components/shared/demo-shell';
 import { BLOG_POSTS, getBlogPost } from '../_posts';
-import CustomEventButton from '@/src/components/app-router/custom-event-button';
+import SubscribeButton from '@/src/components/app-router/subscribe-button';
 
 export function generateStaticParams() {
   // Keeps the demo predictable and gives you a nice set of slugs to click through.
@@ -28,9 +28,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               <Link href="/blog" className="hover:underline">
                 Blog
               </Link>
-              <CustomEventButton eventName="Subscribe" name="subscribe">
+              <SubscribeButton name="subscribe">
                 Subscribe
-              </CustomEventButton>
+              </SubscribeButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">{post.slug}</span>
             </nav>

@@ -98,6 +98,7 @@ jobs:
         if: steps.changes.outputs.client_changed == 'true' || steps.changes.outputs.sdk_changed == 'true'
         run: |
           cp apps/client-app/.env.ci apps/client-app/.env 2>/dev/null || true
+          pnpm --filter next-cwv-monitor build
           pnpm --filter cwv-monitor-client build
 
       - name: Cache Playwright Binaries

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { DemoShell } from '../../../components/shared/demo-shell';
 import { BLOG_POSTS, type BlogPost, getBlogPost } from '../../../app/blog/_posts';
-import CustomEventButton from '@/src/components/pages-router/custom-event-button';
+import SubscribeButton from '@/src/components/pages-router/subscribe-button';
 
 type Props = {
   post: BlogPost;
@@ -46,9 +46,9 @@ export default function PagesRouterBlogPostPage({ post }: InferGetStaticPropsTyp
               <Link href="/pages-router/blog" className="hover:underline">
                 Blog
               </Link>
-              <CustomEventButton eventName="Subscribe" name="subscribe">
+              <SubscribeButton name="subscribe">
                 Subscribe
-              </CustomEventButton>
+              </SubscribeButton>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
               <span className="text-zinc-950 dark:text-zinc-50">{post.slug}</span>
             </nav>

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { DemoShell } from '../../components/shared/demo-shell';
-import CustomEventButton from '@/src/components/pages-router/custom-event-button';
+import SubscribeButton from '@/src/components/pages-router/subscribe-button';
 
 export default function PagesRouterIndexPage() {
   return (
@@ -27,7 +27,7 @@ export default function PagesRouterIndexPage() {
               Go to sub page
             </Link>
 
-            <CustomEventButton eventName='Subscribe' name='subscribe'>Subscribe</CustomEventButton>
+            <SubscribeButton name="subscribe">Subscribe</SubscribeButton>
           </div>
         </div>
 
