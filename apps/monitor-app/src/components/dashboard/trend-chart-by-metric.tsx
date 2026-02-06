@@ -33,7 +33,6 @@ export function TrendChartByMetric({
     dashboardSearchParsers, 
     {...QUERY_STATE_OPTIONS, startTransition}
   );
-  const activeMetric = metric;
 
   const handleMetricChange = (newMetric: MetricName) => {
     void setQuery({ metric: newMetric });
@@ -47,22 +46,22 @@ export function TrendChartByMetric({
       switch (interval) {
         case "month": {
           endDate = new Date(startDate);
-          endDate.setMonth(endDate.getMonth() + 1);
+          endDate.setMonth(endDate.getUTCMonth() + 1);
           break;
         }
         case "week": {
           endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 7);
+          endDate.setDate(endDate.getUTCDate() + 7);
           break;
         }
         case "day": {
           endDate = new Date(startDate);
-          endDate.setDate(endDate.getDate() + 1);
+          endDate.setDate(endDate.getUTCDate() + 1);
           break;
         }
         case "hour": {
           endDate = new Date(startDate);
-          endDate.setHours(endDate.getHours() + 1);
+          endDate.setHours(endDate.getUTCHours() + 1);
           break;
         }
       }
@@ -90,7 +89,7 @@ export function TrendChartByMetric({
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <MetricSelector selected={activeMetric} onChange={handleMetricChange} disabled={isPending} showOtherMetrics />
+          <MetricSelector selected={metric} onChange={handleMetricChange} disabled={isPending} showOtherMetrics />
         </div>
       </CardHeader>
       <CardContent>
@@ -102,7 +101,7 @@ export function TrendChartByMetric({
         >
           <TimeSeriesChart
             data={data}
-            metric={activeMetric}
+            metric={metric}
             height={300}
             dateRange={dateRange}
             interval={interval}

@@ -158,6 +158,7 @@ export async function fetchEventsStatsData({ range, eventNames, projectId, devic
     FROM custom_events
     WHERE project_id = ${projectId}
       AND recorded_at >= ${prevStart}
+      AND recorded_at < ${end}
       AND (event_name IN (${eventNames}) OR event_name = ${PAGE_VIEW_EVENT_NAME})
   `;
 
@@ -380,7 +381,7 @@ export async function fetchConversionTrend({ projectId, eventNames, range, devic
       SELECT
         toDate(ce.recorded_at) AS day,
         uniqExactIf(ce.session_id, ce.event_name = ${PAGE_VIEW_EVENT_NAME}) AS views,
-        uniqExact(ce.session_id, ce.event_name) AS events
+        uniqExactIf(ce.session_id, ce.event_name != ${PAGE_VIEW_EVENT_NAME}) AS events
       FROM
         custom_events AS ce
       ${innerWhere}
@@ -408,7 +409,7 @@ export async function fetchProjectEventNames({ projectId }: FetchProjectEventNam
   const query = sql<FetchProjectEventNamesResult>`
     SELECT event_name
     FROM custom_events
-    WHERE project_id = ${projectId} AND event_name NOT LIKE ${PAGE_VIEW_EVENT_NAME}
+    WHERE project_id = ${projectId} AND event_name != ${PAGE_VIEW_EVENT_NAME}
     GROUP BY event_name
     ORDER BY event_name ASC
   `;

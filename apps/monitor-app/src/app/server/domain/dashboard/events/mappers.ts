@@ -14,7 +14,6 @@ import {
 } from "@/components/dashboard/time-series-chart";
 import { eventsSearchParamsCache } from "@/lib/search-params";
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
-import { getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { MetricSeriesRow } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
 import { GetEventsDashboardQuery } from "@/app/server/domain/dashboard/events/types";
 import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
@@ -106,14 +105,11 @@ export function mapToTimeSeriesChartProps({
 
   const timeSeries: DailySeriesPoint[] = filteredRows.map((row) => {
     const quantiles = toQuantileSummary(row.percentiles);
-    const p75 = quantiles?.p75;
-    const status = typeof p75 === "number" ? getRatingForValue(metric, p75) : null;
 
     return {
       date: row.period,
       sampleSize: Number(row.sample_size || 0),
       quantiles,
-      status,
     };
   });
 

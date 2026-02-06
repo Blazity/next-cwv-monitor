@@ -26,7 +26,7 @@ type BaseFilters = {
 
 /** WHERE clause for cwv_daily_aggregates (date-based filtering) */
 function buildDailyWhereClause(filters: BaseFilters, metricName?: MetricName): SqlFragment {
-  const where = sql`WHERE project_id = ${filters.projectId} AND event_date BETWEEN toDate(${filters.start}) AND toDate(${filters.end})`;
+  const where = sql`WHERE project_id = ${filters.projectId} AND event_date BETWEEN toDate(${toDateOnlyString(filters.start)}) AND toDate(${toDateOnlyString(filters.end)})`;
 
   if (filters.deviceType !== "all") {
     where.append(sql` AND device_type = ${filters.deviceType}`);
@@ -167,10 +167,13 @@ const EVENT_INTERVAL_TO_PERIOD_EXPR: Record<IntervalKey, ReturnType<typeof sql.r
 export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<MetricSeriesRow[]> {
   if (filters.interval === "hour" || isHighPrecisionRequired(filters)) {
     const where = buildEventsWhereClause(filters);
+    const format = filters.interval === "hour" 
+        ? "toString(toStartOfHour(recorded_at, 'UTC'))"
+        : "toString(toDate(recorded_at))";
     return sql<MetricSeriesRow>`
       SELECT
         metric_name,
-        toString(toStartOfHour(recorded_at, 'UTC')) AS period,
+        ${sql.raw(format)} AS period,
         quantiles(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS percentiles,
         toString(count()) AS sample_size
       FROM cwv_events

@@ -13,6 +13,7 @@ import {
   YAxis,
   DotItemDotProps,
   ReferenceArea,
+  MouseHandlerDataParam,
 } from "recharts";
 import { format, addDays, addHours } from "date-fns";
 
@@ -97,11 +98,11 @@ const createChartDataPoint = ({
     rawOverlays: {},
   };
 
-  for (const [label, map] of overlayMaps.entries()) {
+  for (const [id, map] of overlayMaps.entries()) {
     const ovPoint = map.get(timestamp);
     if (ovPoint) {
-      chartPoint[`overlay_${label}`] = ovPoint.conversionRatePct;
-      chartPoint.rawOverlays![label] = ovPoint;
+      chartPoint[`overlay_${id}`] = ovPoint.conversionRatePct;
+      chartPoint.rawOverlays![id] = ovPoint;
     }
   }
 
@@ -219,7 +220,7 @@ type ChartTooltipProps = {
 };
 
 const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: ChartTooltipProps) => {
-  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.label]);
+  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.id]);
   const hasPrimaryData = point.value !== null;
 
   if (!hasPrimaryData && !hasOverlayData) {
@@ -257,13 +258,13 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
 
         {/* Dynamic Overlays */}
         {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
-          const raw = point.rawOverlays?.[ov.label];
+          const raw = point.rawOverlays?.[ov.id];
           if (!raw) return null;
           const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
           const showSeparator = hasPrimaryData || idx > 0;
 
           return (
-            <div key={ov.label} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
+            <div key={ov.id} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -321,7 +322,7 @@ type IslandDotProps = {
 } & Partial<DotItemDotProps>
 
 const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
-  if (index === undefined || !visibilityArray[index]) return null;
+  if (index === undefined || cx === undefined || cy === undefined || !visibilityArray[index]) return null;
   
   return (
     <circle 
@@ -348,12 +349,12 @@ export function TimeSeriesChart({
   const [refAreaRight, setRefAreaRight] = useState<string | null>(null);
 
   // Generate chart data points based on interval
-  const chartData = useMemo(() => {
+  const { chartPoints, chartPointsMap } = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
-    const overlayMaps = new Map(overlays.map((o) => [o.label, new Map(o.series.map((s) => [s.date, s]))]));
-
+    const overlayMaps = new Map(overlays.map((o) => [o.id, new Map(o.series.map((s) => [s.date, s]))]));
+  
     const generator = INTERVAL_GENERATORS[interval];
-    return generator({
+    const points = generator({
       start: new Date(dateRange.start),
       end: new Date(dateRange.end),
       dataByDate,
@@ -361,48 +362,72 @@ export function TimeSeriesChart({
       percentile,
       metric,
     });
+  
+    return {
+      chartPoints: points,
+      chartPointsMap: new Map(points.map(p => [p.timestamp, p]))
+    };
   }, [data, metric, overlays, percentile, dateRange, interval]);
 
   const thresholds = getMetricThresholds(metric);
   const dotVisibility = useMemo(() => {
-    const len = chartData.length;
+    const len = chartPoints.length;
     const primary = Array.from<boolean>({length: len}).fill(false);
     const overlaysMap: Record<string, boolean[]> = {};
   
     for (const ov of overlays) {
-      overlaysMap[ov.label] = Array.from<boolean>({length: len}).fill(false);
+      overlaysMap[ov.id] = Array.from<boolean>({length: len}).fill(false);
     }
   
     for (let i = 0; i < len; i++) {
-      const curr = chartData[i];
+      const curr = chartPoints[i];
       
-      const prev = i > 0 ? chartData[i - 1] : undefined;
-      const next = i < len - 1 ? chartData[i + 1] : undefined;
+      const prev = i > 0 ? chartPoints[i - 1] : undefined;
+      const next = i < len - 1 ? chartPoints[i + 1] : undefined;
   
       const hasVal = curr.value != null;
       primary[i] = hasVal && prev?.value == null && next?.value == null;
   
       for (const ov of overlays) {
-        const key = `overlay_${ov.label}` as keyof ChartDataPoint;
+        const key = `overlay_${ov.id}` as keyof ChartDataPoint;
         const hasOverlayVal = curr[key] != null;
         
-        overlaysMap[ov.label][i] = 
+        overlaysMap[ov.id][i] = 
           hasOverlayVal && prev?.[key] == null && next?.[key] == null;
       }
     }
   
     return { primary, overlays: overlaysMap };
-  }, [chartData, overlays]);
+  }, [chartPoints, overlays]);
 
-  const handleMouseUp = () => {
+  const handleMouseDown = (state: MouseHandlerDataParam, event: React.SyntheticEvent) => {
+    const { nativeEvent } = event;
+    if ('button' in nativeEvent && nativeEvent.button !== 0) return;
+    if (!state.activeLabel) return;
+    
+    setRefAreaLeft(String(state.activeLabel));
+  };
+
+  const handleMouseMove = (state: MouseHandlerDataParam) => {
+    if (refAreaLeft && state.activeLabel) {
+      setRefAreaRight(String(state.activeLabel));
+    }
+  };
+  
+  const handleMouseUp = (_: MouseHandlerDataParam, event: React.SyntheticEvent) => {
+    if ('button' in event.nativeEvent && event.nativeEvent.button !== 0) {
+        setRefAreaLeft(null);
+        setRefAreaRight(null);
+        return;
+      }
+  
     if (onRangeSelect && refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
-      const leftPoint = chartData.find((p) => p.time === refAreaLeft);
-      const rightPoint = chartData.find((p) => p.time === refAreaRight);
+      const leftPoint = chartPointsMap.get(refAreaLeft);
+      const rightPoint = chartPointsMap.get(refAreaRight);
   
       if (leftPoint && rightPoint) {
         const isLeftEarlier = new Date(leftPoint.timestamp) < new Date(rightPoint.timestamp);
         const [start, end] = isLeftEarlier ? [leftPoint, rightPoint] : [rightPoint, leftPoint];
-        
         onRangeSelect(start, end);
       }
     }
@@ -418,7 +443,7 @@ export function TimeSeriesChart({
 
   const overlayDomainMax = useMemo(() => {
     if (overlays.length === 0) return 100;
-    const allRates = overlays.flatMap((o) => o.series.map((s) => s.conversionRatePct || 0));
+    const allRates = overlays.flatMap((o) => o.series.map((s) => s.conversionRatePct ?? 0));
     return Math.min(100, Math.max(...allRates, 1) * 1.1);
   }, [overlays]);
 
@@ -426,18 +451,10 @@ export function TimeSeriesChart({
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart 
-          data={chartData}
+          data={chartPoints}
           margin={CHART_MARGINS}
-          onMouseDown={(e) => {
-            const label = e.activeLabel == null ? null : String(e.activeLabel);
-            setRefAreaLeft(label);
-          }}
-          onMouseMove={(e) => {
-            if (refAreaLeft) {
-              const label = e.activeLabel == null ? null : String(e.activeLabel);
-              setRefAreaRight(label);
-            }
-          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           style={{ cursor: refAreaLeft ? 'crosshair' : 'default' }}
         >
@@ -445,10 +462,11 @@ export function TimeSeriesChart({
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           {/* X-Axis */}
           <XAxis
-            dataKey="time"
+            dataKey="timestamp"
             {...AXIS_STYLES}
             interval="preserveStartEnd"
             minTickGap={isMobile ? 40 : 60}
+            tickFormatter={(value) => chartPointsMap.get(value)?.time ?? value}
             angle={0}
             allowDuplicatedCategory={false}
           />
@@ -515,15 +533,15 @@ export function TimeSeriesChart({
             
             return (
               <Area
-                key={ov.label}
+                key={ov.id}
                 yAxisId="overlay"
                 type="monotone"
-                dataKey={`overlay_${ov.label}`}
+                dataKey={`overlay_${ov.id}`}
                 stroke={color}
                 strokeWidth={2}
                 fill="url(#overlayGradient)"
                 connectNulls={false}
-                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.label]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.id]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
                 activeDot={ACTIVE_DOT_CONFIG(color)}
               />
             );

@@ -6,7 +6,6 @@ import type { DateRangeWithPrev, MetricName, TimeRangeKey } from "@/app/server/d
 import { chunk, mapValues } from "remeda";
 import { AuthRole } from "@/lib/auth-shared";
 import { subDays } from "date-fns/subDays";
-import { startOfDay } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -57,11 +56,13 @@ export function formatCompactNumber(value: number): string {
   }).format(value);
 }
 
+const startOfUtcDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+
 export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRangeWithPrev {
   const now = new Date();
   const days = timeRangeToDays[timeRange];
   
-  const currentStart = timeRange === "24h" ? subDays(now, 1) : startOfDay(subDays(now, days));
+  const currentStart = timeRange === "24h" ? subDays(now, 1) : startOfUtcDay(subDays(now, days));
   const prevStart = subDays(currentStart, days);
 
   return {

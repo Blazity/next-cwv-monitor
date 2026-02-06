@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterAll, beforeEach, it, expect, vi, afterEach } from "vitest";
+import { describe, beforeAll, afterAll, beforeEach, it, expect, vi } from "vitest";
 import type { StartedTestContainer } from "testcontainers";
 import { randomUUID } from "node:crypto";
 import { subDays } from "date-fns";
@@ -50,10 +50,6 @@ describe("custom-events-repository integration", () => {
 
   beforeEach(async () => {
     await sql`TRUNCATE TABLE custom_events`.command();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   describe("insertCustomEvents", () => {

@@ -66,17 +66,11 @@ export class DashboardOverviewService {
     // always use date-only strings (YYYY-MM-DD) compatible with cwv_daily_aggregates
     const filters = {
       projectId: query.projectId,
-      start: toDateOnlyString(query.range.start),
-      end: toDateOnlyString(query.range.end),
+      start: query.range.start.toISOString(),
+      end: query.range.end.toISOString(),
       interval: query.interval,
       deviceType: query.deviceType,
     } as const;
-
-    const seriesFilters = {
-      ...filters,
-      start: query.range.start.toISOString(),
-      end: query.range.end.toISOString(),
-    };
 
     const previousRange = getPreviousPeriod(query.range.start, query.range.end);
     const previousFilters = {
@@ -91,7 +85,7 @@ export class DashboardOverviewService {
         fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
         fetchMetricsOverview(previousFilters),
         fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-        fetchAllMetricsSeries(seriesFilters),
+        fetchAllMetricsSeries(filters),
       ]);
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);

@@ -11,7 +11,7 @@ import { dashboardSearchParamsCache } from "@/lib/search-params";
 import { CACHE_LIFE_DEFAULT, updateTags } from "@/lib/cache";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { notFound } from "next/navigation";
-import type { IntervalKey, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
+import type { DateRange, IntervalKey, MetricName, TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
 import { getEffectiveInterval } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
@@ -20,7 +20,7 @@ const dashboardOverviewService = new DashboardOverviewService();
 async function getCachedOverview(projectId: string, deviceType: DeviceFilter, timeRange: TimeRangeKey, interval: IntervalKey, selectedMetric: MetricName, customStart: Date | null, customEnd: Date | null) {
   "use cache";
   cacheLife(CACHE_LIFE_DEFAULT);
-  cacheTag(updateTags.dashboardOverview(projectId, deviceType, timeRange, interval, selectedMetric));
+  cacheTag(updateTags.dashboardOverview(projectId, deviceType, timeRange, interval, selectedMetric, customStart?.toISOString() ?? "", customEnd?.toISOString() ?? ""));
   const query = buildDashboardOverviewQuery({ projectId, deviceType, timeRange, interval, selectedMetric, customStart, customEnd });
   return await dashboardOverviewService.getOverview(query);
 }
@@ -67,9 +67,10 @@ export default async function ProjectPage({
 
   const { metricOverview, worstRoutes, timeSeriesByMetric, quickStats, statusDistribution } = overview.data;
 
-  const actualDateRange = (customStart && customEnd) 
+  const { start, end } = (customStart && customEnd) 
     ? { start: customStart, end: customEnd }
     : timeRangeToDateRange(timeRange);
+  const actualDateRange: DateRange = { start, end };
 
   return (
     <div className="space-y-6">

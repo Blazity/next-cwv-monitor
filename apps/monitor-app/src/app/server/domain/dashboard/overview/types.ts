@@ -1,6 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
-import { sql } from "@/app/server/lib/clickhouse/client";
+import type { sql } from "@/app/server/lib/clickhouse/client";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 
@@ -136,10 +136,6 @@ export function parseTimeRange(key: unknown): DateRange {
   const start = new Date();
   start.setDate(end.getDate() - range.days);
   return { start, end };
-}
-
-export function getDefaultInterval(timeRange: TimeRangeKey): IntervalKey {
-  return timeRangeToIntervals[timeRange][0];
 }
 
 export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: TimeRangeKey): boolean {

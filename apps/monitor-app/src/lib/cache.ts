@@ -10,8 +10,8 @@ export const CACHE_LIFE_DEFAULT = {
 
 export const updateTags = {
   projectDetails: (projectId: string) => `project-${projectId}` as const,
-  dashboardOverview: (projectId: string, deviceType: string, timeRange: string, interval: string, selectedMetric: string) => 
-    `overview-${projectId}-${deviceType}-${timeRange}-${interval}-${selectedMetric}` as const,
+  dashboardOverview: (projectId: string, deviceType: string, timeRange: string, interval: string, selectedMetric: string, customStart: string, customEnd: string) => 
+    `overview-${projectId}-${deviceType}-${timeRange}-${interval}-${selectedMetric}-${customStart}-${customEnd}` as const,
 };
 
 export async function getCachedProject(projectId: string) {
