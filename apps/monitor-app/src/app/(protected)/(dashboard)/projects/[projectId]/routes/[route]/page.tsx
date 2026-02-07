@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { RouteDetailService } from "@/app/server/domain/routes/detail/service";
-import { buildRouteDetailQuery } from "@/app/server/domain/routes/detail/mappers";
-import { RouteEventOverlayService } from "@/app/server/domain/routes/overlay/service";
-import { buildRouteEventOverlayQuery } from "@/app/server/domain/routes/overlay/mappers";
+import { RouteDetailService } from "@/app/server/domain/dashboard/routes/detail/service";
+import { buildRouteDetailQuery } from "@/app/server/domain/dashboard/routes/detail/mappers";
+import { RouteEventOverlayService } from "@/app/server/domain/dashboard/routes/overlay/service";
+import { buildRouteEventOverlayQuery } from "@/app/server/domain/dashboard/routes/overlay/mappers";
 import { fetchProjectEventNames } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
 import { RouteDetailErrorState } from "@/app/(protected)/(dashboard)/projects/[projectId]/routes/[route]/_components/route-detail-error-state";

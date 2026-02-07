@@ -13,7 +13,7 @@ import type {
   ListRegressionsQuery,
   ListRegressionsResult,
   RegressionsSummary,
-} from "@/app/server/domain/regressions/list/types";
+} from "@/app/server/domain/dashboard/regressions/list/types";
 
 function getPreviousPeriod(start: Date, end: Date): { start: Date; end: Date } {
   const duration = end.getTime() - start.getTime();

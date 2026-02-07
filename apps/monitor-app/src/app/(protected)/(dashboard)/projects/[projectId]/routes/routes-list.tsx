@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 
 import { Card } from "@/components/ui/card";
-import type { ListRoutesData, RoutesSortField } from "@/app/server/domain/routes/list/types";
+import type { ListRoutesData, RoutesSortField } from "@/app/server/domain/dashboard/routes/list/types";
 import type { MetricName, Percentile, SortDirection } from "@/app/server/domain/dashboard/overview/types";
 import { QUERY_STATE_OPTIONS, SEARCH_QUERY_OPTIONS, routesListSearchParsers } from "@/lib/search-params";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
