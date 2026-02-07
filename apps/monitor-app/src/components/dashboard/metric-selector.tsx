@@ -58,7 +58,7 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
   const displayMetrics = metrics || (showOtherMetrics ? [...CORE_WEB_VITALS, ...OTHER_METRICS] : CORE_WEB_VITALS);
 
   return (
-      <div className={cn("bg-muted flex w-fit items-center gap-1 rounded-lg p-1", disabled && "opacity-50")} role="tablist">
+      <div className={cn("bg-muted flex w-fit items-center gap-1 rounded-lg p-1", {"opacity-50": disabled})} role="tablist">
         {displayMetrics.map((metric) => {
           const info = METRIC_INFO[metric];
           const isOther = !info.isCoreWebVital;

@@ -147,6 +147,11 @@ export function getEffectiveInterval(
     : getDefaultInterval(timeRange);
 }
 
-export function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
+export function toDateOnlyString(
+  date: Date | string | number, 
+  fallback = new Date()
+): string {
+  const d = new Date(date);
+  const finalDate = Number.isNaN(d.getTime()) ? fallback : d;
+  return finalDate.toISOString().slice(0, 10);
 }

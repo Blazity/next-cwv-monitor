@@ -57,8 +57,8 @@ export function TrendChartByMetric({
       <CardContent>
         <div 
           className={cn(
-            "transition-opacity duration-300 ease-in-out",
-            isPending ? "opacity-40 grayscale-[20%] pointer-events-none" : "opacity-100"
+            "transition-opacity duration-300 ease-in-out opacity-100",
+            { "opacity-40 grayscale-[20%] pointer-events-none": isPending }
           )}
         >
           <TimeSeriesChart

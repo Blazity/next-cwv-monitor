@@ -75,7 +75,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
     });
 
@@ -103,7 +103,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
       expect(data.total_views_prev).toBe(1);
     });
@@ -143,7 +143,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
 
       expect(data.total_conversion_change_pct).toBe(100);
       expect(data.total_conversions_cur).toBe(2);
@@ -182,7 +182,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_conversions_cur).toBe(2);
     });
   });
@@ -216,7 +216,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"] });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"], deviceType: "all" });
 
       expect(stats[0].conversions_cur).toBe(1);
     });
@@ -253,7 +253,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"] });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"], deviceType: "all" });
       const pricing = stats.find((s) => s.route === "/pricing");
 
       expect(pricing?.conversion_rate).toBe(50);
@@ -267,7 +267,7 @@ describe("custom-events-repository integration", () => {
       const { start } = timeRangeToDateRange(range);
       const format = (d: Date) => d.toISOString().split("T")[0];
     
-      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"] });
+      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"], deviceType: "all" });
       const firstEntryDate = new Date(trend[0].day);
     
       expect(format(firstEntryDate)).toBe(format(start));

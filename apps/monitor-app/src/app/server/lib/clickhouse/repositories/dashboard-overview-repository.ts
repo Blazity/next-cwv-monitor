@@ -1,4 +1,4 @@
-import { IntervalKey, MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { IntervalKey, MetricName, toDateOnlyString } from "@/app/server/domain/dashboard/overview/types";
 import { sql } from "@/app/server/lib/clickhouse/client";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
 
@@ -113,6 +113,20 @@ export type MetricSeriesRow = {
   sample_size: string;
 };
 
+const INTERVAL_TO_PERIOD_EXPR: Record<IntervalKey, ReturnType<typeof sql.raw>> = {
+  hour: sql.raw("toStartOfHour(recorded_at, 'UTC')"),
+  day: sql.raw("event_date"),
+  week: sql.raw("toStartOfWeek(event_date, 0)"),
+  month: sql.raw("toStartOfMonth(event_date)"),
+};
+
+const EVENT_INTERVAL_TO_PERIOD_EXPR: Record<IntervalKey, ReturnType<typeof sql.raw>> = {
+  hour: sql.raw("toStartOfHour(recorded_at, 'UTC')"),
+  day: sql.raw("toDate(recorded_at)"),
+  week: sql.raw("toStartOfWeek(toDate(recorded_at), 0)"),
+  month: sql.raw("toStartOfMonth(toDate(recorded_at))"),
+};
+
 export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<MetricSeriesRow[]> {
   if (filters.interval === "hour") {
     const where = buildEventsWhereClause(filters);
@@ -129,26 +143,15 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
     `;
   }
   
-  let periodFunc;
-  switch (filters.interval) {
-    case "week": {
-      periodFunc = sql.raw("toStartOfWeek(event_date, 0)");
-      break;
-    }
-    case "month": {
-      periodFunc = sql.raw("toStartOfMonth(event_date)");
-      break;
-    }
-    default: {
-      periodFunc = sql.raw("event_date");
-    }
-  }
+  const periodFunc = INTERVAL_TO_PERIOD_EXPR[filters.interval];
+  const eventPeriodFunc = EVENT_INTERVAL_TO_PERIOD_EXPR[filters.interval];
 
   const deviceFilter = filters.deviceType === "all" 
     ? sql`` 
     : sql` AND device_type = ${filters.deviceType}`;
   
-  const endDateString = filters.end.slice(0, 10);
+  const startDateString = toDateOnlyString(filters.start);
+  const endDateString = toDateOnlyString(filters.end);
 
   return sql<MetricSeriesRow>`
     SELECT
@@ -164,7 +167,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
         sample_size AS sample_size_state
       FROM cwv_daily_aggregates
       WHERE project_id = ${filters.projectId}
-        AND event_date >= toDate(${filters.start.slice(0, 10)})
+        AND event_date >= toDate(${startDateString})
         AND event_date < toDate(${endDateString})
         ${deviceFilter}
 
@@ -172,11 +175,7 @@ export async function fetchAllMetricsSeries(filters: BaseFilters): Promise<Metri
 
       SELECT
         metric_name,
-        ${filters.interval === "week" 
-        ? sql.raw("toStartOfWeek(toDate(recorded_at), 0)") 
-        : filters.interval === "month" 
-          ? sql.raw("toStartOfMonth(toDate(recorded_at))") 
-          : sql.raw("toDate(recorded_at)")} AS period,
+        ${eventPeriodFunc} AS period,
         quantilesState(0.5, 0.75, 0.9, 0.95, 0.99)(metric_value) AS quantiles_state,
         countState() AS sample_size_state
       FROM cwv_events

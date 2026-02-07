@@ -113,11 +113,10 @@ type FetchEventsStatsData = {
   range: TimeRangeKey;
   projectId: string;
   eventNames: string[];
-  deviceType?: DeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 type FetchEventsStatsDataResult = {
-  event_name: string;
   route: string;
   conversions_cur: number;
   views_cur: number;
@@ -161,7 +160,7 @@ export async function fetchEventsStatsData({ range, eventNames, projectId, devic
       AND (event_name IN (${eventNames}) OR event_name = ${PAGE_VIEW_EVENT_NAME})
   `;
 
-  if (deviceType && deviceType !== "all") {
+  if (deviceType !== "all") {
     query.append(sql` AND device_type = ${deviceType}`);
   }
 
@@ -209,6 +208,13 @@ export type MultiEventOverlayRow = {
   conversions: string;
 };
 
+const INTERVAL_EXPRESSIONS: Record<IntervalKey, string> = {
+  hour: "toStartOfHour(recorded_at, 'UTC')",
+  day: "toDate(recorded_at)",
+  week: "toStartOfWeek(toDate(recorded_at), 0)",
+  month: "toStartOfMonth(toDate(recorded_at))",
+};
+
 export async function fetchMultiEventOverlaySeries(
   query: BaseFilters & {
     route?: string;
@@ -219,22 +225,8 @@ export async function fetchMultiEventOverlaySeries(
   const allEvents = [PAGE_VIEW_EVENT_NAME, ...query.eventNames];
   const where = buildCustomEventsWhereClause(query, allEvents, query.route);
 
-  let periodExpr = sql.raw("toDate(recorded_at)");
-  
-  switch (query.interval) {
-    case "hour": {
-      periodExpr = sql.raw("toStartOfHour(recorded_at, 'UTC')");
-      break;
-    }
-    case "week": {
-      periodExpr = sql.raw("toStartOfWeek(toDate(recorded_at), 0)");
-      break;
-    }
-    case "month": {
-      periodExpr = sql.raw("toStartOfMonth(toDate(recorded_at))");
-      break;
-    }
-  }
+  const rawExpr = INTERVAL_EXPRESSIONS[query.interval] || INTERVAL_EXPRESSIONS.day;
+  const periodExpr = sql.raw(rawExpr);
 
   return sql<MultiEventOverlayRow>`
     SELECT
@@ -260,7 +252,7 @@ export async function fetchMultiEventOverlaySeries(
 type FetchTotalStatsEvents = {
   range: TimeRangeKey;
   projectId: string;
-  deviceType?: DeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 export type FetchEventsTotalStatsResult = {
@@ -297,7 +289,7 @@ export async function fetchTotalStatsEvents({ projectId, range, deviceType }: Fe
       AND recorded_at >= ${prevStart} AND recorded_at < ${end}
   `;
 
-  if (deviceType && deviceType !== "all") {
+  if (deviceType !== "all") {
     query.append(sql` AND device_type = ${deviceType}`);
   }
 
@@ -310,7 +302,7 @@ type FetchEvents = {
   range: TimeRangeKey;
   projectId: string;
   limit?: number;
-  deviceType?: DeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 export type FetchEventResult = {
@@ -332,7 +324,7 @@ export async function fetchEvents({ projectId, range, limit, deviceType }: Fetch
       AND ce.event_name != ${PAGE_VIEW_EVENT_NAME}
   `;
 
-  if (deviceType && deviceType !== "all") {
+  if (deviceType !== "all") {
     query.append(sql` AND ce.device_type = ${deviceType}`);
   }
 
@@ -349,11 +341,10 @@ type FetchConversionTrend = {
   range: TimeRangeKey;
   projectId: string;
   eventNames: string[];
-  deviceType?: DeviceFilter;
+  deviceType: DeviceFilter;
 };
 
 type FetchConversionTrendResult = {
-  event_name: string;
   day: string;
   views: string;
   events: string;
@@ -374,7 +365,7 @@ export async function fetchConversionTrend({ projectId, eventNames, range, devic
       AND ce.event_name IN (${allEventNames})
   `;
 
-  if (deviceType && deviceType !== "all") {
+  if (deviceType !== "all") {
     innerWhere.append(sql` AND ce.device_type = ${deviceType}`);
   }
 
