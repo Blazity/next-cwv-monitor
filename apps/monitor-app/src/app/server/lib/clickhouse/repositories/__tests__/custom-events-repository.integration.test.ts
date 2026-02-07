@@ -5,7 +5,7 @@ import { subDays } from "date-fns";
 
 import { setupClickHouseContainer } from "@/test/clickhouse-test-utils";
 import { TimeRangeKey } from "@/app/server/domain/dashboard/overview/types";
-import { timeRangeToDays } from "@/lib/utils";
+import { timeRangeToDateRange, timeRangeToDays } from "@/lib/utils";
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
@@ -75,22 +75,19 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
     });
 
     it("should correctly separate current and previous periods at the boundary", async () => {
-      const days = timeRangeToDays[range];
-      const now = new Date();
-
-      const boundaryDate = subDays(now, days);
+      const { start } = timeRangeToDateRange(range);
 
       await insertCustomEvents([
         {
           project_id: projectId,
           event_name: "$page_view",
           session_id: "cur",
-          recorded_at: now,
+          recorded_at: start,
           route: "/",
           path: "/",
           device_type: "desktop",
@@ -99,14 +96,14 @@ describe("custom-events-repository integration", () => {
           project_id: projectId,
           event_name: "$page_view",
           session_id: "prev",
-          recorded_at: boundaryDate,
+          recorded_at: new Date(start.getTime() - 1),
           route: "/",
           path: "/",
           device_type: "desktop",
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_views_cur).toBe(1);
       expect(data.total_views_prev).toBe(1);
     });
@@ -146,7 +143,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
 
       expect(data.total_conversion_change_pct).toBe(100);
       expect(data.total_conversions_cur).toBe(2);
@@ -185,7 +182,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const data = await fetchTotalStatsEvents({ projectId, range });
+      const data = await fetchTotalStatsEvents({ projectId, range, deviceType: "all" });
       expect(data.total_conversions_cur).toBe(2);
     });
   });
@@ -219,7 +216,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "target_event" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["target_event"], deviceType: "all" });
 
       expect(stats[0].conversions_cur).toBe(1);
     });
@@ -256,7 +253,7 @@ describe("custom-events-repository integration", () => {
         },
       ]);
 
-      const stats = await fetchEventsStatsData({ projectId, range, eventName: "subscribe" });
+      const stats = await fetchEventsStatsData({ projectId, range, eventNames: ["subscribe"], deviceType: "all" });
       const pricing = stats.find((s) => s.route === "/pricing");
 
       expect(pricing?.conversion_rate).toBe(50);
@@ -267,18 +264,13 @@ describe("custom-events-repository integration", () => {
 
   describe("fetchConversionTrend", () => {
     it("should ensure the trend starts exactly from the requested range start", async () => {
-      const days = timeRangeToDays[range];
-
+      const { start } = timeRangeToDateRange(range);
       const format = (d: Date) => d.toISOString().split("T")[0];
-
-      const now = new Date();
-      const expectedStartTimestamp = now.getTime() - days * 24 * 60 * 60 * 1000;
-      const expectedStartDate = new Date(expectedStartTimestamp);
-
-      const trend = await fetchConversionTrend({ projectId, range, eventName: "any" });
+    
+      const trend = await fetchConversionTrend({ projectId, range, eventNames: ["any"], deviceType: "all" });
       const firstEntryDate = new Date(trend[0].day);
-
-      expect(format(firstEntryDate)).toBe(format(expectedStartDate));
+    
+      expect(format(firstEntryDate)).toBe(format(start));
     });
   });
 });

@@ -18,7 +18,7 @@ function isTab(value: string): value is (typeof tabs)[number] {
   return tabs.includes(value as (typeof tabs)[number]);
 }
 
-export function EventsTabs({ chartData, eventDisplaySettings, events, eventStats, projectId, selectedEvent }: Props) {
+export function EventsTabs({ chartData, eventDisplaySettings, events, eventStats, projectId, selectedEvents }: Props) {
   const [selectedTab, setSelectedTab] = useQueryState(
     "tab",
     parseAsStringEnum([...tabs])
@@ -49,7 +49,7 @@ export function EventsTabs({ chartData, eventDisplaySettings, events, eventStats
         <AnalyticsSelectEvent eventDisplaySettings={eventDisplaySettings} events={events} />
         <AnalyticsTab
           eventDisplaySettings={eventDisplaySettings}
-          selectedEvent={selectedEvent}
+          selectedEvents={selectedEvents}
           chartData={chartData}
           eventStats={eventStats}
         />

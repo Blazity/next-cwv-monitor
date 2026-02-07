@@ -21,12 +21,9 @@ import {
   METRIC_NAMES,
   QuickStatsData,
   MetricName,
+  toDateOnlyString,
 } from "@/app/server/domain/dashboard/overview/types";
 import { projectIdSchema } from "@/app/server/domain/projects/schema";
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function isMetricName(value: string): value is MetricName {
   return METRIC_NAMES.includes(value as MetricName);
@@ -76,17 +73,10 @@ export class DashboardOverviewService {
       deviceType: query.deviceType,
     } as const;
 
-    // Filters for Time Series Chart
-    // For hour interval, use ISO timestamps for precise filtering on cwv_events
-    // For other intervals, use date-only strings
-    const toSeriesFilterString = query.interval === "hour"
-      ? (date: Date) => date.toISOString()
-      : toDateOnlyString;
-
     const seriesFilters = {
       ...filters,
-      start: toSeriesFilterString(query.range.start),
-      end: toSeriesFilterString(query.range.end),
+      start: query.range.start.toISOString(),
+      end: query.range.end.toISOString(),
     };
 
     const previousRange = getPreviousPeriod(query.range.start, query.range.end);
@@ -104,7 +94,6 @@ export class DashboardOverviewService {
         fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
         fetchAllMetricsSeries(seriesFilters),
       ]);
-
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;

@@ -4,8 +4,8 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { RegressionsHelpTooltip } from "@/app/(protected)/(dashboard)/projects/[projectId]/regressions/_components/regressions-help-tooltip";
 import { RegressionsList } from "@/app/(protected)/(dashboard)/projects/[projectId]/regressions/_components/regressions-list";
-import { RegressionsListService } from "@/app/server/domain/regressions/list/service";
-import { buildListRegressionsQuery } from "@/app/server/domain/regressions/list/mappers";
+import { RegressionsListService } from "@/app/server/domain/dashboard/regressions/list/service";
+import { buildListRegressionsQuery } from "@/app/server/domain/dashboard/regressions/list/mappers";
 import { getAuthorizedSession } from "@/lib/auth-utils";
 import { regressionsSearchParamsCache } from "@/lib/search-params";
 import { timeRangeToDateRange } from "@/lib/utils";
@@ -14,7 +14,7 @@ import type { SortDirection, TimeRangeKey } from "@/app/server/domain/dashboard/
 import type {
   RegressionsMetricFilter,
   RegressionsSortField,
-} from "@/app/server/domain/regressions/list/types";
+} from "@/app/server/domain/dashboard/regressions/list/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const regressionsListService = new RegressionsListService();

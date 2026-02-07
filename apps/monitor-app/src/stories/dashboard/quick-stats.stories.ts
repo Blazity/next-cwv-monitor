@@ -10,7 +10,7 @@ const meta: Meta<typeof QuickStats> = {
   },
   tags: ["autodocs"],
   argTypes: {
-    selectedMetric: {
+    queriedMetric: {
       control: "select",
       options: ["LCP", "INP", "CLS", "FCP", "TTFB"] as MetricName[],
     },
@@ -35,7 +35,7 @@ const baseStatusDistribution = {
 export const WithTrends: Story = {
   args: {
     projectId: "project-123",
-    selectedMetric: "LCP",
+    queriedMetric: "LCP",
     data: baseData,
     statusDistribution: baseStatusDistribution,
   },
@@ -56,7 +56,7 @@ export const NegativeTrend: Story = {
 export const ZeroState: Story = {
   args: {
     projectId: "project-empty",
-    selectedMetric: "CLS",
+    queriedMetric: "CLS",
     data: {
       timeRangeLabel: "24 Hours",
       totalViews: 0,
