@@ -20,6 +20,13 @@ type TrendChartByMetricProps = {
   multiOverlay?: TimeSeriesOverlay[];
 };
 
+const intervalMutators: Record<IntervalKey, (d: Date) => void> = {
+  month: (d) => d.setUTCMonth(d.getUTCMonth() + 1),
+  week: (d) => d.setUTCDate(d.getUTCDate() + 7),
+  day: (d) => d.setUTCDate(d.getUTCDate() + 1),
+  hour: (d) => d.setUTCHours(d.getUTCHours() + 1),
+};
+
 export function TrendChartByMetric({
   data,
   title = "Trend Over Time",
@@ -43,28 +50,9 @@ export function TrendChartByMetric({
     let endDate = new Date(end.timestamp);
     
     if (startDate.getTime() === endDate.getTime()) {
-      switch (interval) {
-        case "month": {
-          endDate = new Date(startDate);
-          endDate.setMonth(endDate.getUTCMonth() + 1);
-          break;
-        }
-        case "week": {
-          endDate = new Date(startDate);
-          endDate.setDate(endDate.getUTCDate() + 7);
-          break;
-        }
-        case "day": {
-          endDate = new Date(startDate);
-          endDate.setDate(endDate.getUTCDate() + 1);
-          break;
-        }
-        case "hour": {
-          endDate = new Date(startDate);
-          endDate.setHours(endDate.getUTCHours() + 1);
-          break;
-        }
-      }
+      const mutate = intervalMutators[interval];
+      endDate = new Date(startDate);
+      mutate(endDate);
     }
     const exclusiveEndDate = new Date(endDate.getTime() - 1);
     const validIntervals = getValidIntervalsForCustomRange(startDate, endDate);

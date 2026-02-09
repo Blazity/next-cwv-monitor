@@ -21,10 +21,10 @@ export function TimeRangeSelector() {
     { ...QUERY_STATE_OPTIONS }
   );
 
-  const isZoomed = !!(from && to);
+  const isZoomed = Boolean(from && to);
   const effectiveTimeRange = isTimeRangeKey(timeRange) ? timeRange : DEFAULT_TIME_RANGE;
   const validIntervals = isZoomed
-    ? getValidIntervalsForCustomRange(from, to)
+    ? getValidIntervalsForCustomRange(from!, to!)
     : timeRangeToIntervals[effectiveTimeRange];
   const effectiveInterval = getEffectiveInterval(
     intervalParam, 
@@ -72,7 +72,7 @@ export function TimeRangeSelector() {
           <DropdownMenuItem
             key={range.value}
             onClick={() => handleTimeRangeChange(range.value)}
-            className={cn("cursor-pointer", effectiveTimeRange === range.value && !isZoomed && "bg-accent")}
+            className={cn("cursor-pointer", {"bg-accent": effectiveTimeRange === range.value && !isZoomed})}
           >
             {range.label}
           </DropdownMenuItem>
