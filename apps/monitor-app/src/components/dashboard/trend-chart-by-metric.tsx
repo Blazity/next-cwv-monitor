@@ -56,6 +56,12 @@ export function TrendChartByMetric({
             />
             <span>Poor threshold</span>
           </div>
+          <div className="flex items-center gap-2">
+            <div
+              className="border-muted-foreground h-4 w-px border-l border-dashed opacity-50"
+            />
+            <span>Partial data</span>
+          </div>
         </div>
       </CardContent>
     </Card>

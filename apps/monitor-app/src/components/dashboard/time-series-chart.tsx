@@ -199,19 +199,40 @@ const INTERVAL_GENERATORS: Record<IntervalKey, (ctx: GeneratorContext) => ChartD
   month: generateMonthlyPoints,
 };
 
+/**
+ * Returns the timestamp key for the current (incomplete) period based on the interval.
+ * Used to identify chart data points that represent partial/incomplete data.
+ */
+const CURRENT_PERIOD_KEY_GETTERS: Record<IntervalKey, () => string> = {
+  hour: () => toHourKeyUTC(new Date()),
+  day: () => toISODateUTC(new Date()),
+  week: () => {
+    const weekStart = getStartOfWeekUTC(toUTCTimestamp(new Date()));
+    return toISODateUTC(new Date(weekStart));
+  },
+  month: () => {
+    const { year, month } = getUTCYearMonth(new Date());
+    return toISODateUTC(new Date(Date.UTC(year, month, 1)));
+  },
+};
+
 type ChartTooltipProps = {
   point: ChartDataPoint;
   metric: MetricName;
   percentile: Percentile;
   overlay?: TimeSeriesOverlay | null;
+  isPartialData?: boolean;
 };
 
-const ChartTooltipContent = ({ point, metric, percentile, overlay }: ChartTooltipProps) => {
+const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData }: ChartTooltipProps) => {
   if (point.value === null) {
     return (
       <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
         <p className="text-muted-foreground text-sm">{point.time}</p>
         <p className="text-muted-foreground mt-1 text-sm">No data</p>
+        {isPartialData && (
+          <p className="text-muted-foreground mt-1 text-xs italic">Partial data — period still in progress</p>
+        )}
       </div>
     );
   }
@@ -237,6 +258,11 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay }: ChartToolti
 
         {/* Sample Count */}
         <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+
+        {/* Partial data notice */}
+        {isPartialData && (
+          <div className="text-muted-foreground text-xs italic">Partial data - period still in progress</div>
+        )}
 
         {/* Overlay Data */}
         {hasOverlayData && (
@@ -332,6 +358,13 @@ export function TimeSeriesChart({
     return Math.min(100, maxRate * 1.1);
   }, [overlay]);
 
+  // Find the incomplete (partial) data point for the current period
+  const incompletePointLabel = useMemo(() => {
+    const currentKey = CURRENT_PERIOD_KEY_GETTERS[interval]();
+    const point = chartData.find((p) => p.timestamp === currentKey);
+    return point?.time ?? null;
+  }, [chartData, interval]);
+
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -395,7 +428,15 @@ export function TimeSeriesChart({
               if (!active || payload.length === 0) return null;
               const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
-              return <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlay={overlay} />;
+              return (
+                <ChartTooltipContent
+                  point={point}
+                  metric={metric}
+                  percentile={percentile}
+                  overlay={overlay}
+                  isPartialData={point.time === incompletePointLabel}
+                />
+              );
             }}
           />
 
@@ -424,6 +465,17 @@ export function TimeSeriesChart({
               connectNulls={false}
               dot={false}
               activeDot={ACTIVE_DOT_CONFIG("var(--chart-5)")}
+            />
+          )}
+
+          {/* Incomplete data indicator */}
+          {incompletePointLabel && (
+            <ReferenceLine
+              yAxisId="metric"
+              x={incompletePointLabel}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+              strokeOpacity={0.5}
             />
           )}
 

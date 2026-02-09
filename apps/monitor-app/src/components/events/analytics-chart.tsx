@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import {
   CartesianGrid,
   ComposedChart,
+  ReferenceLine,
   ResponsiveContainer,
   Scatter,
   XAxis,
@@ -42,6 +43,14 @@ export function AnalyticsChart({ chartData }: Props) {
       ),
     [chartData],
   );
+
+  // Find the incomplete (partial) data point for today
+  const incompletePointLabel = useMemo(() => {
+    const todayLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const point = memoizedChartData.find((p) => p.date === todayLabel);
+    return point?.date ?? null;
+  }, [memoizedChartData]);
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={memoizedChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -76,12 +85,16 @@ export function AnalyticsChart({ chartData }: Props) {
           content={({ active, payload }) => {
             if (!active || payload.length === 0) return null;
             const point = payload[0].payload as ChartPoint;
+            const isPartial = point.date === incompletePointLabel;
 
             if (point.rate === null) {
               return (
                 <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
                   <p className="text-muted-foreground text-sm">{point.date}</p>
                   <p className="text-muted-foreground mt-1 text-sm">No data</p>
+                  {isPartial && (
+                    <p className="text-muted-foreground mt-1 text-xs italic">Partial data — period still in progress</p>
+                  )}
                 </div>
               );
             }
@@ -97,6 +110,9 @@ export function AnalyticsChart({ chartData }: Props) {
                   <div className="text-muted-foreground text-xs">
                     {point.events.toLocaleString()} events / {point.views.toLocaleString()} views
                   </div>
+                  {isPartial && (
+                    <div className="text-muted-foreground text-xs italic">Partial data - period still in progress</div>
+                  )}
                 </div>
               </div>
             );
@@ -116,6 +132,16 @@ export function AnalyticsChart({ chartData }: Props) {
             strokeWidth: 2,
           }}
         />
+        {/* Incomplete data indicator */}
+        {incompletePointLabel && (
+          <ReferenceLine
+            x={incompletePointLabel}
+            stroke="var(--muted-foreground)"
+            strokeDasharray="4 4"
+            strokeOpacity={0.5}
+          />
+        )}
+
         {/* Invisible scatter points for days with no data, enabling tooltip on hover */}
         <Scatter dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />
       </ComposedChart>
