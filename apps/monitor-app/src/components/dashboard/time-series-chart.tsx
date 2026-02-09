@@ -95,11 +95,11 @@ const createChartDataPoint = ({
     rawOverlays: {},
   };
 
-  for (const [label, map] of overlayMaps.entries()) {
+  for (const [id, map] of overlayMaps.entries()) {
     const ovPoint = map.get(timestamp);
     if (ovPoint) {
-      chartPoint[`overlay_${label}`] = ovPoint.conversionRatePct;
-      chartPoint.rawOverlays![label] = ovPoint;
+      chartPoint[`overlay_${id}`] = ovPoint.conversionRatePct;
+      chartPoint.rawOverlays![id] = ovPoint;
     }
   }
 
@@ -217,7 +217,7 @@ type ChartTooltipProps = {
 };
 
 const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: ChartTooltipProps) => {
-  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.label]);
+  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.id]);
   const hasPrimaryData = point.value !== null;
 
   if (!hasPrimaryData && !hasOverlayData) {
@@ -255,13 +255,13 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
 
         {/* Dynamic Overlays */}
         {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
-          const raw = point.rawOverlays?.[ov.label];
+          const raw = point.rawOverlays?.[ov.id];
           if (!raw) return null;
           const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
           const showSeparator = hasPrimaryData || idx > 0;
 
           return (
-            <div key={ov.label} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
+            <div key={ov.id} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -345,7 +345,7 @@ export function TimeSeriesChart({
   // Generate chart data points based on interval
   const chartData = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
-    const overlayMaps = new Map(overlays.map((o) => [o.label, new Map(o.series.map((s) => [s.date, s]))]));
+    const overlayMaps = new Map(overlays.map((o) => [o.id, new Map(o.series.map((s) => [s.date, s]))]));
 
     const generator = INTERVAL_GENERATORS[interval];
     return generator({
@@ -365,7 +365,7 @@ export function TimeSeriesChart({
     const overlaysMap: Record<string, boolean[]> = {};
   
     for (const ov of overlays) {
-      overlaysMap[ov.label] = Array.from<boolean>({length: len});
+      overlaysMap[ov.id] = Array.from<boolean>({length: len});
     }
   
     for (let i = 0; i < len; i++) {
@@ -378,10 +378,10 @@ export function TimeSeriesChart({
       primary[i] = hasVal && prev?.value == null && next?.value == null;
   
       for (const ov of overlays) {
-        const key = `overlay_${ov.label}` as keyof ChartDataPoint;
+        const key = `overlay_${ov.id}` as keyof ChartDataPoint;
         const hasOverlayVal = curr[key] != null;
         
-        overlaysMap[ov.label][i] = 
+        overlaysMap[ov.id][i] = 
           hasOverlayVal && prev?.[key] == null && next?.[key] == null;
       }
     }
@@ -478,15 +478,15 @@ export function TimeSeriesChart({
             
             return (
               <Area
-                key={ov.label}
+                key={ov.id}
                 yAxisId="overlay"
                 type="monotone"
-                dataKey={`overlay_${ov.label}`}
+                dataKey={`overlay_${ov.id}`}
                 stroke={color}
                 strokeWidth={2}
                 fill="url(#overlayGradient)"
                 connectNulls={false}
-                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.label]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.id]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
                 activeDot={ACTIVE_DOT_CONFIG(color)}
               />
             );
