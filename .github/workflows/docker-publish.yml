@@ -56,12 +56,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.name }}
           tags: |
-            type=match,pattern=monitor-app-v(\d+\.\d+\.\d+),group=1,enable=${{ github.event_name == 'push' }}
-            type=match,pattern=monitor-app-v(\d+\.\d+),group=1,enable=${{ github.event_name == 'push' }}
-            type=semver,pattern={{version}},value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_call' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_call' }}
-            type=raw,value=latest,enable=${{ github.event_name == 'workflow_call' }}
-            type=raw,value=latest,enable=${{ github.event_name != 'workflow_call' && github.ref_name == github.event.repository.default_branch }}
+            type=match,pattern=monitor-app-v(\d+\.\d+\.\d+),group=1,enable=${{ startsWith(github.ref, 'refs/tags/monitor-app-v') }}
+            type=match,pattern=monitor-app-v(\d+\.\d+),group=1,enable=${{ startsWith(github.ref, 'refs/tags/monitor-app-v') }}
+            type=semver,pattern={{version}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+            type=raw,value=latest
             type=raw,value=${{ inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: Build and push ${{ matrix.name }}
