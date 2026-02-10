@@ -19,12 +19,15 @@ type Props = {
 };
 
 type ChartPoint = {
+  dayKey: string;
   date: string;
   rate: number | null;
   events: number;
   views: number;
   hoverTarget?: number;
 };
+
+const utcDateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC" });
 
 export function AnalyticsChart({ chartData }: Props) {
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -33,6 +36,7 @@ export function AnalyticsChart({ chartData }: Props) {
     () =>
       chartData.map(
         (point): ChartPoint => ({
+          dayKey: utcDateFormatter.format(new Date(point.day)),
           date: new Date(point.day).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           rate: point.conversion_rate,
           events: Number(point.events),
@@ -46,8 +50,8 @@ export function AnalyticsChart({ chartData }: Props) {
 
   // Find the incomplete (partial) data point for today
   const incompletePointLabel = useMemo(() => {
-    const todayLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    const point = memoizedChartData.find((p) => p.date === todayLabel);
+    const todayKey = utcDateFormatter.format(new Date());
+    const point = memoizedChartData.find((p) => p.dayKey === todayKey);
     return point?.date ?? null;
   }, [memoizedChartData]);
 
@@ -93,7 +97,7 @@ export function AnalyticsChart({ chartData }: Props) {
                   <p className="text-muted-foreground text-sm">{point.date}</p>
                   <p className="text-muted-foreground mt-1 text-sm">No data</p>
                   {isPartial && (
-                    <p className="text-muted-foreground mt-1 text-xs italic">Partial data — period still in progress</p>
+                    <p className="text-muted-foreground mt-1 text-xs italic">Partial data – period still in progress</p>
                   )}
                 </div>
               );
@@ -111,7 +115,7 @@ export function AnalyticsChart({ chartData }: Props) {
                     {point.events.toLocaleString()} events / {point.views.toLocaleString()} views
                   </div>
                   {isPartial && (
-                    <div className="text-muted-foreground text-xs italic">Partial data - period still in progress</div>
+                    <div className="text-muted-foreground text-xs italic">Partial data – period still in progress</div>
                   )}
                 </div>
               </div>

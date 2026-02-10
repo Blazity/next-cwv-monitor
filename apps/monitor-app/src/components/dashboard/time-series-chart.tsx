@@ -231,7 +231,7 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
         <p className="text-muted-foreground text-sm">{point.time}</p>
         <p className="text-muted-foreground mt-1 text-sm">No data</p>
         {isPartialData && (
-          <p className="text-muted-foreground mt-1 text-xs italic">Partial data — period still in progress</p>
+          <p className="text-muted-foreground mt-1 text-xs italic">Partial data – period still in progress</p>
         )}
       </div>
     );
@@ -261,7 +261,7 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
 
         {/* Partial data notice */}
         {isPartialData && (
-          <div className="text-muted-foreground text-xs italic">Partial data - period still in progress</div>
+          <div className="text-muted-foreground text-xs italic">Partial data – period still in progress</div>
         )}
 
         {/* Overlay Data */}
