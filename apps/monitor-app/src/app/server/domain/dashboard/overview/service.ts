@@ -21,12 +21,9 @@ import {
   METRIC_NAMES,
   QuickStatsData,
   MetricName,
+  toDateOnlyString,
 } from "@/app/server/domain/dashboard/overview/types";
 import { projectIdSchema } from "@/app/server/domain/projects/schema";
-
-function toDateOnlyString(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
 
 function isMetricName(value: string): value is MetricName {
   return METRIC_NAMES.includes(value as MetricName);
@@ -65,29 +62,15 @@ export class DashboardOverviewService {
     }
 
     const selectedThresholds = getMetricThresholds(query.selectedMetric);
-
     // Filters for daily-aggregated queries (Metrics Overview, Worst Routes, Status Distribution)
     // always use date-only strings (YYYY-MM-DD) compatible with cwv_daily_aggregates
     const filters = {
       projectId: query.projectId,
-      start: toDateOnlyString(query.range.start),
-      end: toDateOnlyString(query.range.end),
+      start: query.range.start.toISOString(),
+      end: query.range.end.toISOString(),
       interval: query.interval,
       deviceType: query.deviceType,
     } as const;
-
-    // Filters for Time Series Chart
-    // For hour interval, use ISO timestamps for precise filtering on cwv_events
-    // For other intervals, use date-only strings
-    const toSeriesFilterString = query.interval === "hour"
-      ? (date: Date) => date.toISOString()
-      : toDateOnlyString;
-
-    const seriesFilters = {
-      ...filters,
-      start: toSeriesFilterString(query.range.start),
-      end: toSeriesFilterString(query.range.end),
-    };
 
     const previousRange = getPreviousPeriod(query.range.start, query.range.end);
     const previousFilters = {
@@ -102,9 +85,8 @@ export class DashboardOverviewService {
         fetchWorstRoutes(filters, query.selectedMetric, query.topRoutesLimit),
         fetchMetricsOverview(previousFilters),
         fetchRouteStatusDistribution(filters, query.selectedMetric, selectedThresholds),
-        fetchAllMetricsSeries(seriesFilters),
+        fetchAllMetricsSeries(filters),
       ]);
-
     const metricOverview: MetricOverviewItem[] = metricsRows.map((row) => {
       const quantiles = toQuantileSummary(row.percentiles);
       const p75 = quantiles?.p75;

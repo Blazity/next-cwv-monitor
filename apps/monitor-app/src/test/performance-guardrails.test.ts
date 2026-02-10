@@ -24,24 +24,22 @@ let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
 
 let DashboardOverviewService: typeof import("@/app/server/domain/dashboard/overview/service").DashboardOverviewService;
-let RoutesListService: typeof import("@/app/server/domain/routes/list/service").RoutesListService;
-let RouteDetailService: typeof import("@/app/server/domain/routes/detail/service").RouteDetailService;
-let RouteEventOverlayService: typeof import("@/app/server/domain/routes/overlay/service").RouteEventOverlayService;
-let RegressionsListService: typeof import("@/app/server/domain/regressions/list/service").RegressionsListService;
-
-let fetchConversionTrend: typeof import("@/app/server/lib/clickhouse/repositories/custom-events-repository").fetchConversionTrend;
-let fetchEventsStatsData: typeof import("@/app/server/lib/clickhouse/repositories/custom-events-repository").fetchEventsStatsData;
-let fetchTotalStatsEvents: typeof import("@/app/server/lib/clickhouse/repositories/custom-events-repository").fetchTotalStatsEvents;
+let RoutesListService: typeof import("@/app/server/domain/dashboard/routes/list/service").RoutesListService;
+let RouteDetailService: typeof import("@/app/server/domain/dashboard/routes/detail/service").RouteDetailService;
+let RouteEventOverlayService: typeof import("@/app/server/domain/dashboard/routes/overlay/service").RouteEventOverlayService;
+let RegressionsListService: typeof import("@/app/server/domain/dashboard/regressions/list/service").RegressionsListService;
+let EventsDashboardService: typeof import("@/app/server/domain/dashboard/events/service").EventsDashboardService;
 
 let overviewService: InstanceType<
   typeof import("@/app/server/domain/dashboard/overview/service").DashboardOverviewService
 >;
-let routesListService: InstanceType<typeof import("@/app/server/domain/routes/list/service").RoutesListService>;
-let routeDetailService: InstanceType<typeof import("@/app/server/domain/routes/detail/service").RouteDetailService>;
-let overlayService: InstanceType<typeof import("@/app/server/domain/routes/overlay/service").RouteEventOverlayService>;
+let routesListService: InstanceType<typeof import("@/app/server/domain/dashboard/routes/list/service").RoutesListService>;
+let routeDetailService: InstanceType<typeof import("@/app/server/domain/dashboard/routes/detail/service").RouteDetailService>;
+let overlayService: InstanceType<typeof import("@/app/server/domain/dashboard/routes/overlay/service").RouteEventOverlayService>;
 let regressionsService: InstanceType<
-  typeof import("@/app/server/domain/regressions/list/service").RegressionsListService
+  typeof import("@/app/server/domain/dashboard/regressions/list/service").RegressionsListService
 >;
+let eventsService: InstanceType<typeof import("@/app/server/domain/dashboard/events/service").EventsDashboardService>;
 
 const BUDGETS = {
   OVERVIEW: 100, // /projects/[projectId]/
@@ -49,9 +47,7 @@ const BUDGETS = {
   ROUTE_DETAIL: 100, // /projects/[projectId]/routes/[route]
   CONVERSIONS: 100, // /projects/[projectId]/routes/[route] (Overlay)
   REGRESSIONS: 150, // /projects/[projectId]/regressions
-  EVENTS_STATS: 100, // /projects/[projectId]/events (Conversion rate table calculation)
-  EVENTS_TOTAL_STATS: 100, // /projects/[projectId]/events (Conversion rate table calculation)
-  EVENTS_TREND: 100, // /projects/[projectId]/events (time-series conversion chart)
+  EVENTS: 150, // /projects/[projectId]/events
 };
 
 const measureMedian = async (fn: () => Promise<unknown>, iterations = 3) => {
@@ -113,12 +109,11 @@ describe("Performance Guardrails", () => {
     ({ sql } = await import("@/app/server/lib/clickhouse/client"));
 
     ({ DashboardOverviewService } = await import("@/app/server/domain/dashboard/overview/service"));
-    ({ RoutesListService } = await import("@/app/server/domain/routes/list/service"));
-    ({ RouteDetailService } = await import("@/app/server/domain/routes/detail/service"));
-    ({ RouteEventOverlayService } = await import("@/app/server/domain/routes/overlay/service"));
-    ({ RegressionsListService } = await import("@/app/server/domain/regressions/list/service"));
-    ({ fetchConversionTrend, fetchEventsStatsData, fetchTotalStatsEvents } =
-      await import("@/app/server/lib/clickhouse/repositories/custom-events-repository"));
+    ({ RoutesListService } = await import("@/app/server/domain/dashboard/routes/list/service"));
+    ({ RouteDetailService } = await import("@/app/server/domain/dashboard/routes/detail/service"));
+    ({ RouteEventOverlayService } = await import("@/app/server/domain/dashboard/routes/overlay/service"));
+    ({ RegressionsListService } = await import("@/app/server/domain/dashboard/regressions/list/service"));
+    ({ EventsDashboardService } = await import("@/app/server/domain/dashboard/events/service"));
 
     const { seedDemoData } = await import("../../scripts/seed-demo-data.mjs");
 
@@ -127,7 +122,8 @@ describe("Performance Guardrails", () => {
     routeDetailService = new RouteDetailService();
     overlayService = new RouteEventOverlayService();
     regressionsService = new RegressionsListService();
-
+    eventsService = new EventsDashboardService();
+    
     await seedDemoData({ seedCwvEvents: true, seedCustomEvents: true });
 
     await optimizeAggregates(sql);
@@ -168,6 +164,7 @@ describe("Performance Guardrails", () => {
           selectedMetric: "LCP",
           deviceType: "all",
           topRoutesLimit: 5,
+          interval: "day",
         }),
     );
 
@@ -237,40 +234,18 @@ describe("Performance Guardrails", () => {
     expect(duration).toPassBudget(BUDGETS.REGRESSIONS);
   });
 
-  it("Repository: Events Page Data (Conversion & Stats)", async () => {
-    const statsDuration = await measureMedian(
-      async () =>
-        await fetchEventsStatsData({
-          projectId: PERF_PROJECT_ID,
-          range: "30d",
-          eventName: "search",
-          deviceType: "all",
-        }),
+  it("Service: Events Dashboard", async () => {
+    const duration = await measureMedian(() =>
+      eventsService.getDashboardData({
+        projectId: PERF_PROJECT_ID,
+        range: "7d",
+        deviceType: "all",
+        metric: "LCP",
+        selectedEvents: ["search"],
+        interval: "day",
+      }),
     );
 
-    expect(statsDuration).toPassBudget(BUDGETS.EVENTS_STATS);
-
-    const totalStatsDuration = await measureMedian(
-      async () =>
-        await fetchTotalStatsEvents({
-          projectId: PERF_PROJECT_ID,
-          range: "30d",
-          deviceType: "all",
-        }),
-    );
-
-    expect(totalStatsDuration).toPassBudget(BUDGETS.EVENTS_TOTAL_STATS);
-
-    const trendDuration = await measureMedian(
-      async () =>
-        await fetchConversionTrend({
-          projectId: PERF_PROJECT_ID,
-          range: "30d",
-          eventName: "search",
-          deviceType: "all",
-        }),
-    );
-
-    expect(trendDuration).toPassBudget(BUDGETS.EVENTS_TREND);
+    expect(duration).toPassBudget(BUDGETS.EVENTS);
   });
 });
