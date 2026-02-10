@@ -4,6 +4,7 @@ export function formatCountdown(seconds: number) {
   const s = clamped % 60;
 
   if (m === 0) return `${s}s`;
-  if (s === 0) return `${clamped}s`;
+  if (m === 1 && s === 0) return `${clamped}s`;
+  if (s === 0) return `${m}m`;
   return `${m}m ${s}s`;
 }
