@@ -6,7 +6,7 @@ import type {
   GetRouteEventOverlayQuery,
   GetRouteEventOverlayResult,
   RouteEventOverlayPoint,
-} from "@/app/server/domain/routes/overlay/types";
+} from "@/app/server/domain/dashboard/routes/overlay/types";
 
 function toRatePct(conversions: number, views: number): number | null {
   if (views <= 0) return null;

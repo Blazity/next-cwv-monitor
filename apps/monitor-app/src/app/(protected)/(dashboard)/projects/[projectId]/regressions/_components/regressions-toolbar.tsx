@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { METRIC_DETAILS } from "@/consts/metric-details";
-import type { RegressionsMetricFilter } from "@/app/server/domain/regressions/list/types";
+import type { RegressionsMetricFilter } from "@/app/server/domain/dashboard/regressions/list/types";
 
 const REGRESSION_METRIC_OPTIONS: RegressionsMetricFilter[] = ["all", "LCP", "INP", "CLS", "TTFB"];
 

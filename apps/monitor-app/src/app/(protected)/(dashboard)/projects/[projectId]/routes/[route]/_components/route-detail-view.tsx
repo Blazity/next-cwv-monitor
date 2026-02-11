@@ -20,8 +20,8 @@ import { cn, capitalize } from "@/lib/utils";
 import { QUERY_STATE_OPTIONS, routeDetailSearchParsers, SEARCH_QUERY_OPTIONS } from "@/lib/search-params";
 import { METRIC_INFO } from "@/app/server/lib/cwv-metadata";
 import type { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
-import type { RouteDetail } from "@/app/server/domain/routes/detail/types";
-import type { RouteEventOverlay } from "@/app/server/domain/routes/overlay/types";
+import type { RouteDetail } from "@/app/server/domain/dashboard/routes/detail/types";
+import type { RouteEventOverlay } from "@/app/server/domain/dashboard/routes/overlay/types";
 import { DateRange, IntervalKey, MetricName, PERCENTILES, type Percentile } from "@/app/server/domain/dashboard/overview/types";
 import { useQueryState } from "nuqs";
 
@@ -109,8 +109,8 @@ export function RouteDetailView({
   const selectedMetricSampleSize = selectedMetricSummary?.sampleSize ?? 0;
 
   const overlayLabel = selectedEvent ? getEventLabel(selectedEvent, eventDisplaySettings) : null;
-  const overlayInput: TimeSeriesOverlay | null =
-    overlayLabel && overlay ? { label: overlayLabel, series: overlay.series } : null;
+  const overlayInput: TimeSeriesOverlay[] =
+    overlayLabel && overlay ? [ { id: selectedEvent, label: overlayLabel, series: overlay.series } ] : [];
 
   const showLowDataWarning = data.views > 0 && data.views < LOW_DATA_VIEWS_THRESHOLD;
 
@@ -263,9 +263,9 @@ export function RouteDetailView({
         <CardContent>
           <TimeSeriesChart
             data={data.timeSeries}
-            metric={selectedMetric as unknown as Parameters<typeof TimeSeriesChart>[0]["metric"]}
+            metric={selectedMetric}
             percentile={selectedPercentile}
-            overlay={overlayInput}
+            overlays={overlayInput}
             height={300}
             dateRange={dateRange}
             interval={interval}

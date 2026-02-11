@@ -41,6 +41,7 @@ describe("dashboard-overview-service (integration)", () => {
       selectedMetric: "LCP",
       deviceType: "all",
       topRoutesLimit: 5,
+      interval: "day"
     });
 
     expect(result).toEqual({
@@ -148,6 +149,7 @@ describe("dashboard-overview-service (integration)", () => {
       selectedMetric: "LCP",
       deviceType: "desktop",
       topRoutesLimit: 10,
+      interval: "day"
     });
 
     expect(result.kind).toBe("ok");

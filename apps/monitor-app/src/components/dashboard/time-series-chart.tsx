@@ -11,6 +11,7 @@ import {
   Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
+  DotItemDotProps,
 } from "recharts";
 import { format, addDays, addHours } from "date-fns";
 
@@ -18,7 +19,7 @@ import { Badge } from "@/components/badge";
 import { toISODateUTC, toUTCTimestamp, getStartOfWeekUTC, getUTCYearMonth, toHourKeyUTC } from "@/lib/utc-date";
 import { statusToBadge } from "@/consts/status-to-badge";
 import { getMetricThresholds, getRatingForValue } from "@/app/server/lib/cwv-thresholds";
-import { formatMetricValue } from "@/lib/utils";
+import { cn, formatMetricValue } from "@/lib/utils";
 import type {
   DailySeriesPoint,
   IntervalKey,
@@ -36,15 +37,16 @@ export type TimeSeriesOverlayPoint = {
 };
 
 export type TimeSeriesOverlay = {
+  id: string;
   label: string;
   series: TimeSeriesOverlayPoint[];
 };
 
-type TimeSeriesChartProps = {
+export type TimeSeriesChartProps = {
   data: DailySeriesPoint[];
   metric: MetricName;
   percentile?: Percentile;
-  overlay?: TimeSeriesOverlay | null;
+  overlays?: TimeSeriesOverlay[];
   height?: number;
   dateRange: { start: Date; end: Date };
   interval: IntervalKey;
@@ -56,17 +58,18 @@ type ChartDataPoint = {
   samples: number;
   status: WebVitalRatingV1 | null;
   time: string;
-  overlayRatePct?: number | null;
-  overlayViews?: number;
-  overlayConversions?: number;
   hoverTarget?: number;
+  [key: `overlay_${string}`]: number | null | undefined;
+  rawOverlays?: Record<string, TimeSeriesOverlayPoint>;
 };
+
+const OVERLAY_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
 
 type CreateChartPointParams = {
   timestamp: string;
   timeLabel: string;
   dataByDate: Map<string, DailySeriesPoint>;
-  overlayByDate: Map<string, TimeSeriesOverlayPoint> | null;
+  overlayMaps: Map<string, Map<string, TimeSeriesOverlayPoint>>;
   percentile: Percentile;
   metric: MetricName;
 };
@@ -75,32 +78,39 @@ const createChartDataPoint = ({
   timestamp,
   timeLabel,
   dataByDate,
-  overlayByDate,
+  overlayMaps,
   percentile,
   metric,
 }: CreateChartPointParams): ChartDataPoint => {
   const point = dataByDate.get(timestamp);
-  const overlayPoint = overlayByDate?.get(timestamp);
   const value = point?.quantiles?.[percentile] ?? null;
 
-  return {
+  const chartPoint: ChartDataPoint = {
     timestamp,
     value,
     samples: point?.sampleSize ?? 0,
     status: typeof value === "number" ? getRatingForValue(metric, value) : null,
     time: timeLabel,
-    overlayRatePct: overlayPoint?.conversionRatePct ?? null,
-    overlayViews: overlayPoint?.views ?? 0,
-    overlayConversions: overlayPoint?.conversions ?? 0,
     hoverTarget: value === null ? 0 : undefined,
+    rawOverlays: {},
   };
+
+  for (const [id, map] of overlayMaps.entries()) {
+    const ovPoint = map.get(timestamp);
+    if (ovPoint) {
+      chartPoint[`overlay_${id}`] = ovPoint.conversionRatePct;
+      chartPoint.rawOverlays![id] = ovPoint;
+    }
+  }
+
+  return chartPoint;
 };
 
 type GeneratorContext = {
   start: Date;
   end: Date;
   dataByDate: Map<string, DailySeriesPoint>;
-  overlayByDate: Map<string, TimeSeriesOverlayPoint> | null;
+  overlayMaps: Map<string, Map<string, TimeSeriesOverlayPoint>>;
   percentile: Percentile;
   metric: MetricName;
 };
@@ -203,11 +213,14 @@ type ChartTooltipProps = {
   point: ChartDataPoint;
   metric: MetricName;
   percentile: Percentile;
-  overlay?: TimeSeriesOverlay | null;
+  overlays?: TimeSeriesOverlay[];
 };
 
-const ChartTooltipContent = ({ point, metric, percentile, overlay }: ChartTooltipProps) => {
-  if (point.value === null) {
+const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: ChartTooltipProps) => {
+  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.id]);
+  const hasPrimaryData = point.value !== null;
+
+  if (!hasPrimaryData && !hasOverlayData) {
     return (
       <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
         <p className="text-muted-foreground text-sm">{point.time}</p>
@@ -216,40 +229,54 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay }: ChartToolti
     );
   }
 
-  const hasOverlayData = overlay && typeof point.overlayRatePct === "number";
-
   return (
     <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
       <p className="text-muted-foreground mb-2 text-sm">{point.time}</p>
       <div className="space-y-2">
         {/* Metric Value Row */}
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-foreground text-sm">
-            {metric} ({percentile.toUpperCase()})
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-foreground font-mono text-sm font-medium">
-              {formatMetricValue(metric, point.value)}
-            </span>
-            {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
-          </div>
-        </div>
-
-        {/* Sample Count */}
-        <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
-
-        {/* Overlay Data */}
-        {hasOverlayData && (
-          <div className="border-border mt-2 border-t pt-2">
+        {hasPrimaryData &&
+          <>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-foreground text-sm">{overlay.label}</span>
-              <span className="text-foreground font-mono text-sm">{point.overlayRatePct?.toFixed(2)}%</span>
+              <span className="text-foreground text-sm">
+                {metric} ({percentile.toUpperCase()})
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-foreground font-mono text-sm font-medium">
+                  {formatMetricValue(metric, point.value!)}
+                </span>
+                {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
+              </div>
             </div>
-            <div className="text-muted-foreground mt-1 text-xs">
-              {point.overlayConversions?.toLocaleString()} events / {point.overlayViews?.toLocaleString()} tracked views
+
+            {/* Sample Count */}
+            <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+          </>
+        }
+
+        {/* Dynamic Overlays */}
+        {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
+          const raw = point.rawOverlays?.[ov.id];
+          if (!raw) return null;
+          const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
+          const showSeparator = hasPrimaryData || idx > 0;
+
+          return (
+            <div key={ov.id} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                  <span className="text-foreground text-sm">{ov.label}</span>
+                </div>
+                <span className="text-foreground font-mono text-sm">
+                  {raw.conversionRatePct == null ? "—" : `${raw.conversionRatePct.toFixed(2)}%`}
+                </span>
+              </div>
+              <div className="text-muted-foreground mt-1 text-xs">
+                {raw.conversions.toLocaleString()} ev / {raw.views.toLocaleString()} views
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );
@@ -285,40 +312,82 @@ const ChartGradients = () => (
   </defs>
 );
 
+type IslandDotProps = {
+  index?: number;
+  visibilityArray: boolean[];
+  color: string;
+} & Partial<DotItemDotProps>
+
+const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
+  if (index === undefined || !visibilityArray[index]) return null;
+  
+  return (
+    <circle 
+      cx={cx} 
+      cy={cy} 
+      r={2} 
+      fill={color}
+    />
+  );
+};
+
 export function TimeSeriesChart({
   data,
   metric,
+  overlays = [],
   percentile = "p75",
-  overlay,
   height = 300,
   dateRange,
   interval,
 }: TimeSeriesChartProps) {
   const isMobile = useMediaQuery("(max-width: 640px)");
 
-  // Build overlay lookup map
-  const overlayByDate = useMemo(() => {
-    if (!overlay) return null;
-    return new Map(overlay.series.map((point) => [point.date, point]));
-  }, [overlay]);
-
   // Generate chart data points based on interval
   const chartData = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
-    const generator = INTERVAL_GENERATORS[interval];
+    const overlayMaps = new Map(overlays.map((o) => [o.id, new Map(o.series.map((s) => [s.date, s]))]));
 
+    const generator = INTERVAL_GENERATORS[interval];
     return generator({
       start: new Date(dateRange.start),
       end: new Date(dateRange.end),
       dataByDate,
-      overlayByDate,
+      overlayMaps,
       percentile,
       metric,
     });
-  }, [data, metric, overlayByDate, percentile, dateRange, interval]);
+  }, [data, metric, overlays, percentile, dateRange, interval]);
 
-  // Calculate Y-axis domains
   const thresholds = getMetricThresholds(metric);
+  const dotVisibility = useMemo(() => {
+    const len = chartData.length;
+    const primary = Array.from<boolean>({length: len});
+    const overlaysMap: Record<string, boolean[]> = {};
+  
+    for (const ov of overlays) {
+      overlaysMap[ov.id] = Array.from<boolean>({length: len});
+    }
+  
+    for (let i = 0; i < len; i++) {
+      const curr = chartData[i];
+      
+      const prev = i > 0 ? chartData[i - 1] : undefined;
+      const next = i < len - 1 ? chartData[i + 1] : undefined;
+  
+      const hasVal = curr.value != null;
+      primary[i] = hasVal && prev?.value == null && next?.value == null;
+  
+      for (const ov of overlays) {
+        const key = `overlay_${ov.id}` as keyof ChartDataPoint;
+        const hasOverlayVal = curr[key] != null;
+        
+        overlaysMap[ov.id][i] = 
+          hasOverlayVal && prev?.[key] == null && next?.[key] == null;
+      }
+    }
+  
+    return { primary, overlays: overlaysMap };
+  }, [chartData, overlays]);
 
   const maxMetricValue = useMemo(() => {
     const values = data.map((d) => d.quantiles?.[percentile] ?? null).filter((v): v is number => v !== null);
@@ -326,20 +395,17 @@ export function TimeSeriesChart({
   }, [data, percentile, thresholds.needsImprovement]);
 
   const overlayDomainMax = useMemo(() => {
-    if (!overlay) return 0;
-    const rates = overlay.series.map((p) => p.conversionRatePct).filter((v): v is number => v !== null);
-    const maxRate = Math.max(1, ...rates);
-    return Math.min(100, maxRate * 1.1);
-  }, [overlay]);
+    if (overlays.length === 0) return 100;
+    const allRates = overlays.flatMap((o) => o.series.map((s) => s.conversionRatePct || 0));
+    return Math.min(100, Math.max(...allRates, 1) * 1.1);
+  }, [overlays]);
 
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={chartData} margin={CHART_MARGINS}>
           <ChartGradients />
-
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-
           {/* X-Axis */}
           <XAxis
             dataKey="time"
@@ -359,20 +425,16 @@ export function TimeSeriesChart({
             width={60}
             hide={isMobile}
           />
-
           {/* Secondary Y-Axis (Overlay) */}
-          {overlay && (
-            <YAxis
-              yAxisId="overlay"
-              orientation="right"
-              {...AXIS_STYLES}
-              tickFormatter={(value) => `${Number(value).toFixed(1)}%`}
-              domain={[0, overlayDomainMax]}
-              width={50}
-              hide={isMobile}
-            />
-          )}
-
+          <YAxis
+            yAxisId="overlay"
+            orientation="right"
+            {...AXIS_STYLES}
+            tickFormatter={(value) => `${Number(value).toFixed(1)}%`}
+            domain={[0, overlayDomainMax]}
+            width={50}
+            hide={isMobile}
+          />
           {/* Threshold Reference Lines */}
           <ReferenceLine
             yAxisId="metric"
@@ -388,17 +450,17 @@ export function TimeSeriesChart({
             strokeDasharray="4 4"
             strokeOpacity={0.5}
           />
-
           {/* Tooltip */}
           <RechartsTooltip
             content={({ active, payload }) => {
               if (!active || payload.length === 0) return null;
               const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
-              return <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlay={overlay} />;
+              return (
+                <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlays={overlays} />
+              );
             }}
           />
-
           {/* Primary Area (Metric) */}
           <Area
             yAxisId="metric"
@@ -408,25 +470,27 @@ export function TimeSeriesChart({
             strokeWidth={2}
             fill="url(#metricGradient)"
             connectNulls={false}
-            dot={false}
+            dot={<IslandDot visibilityArray={dotVisibility.primary} color="var(--chart-1)" />}
             activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
           />
-
-          {/* Secondary Area (Overlay) */}
-          {overlay && (
-            <Area
-              yAxisId="overlay"
-              type="monotone"
-              dataKey="overlayRatePct"
-              stroke="var(--chart-5)"
-              strokeWidth={2}
-              fill="url(#overlayGradient)"
-              connectNulls={false}
-              dot={false}
-              activeDot={ACTIVE_DOT_CONFIG("var(--chart-5)")}
-            />
-          )}
-
+          {overlays.map((ov, idx) => {
+            const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
+            
+            return (
+              <Area
+                key={ov.id}
+                yAxisId="overlay"
+                type="monotone"
+                dataKey={`overlay_${ov.id}`}
+                stroke={color}
+                strokeWidth={2}
+                fill="url(#overlayGradient)"
+                connectNulls={false}
+                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.id]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                activeDot={ACTIVE_DOT_CONFIG(color)}
+              />
+            );
+          })}
           {/* Invisible scatter for tooltip on empty data points */}
           <Scatter yAxisId="metric" dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />
         </ComposedChart>

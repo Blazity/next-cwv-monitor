@@ -9,17 +9,17 @@ import { PersistParamsLink } from "@/components/dashboard/persist-params-link";
 
 type WorstRoutesByMetricProps = {
   projectId: string;
-  metricName: MetricName;
+  queriedMetric: MetricName;
   routes: WorstRouteItem[];
 };
 
-export async function WorstRoutesByMetric({ projectId, metricName, routes }: WorstRoutesByMetricProps) {
+export async function WorstRoutesByMetric({ projectId, queriedMetric: selectedMetric, routes }: WorstRoutesByMetricProps) {
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-foreground text-base font-medium sm:text-lg">Worst by {metricName}</CardTitle>
+            <CardTitle className="text-foreground text-base font-medium sm:text-lg">Worst by {selectedMetric}</CardTitle>
             <RouteHelpTooltip />
           </div>
           <PersistParamsLink
@@ -45,7 +45,7 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
                   <span className="text-foreground truncate font-mono text-xs sm:text-sm">{route.route}</span>
                   <div className="ml-auto flex items-center gap-1.5 sm:hidden">
                     <span className="text-foreground font-mono text-sm font-medium">
-                      {route.quantiles && formatMetricValue(metricName, route.quantiles.p75)}
+                      {route.quantiles && formatMetricValue(selectedMetric, route.quantiles.p75)}
                     </span>
                     {route.status && <Badge {...statusToBadge[route.status]} label={undefined} size="sm" />}
                   </div>
@@ -56,7 +56,7 @@ export async function WorstRoutesByMetric({ projectId, metricName, routes }: Wor
 
                   <div className="hidden items-center gap-1.5 gap-2 sm:flex">
                     <span className="text-foreground font-mono text-sm font-medium">
-                      {route.quantiles && formatMetricValue(metricName, route.quantiles.p75)}
+                      {route.quantiles && formatMetricValue(selectedMetric, route.quantiles.p75)}
                     </span>
                     {route.status && <Badge {...statusToBadge[route.status]} label={undefined} size="sm" />}
                   </div>

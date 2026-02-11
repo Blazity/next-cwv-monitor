@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, Info, Lightbulb, type LucideIcon } from "l
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { RouteDetail } from "@/app/server/domain/routes/detail/types";
+import type { RouteDetail } from "@/app/server/domain/dashboard/routes/detail/types";
 
 type InsightKind = RouteDetail["insights"][number]["kind"];
 

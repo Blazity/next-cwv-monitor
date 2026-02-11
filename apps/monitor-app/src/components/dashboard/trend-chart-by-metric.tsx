@@ -1,40 +1,75 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { TimeSeriesChart } from "@/components/dashboard/time-series-chart";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { TimeSeriesChart, TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
 import { MetricSelector } from "@/components/dashboard/metric-selector";
-import type { DashboardOverview, DateRange, IntervalKey } from "@/app/server/domain/dashboard/overview/types";
+import type { DailySeriesPoint, DateRange, IntervalKey } from "@/app/server/domain/dashboard/overview/types";
 import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
+import { dashboardSearchParsers, QUERY_STATE_OPTIONS } from "@/lib/search-params";
+import { useQueryStates } from "nuqs";
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type TrendChartByMetricProps = {
-  timeSeriesByMetric: DashboardOverview["timeSeriesByMetric"];
-  initialMetric?: MetricName;
+  data: DailySeriesPoint[];
   title?: string;
+  description?: string;
   dateRange: DateRange;
   interval: IntervalKey;
+  multiOverlay?: TimeSeriesOverlay[];
 };
 
 export function TrendChartByMetric({
-  timeSeriesByMetric,
-  initialMetric = "LCP",
+  data,
   title = "Trend Over Time",
+  description,
   dateRange,
   interval,
+  multiOverlay,
 }: TrendChartByMetricProps) {
-  const [selectedMetric, setSelectedMetric] = useState<MetricName>(initialMetric);
-  const data = timeSeriesByMetric[selectedMetric];
+  const [isPending, startTransition] = useTransition();
+  const [{ metric }, setQuery] = useQueryStates(
+    dashboardSearchParsers, 
+    {...QUERY_STATE_OPTIONS, startTransition}
+  );
+
+  const activeMetric = metric;
+
+  const handleMetricChange = (newMetric: MetricName) => {
+    void setQuery({ metric: newMetric });
+  };
 
   return (
     <Card className="bg-card border-border">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="text-foreground text-lg font-medium">{title}</CardTitle>
-          <MetricSelector selected={selectedMetric} onChange={setSelectedMetric} showOtherMetrics />
+          <div>
+            <CardTitle className="flex flex-row items-center gap-2 text-foreground text-lg font-medium">
+              {title}
+              {isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            </CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+          <MetricSelector selected={activeMetric} onChange={handleMetricChange} disabled={isPending} showOtherMetrics />
         </div>
       </CardHeader>
       <CardContent>
-        <TimeSeriesChart data={data} metric={selectedMetric} height={300} dateRange={dateRange} interval={interval} />
+        <div 
+          className={cn(
+            "transition-opacity duration-300 ease-in-out opacity-100",
+            { "opacity-40 grayscale-[20%] pointer-events-none": isPending }
+          )}
+        >
+          <TimeSeriesChart
+            data={data}
+            metric={activeMetric}
+            height={300}
+            dateRange={dateRange}
+            interval={interval}
+            overlays={multiOverlay}
+          />
+        </div>
         <div className="text-muted-foreground mt-4 flex items-center gap-4 text-xs">
           <div className="flex items-center gap-2">
             <div

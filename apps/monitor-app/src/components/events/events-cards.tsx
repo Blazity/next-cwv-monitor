@@ -1,4 +1,7 @@
-import { fetchEvents, fetchTotalStatsEvents } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
+import {
+  FetchEventResult,
+  fetchTotalStatsEvents,
+} from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
 import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -6,7 +9,7 @@ import { Eye, MousePointerClick, Tag, TrendingDown, TrendingUp, Zap } from "luci
 
 type Props = {
   totalEventData: Awaited<ReturnType<typeof fetchTotalStatsEvents>> | null;
-  mostActiveEvent: Awaited<ReturnType<typeof fetchEvents>>[number];
+  mostActiveEvent: FetchEventResult | null;
   eventDisplaySettings: EventDisplaySettings;
 };
 
