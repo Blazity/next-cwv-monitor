@@ -17,7 +17,7 @@ export default function SubscribeButton({ onClick, ...props }: Props) {
     <BaseCustomEventButton
       {...props}
       type={props.type ?? 'button'}
-      eventName="Subscribe"
+      eventName="subscribe"
       useTrackHook={useTrackCustomEvent}
       className={
         'cursor-pointer rounded bg-black px-4 py-2 text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed'
