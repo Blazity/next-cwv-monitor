@@ -26,6 +26,10 @@ export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
 export const PAGE_VIEW_EVENT_NAME = "$page_view";
 
+export function normalizeEventName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export const timeRangeToIntervals = {
   "24h": ["hour"],
   "7d": ["hour", "day", "week"],
@@ -147,10 +151,7 @@ export function getEffectiveInterval(
     : getDefaultInterval(timeRange);
 }
 
-export function toDateOnlyString(
-  date: Date | string | number, 
-  fallback = new Date()
-): string {
+export function toDateOnlyString(date: Date | string | number, fallback = new Date()): string {
   const d = new Date(date);
   const finalDate = Number.isNaN(d.getTime()) ? fallback : d;
   return finalDate.toISOString().slice(0, 10);
