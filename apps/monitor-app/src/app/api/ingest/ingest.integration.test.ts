@@ -207,7 +207,7 @@ describe("POST /api/ingest integration", () => {
     const stored = await waitForPersistedCustomEvents(project.id, 2, { limit: 10 });
     expect(stored).toHaveLength(2);
 
-    const eventNames = stored.map((e) => e.event_name).sort();
+    const eventNames = stored.map((e) => e.event_name).toSorted();
     expect(eventNames).toEqual(["add_to_cart", "signup_click"]);
   });
 
