@@ -1,5 +1,20 @@
 # cwv-monitor-app
 
+## 1.3.0
+
+### Minor Changes
+
+- 2a05659: Add time series charts multi-overlay support
+
+### Patch Changes
+
+- 9a23afd: Simplify auto-refresh countdown formatting
+  - Replaced `date-fns` `formatDuration`/`intervalToDuration` with a lightweight manual formatter for the countdown display
+
+- 03ba9f9: Normalize custom event names to lowercase
+- 4cf4c2c: Fix project card title/domain overflow by ensuring flex truncation works correctly.
+- 889fb19: Move Users link to user actions section in mobile menu and desktop
+
 ## 1.2.0
 
 ### Minor Changes
