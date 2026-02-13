@@ -6,6 +6,7 @@ import { insertCustomEvents } from "@/app/server/lib/clickhouse/repositories/cus
 import { logger } from "@/app/server/lib/logger";
 import { IngestCommand } from "@/app/server/domain/ingest/types";
 import { isDomainAuthorized, normalizeHostname } from "@/lib/utils";
+import { normalizeEventName } from "@/app/server/domain/dashboard/overview/types";
 
 export type IngestServiceResult =
   | { kind: "ok"; accepted: { cwv: number; custom: number } }
@@ -66,7 +67,7 @@ export class IngestService {
       route: event.route,
       path: event.path,
       device_type: event.deviceType,
-      event_name: event.name,
+      event_name: normalizeEventName(event.name),
       recorded_at: event.recordedAt,
       ingested_at: now,
     }));

@@ -170,6 +170,47 @@ describe("POST /api/ingest integration", () => {
     expect(stored[0]?.device_type).toBe("desktop");
   });
 
+  it("normalizes custom event names to lowercase", async () => {
+    const project: InsertableProjectRow = {
+      id: randomUUID(),
+      domain: "localhost",
+      name: "Normalize Events Project",
+    };
+    await createProject(project);
+
+    const recordedAt = new Date().toISOString();
+
+    const response = await POST(
+      buildRequest({
+        projectId: project.id,
+        customEvents: [
+          {
+            sessionId: "session-1",
+            route: "/products",
+            path: "/products",
+            name: "Add_To_Cart",
+            recordedAt,
+          },
+          {
+            sessionId: "session-2",
+            route: "/signup",
+            path: "/signup",
+            name: "SIGNUP_CLICK",
+            recordedAt,
+          },
+        ],
+      }),
+    );
+
+    expect(response.status).toBe(204);
+
+    const stored = await waitForPersistedCustomEvents(project.id, 2, { limit: 10 });
+    expect(stored).toHaveLength(2);
+
+    const eventNames = stored.map((e) => e.event_name).sort();
+    expect(eventNames).toEqual(["add_to_cart", "signup_click"]);
+  });
+
   it("returns 404 when project does not exist", async () => {
     const response = await POST(
       buildRequest({
