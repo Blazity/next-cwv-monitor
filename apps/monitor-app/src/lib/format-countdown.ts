@@ -1,10 +1,10 @@
-import { formatDuration, intervalToDuration } from "date-fns";
-
 export function formatCountdown(seconds: number) {
-  const duration = intervalToDuration({ start: 0, end: Math.max(1, seconds) * 1000 });
-  return formatDuration(duration, { format: ["minutes", "seconds"], zero: false })
-    .replace(" minutes", "m")
-    .replace(" minute", "m")
-    .replace(" seconds", "s")
-    .replace(" second", "s");
+  const clamped = Math.max(1, Math.round(seconds));
+  const m = Math.floor(clamped / 60);
+  const s = clamped % 60;
+
+  if (m === 0) return `${s}s`;
+  if (m === 1 && s === 0) return `${clamped}s`;
+  if (s === 0) return `${m}m`;
+  return `${m}m ${s}s`;
 }

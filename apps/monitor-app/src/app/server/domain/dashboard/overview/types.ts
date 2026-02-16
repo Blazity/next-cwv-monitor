@@ -29,6 +29,10 @@ export const isValidInterval = (key: string): key is IntervalKey =>
 
 export const PAGE_VIEW_EVENT_NAME = "$page_view";
 
+export function normalizeEventName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export const timeRangeToIntervals = {
   "24h": ["hour"],
   "7d": ["hour", "day"],

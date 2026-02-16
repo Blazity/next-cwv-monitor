@@ -1,5 +1,5 @@
 import type { GetRouteEventOverlayQuery } from "@/app/server/domain/dashboard/routes/overlay/types";
-import { DateRange } from "@/app/server/domain/dashboard/overview/types";
+import { DateRange, normalizeEventName } from "@/app/server/domain/dashboard/overview/types";
 import { DeviceFilter } from "@/app/server/lib/device-types";
 
 const DEFAULT_RANGE_DAYS = 7;
@@ -17,10 +17,6 @@ function defaultRange(): DateRange {
   const start = new Date(end);
   start.setDate(start.getDate() - DEFAULT_RANGE_DAYS);
   return { start, end };
-}
-
-function normalizeEventName(value: string): string {
-  return value.trim();
 }
 
 export function buildRouteEventOverlayQuery(input: BuildRouteEventOverlayQueryInput): GetRouteEventOverlayQuery {
