@@ -22,12 +22,9 @@ import {
   QuickStatsData,
   MetricName,
   toDateOnlyString,
+  isMetricName,
 } from "@/app/server/domain/dashboard/overview/types";
 import { projectIdSchema } from "@/app/server/domain/projects/schema";
-
-function isMetricName(value: string): value is MetricName {
-  return METRIC_NAMES.includes(value as MetricName);
-}
 
 function emptyStatusDistribution(): StatusDistribution {
   return {

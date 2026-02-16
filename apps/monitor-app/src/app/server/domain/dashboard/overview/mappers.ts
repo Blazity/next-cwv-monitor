@@ -32,28 +32,22 @@ export type BuildDashboardOverviewQueryInput = {
  * first valid interval for that time range.
  */
 export function buildDashboardOverviewQuery(input: BuildDashboardOverviewQueryInput): GetDashboardOverviewQuery {
-  let start: Date;
-  let end: Date;
-  if (input.customStart && input.customEnd) {
-    start = input.customStart;
-    end = input.customEnd;
-  } else {
-    const timeRange = input.timeRange ?? DEFAULT_TIME_RANGE;
-    const range = timeRangeToDateRange(timeRange);
-    start = range.start;
-    end = range.end;
-  }
 
-  const timeRangeKey = input.timeRange ?? DEFAULT_TIME_RANGE;
-  const interval = getEffectiveInterval(input.interval, timeRangeKey, {
-    from: input.customStart ?? null,
-    to: input.customEnd ?? null,
-  });
+  const isCustom = Boolean(input.customStart && input.customEnd);
+  const range = isCustom 
+  ? { start: input.customStart!, end: input.customEnd! }
+  : timeRangeToDateRange(input.timeRange ?? DEFAULT_TIME_RANGE);
+
+  const interval = getEffectiveInterval(
+    input.interval ?? null, 
+    input.timeRange ?? DEFAULT_TIME_RANGE, 
+    { from: input.customStart ?? null, to: input.customEnd ?? null }
+  );
 
   return {
     projectId: input.projectId,
     deviceType: input.deviceType ?? "all",
-    range: { start, end },
+    range,
     interval,
     selectedMetric: input.selectedMetric ?? "LCP",
     topRoutesLimit: input.topRoutesLimit ?? DEFAULT_TOP_ROUTES_LIMIT,
