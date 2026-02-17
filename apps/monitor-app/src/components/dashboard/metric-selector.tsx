@@ -51,13 +51,14 @@ type MetricSelectorProps = {
   onChange: (metric: MetricName) => void;
   showOtherMetrics?: boolean;
   metrics?: MetricName[];
+  disabled?: boolean;
 };
 
-export function MetricSelector({ selected, onChange, showOtherMetrics = false, metrics }: MetricSelectorProps) {
+export function MetricSelector({ selected, onChange, showOtherMetrics = false, metrics, disabled = false }: MetricSelectorProps) {
   const displayMetrics = metrics || (showOtherMetrics ? [...CORE_WEB_VITALS, ...OTHER_METRICS] : CORE_WEB_VITALS);
 
   return (
-      <div className="bg-muted flex w-fit items-center gap-1 rounded-lg p-1" role="tablist">
+      <div className={cn("bg-muted flex w-fit items-center gap-1 rounded-lg p-1", {"opacity-50": disabled})} role="tablist">
         {displayMetrics.map((metric) => {
           const info = METRIC_INFO[metric];
           const isOther = !info.isCoreWebVital;
@@ -68,6 +69,7 @@ export function MetricSelector({ selected, onChange, showOtherMetrics = false, m
                 <button
                   role="tab"
                   type="button"
+                  disabled={disabled}
                   aria-selected={selected === metric}
                   onClick={() => onChange(metric)}
                   className={cn(

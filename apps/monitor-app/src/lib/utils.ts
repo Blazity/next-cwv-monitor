@@ -6,6 +6,7 @@ import type { DateRange, MetricName, TimeRangeKey } from "@/app/server/domain/da
 import { chunk, mapValues } from "remeda";
 import { AuthRole } from "@/lib/auth-shared";
 import { subDays } from "date-fns/subDays";
+import { startOfDay } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -56,28 +57,18 @@ export function formatCompactNumber(value: number): string {
   }).format(value);
 }
 
-export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange {
+export function timeRangeToDateRange(timeRange: TimeRangeKey): DateRange & {prevStart: Date} {
   const now = new Date();
-
-  // For 24h view, use exact "now - 24h" to "now" for precise hourly filtering
-  if (timeRange === "24h") {
-    const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    return { start, end: now };
-  }
-
-  // For other ranges, use day-based filtering
-  // Set end date to the end of the current day (23:59:59.999)
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-
-  // Calculate start date by subtracting the time range days from the end date
-  // Set to the beginning of that day (00:00:00.000) to include the full day
-  const start = new Date(end);
   const days = timeRangeToDays[timeRange];
-  start.setDate(start.getDate() - (days - 1));
-  start.setHours(0, 0, 0, 0);
+  
+  const currentStart = timeRange === "24h" ? subDays(now, 1) : startOfDay(subDays(now, days));
+  const prevStart = subDays(currentStart, days);
 
-  return { start, end };
+  return {
+    start: currentStart,
+    end: now,
+    prevStart,
+  };
 }
 
 // User has to have any of the roles
@@ -194,16 +185,6 @@ export function parseClickHouseNumbers<T extends object>(row: T): T {
     return val;
   }) as T;
 }
-
-export const getPeriodDates = (range: TimeRangeKey) => {
-  const days = timeRangeToDays[range];
-  const now = new Date();
-
-  const currentStart = subDays(now, days);
-  const prevStart = subDays(currentStart, days);
-
-  return { now, currentStart, prevStart };
-};
 
 export function coerceClickHouseDateTime(value: Date | string): Date {
   if (value instanceof Date) return value;

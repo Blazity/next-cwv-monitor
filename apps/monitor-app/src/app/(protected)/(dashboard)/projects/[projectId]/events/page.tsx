@@ -1,74 +1,48 @@
-import {
-  fetchEventsStatsData,
-  fetchEvents,
-  fetchTotalStatsEvents,
-  fetchConversionTrend,
-  fetchProjectEventNames,
-} from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
-import { eventDisplaySettingsSchema } from "@/app/server/lib/clickhouse/schema";
+import { buildEventsDashboardQuery } from "@/app/server/domain/dashboard/events/mappers";
+import { EventsDashboardService } from "@/app/server/domain/dashboard/events/service";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { EventsCards } from "@/components/events/events-cards";
 import { EventsTabs } from "@/components/events/events-tabs";
 import { getAuthorizedSession } from "@/lib/auth-utils";
-import { getCachedProject } from "@/lib/cache";
 import { eventsSearchParamsCache } from "@/lib/search-params";
-import { ArkErrors } from "arktype";
 import { notFound } from "next/navigation";
+
+const eventsService = new EventsDashboardService();
 
 async function EventsPage({ params, searchParams }: PageProps<"/projects/[projectId]/events">) {
   await getAuthorizedSession();
   const { projectId } = await params;
-  // TODO: time range should handle 24h here
-  const { timeRange, deviceType, event = "" } = eventsSearchParamsCache.parse(await searchParams);
+  const parsedParams = eventsSearchParamsCache.parse(await searchParams);
 
-  const [allEvents, names, project] = await Promise.all([
-    fetchEvents({ projectId, range: timeRange }),
-    fetchProjectEventNames({ projectId }),
-    getCachedProject(projectId),
-  ]);
-
-  if (!project) {
-    notFound();
-  }
-
-  const out = eventDisplaySettingsSchema(project.events_display_settings);
-  const eventDisplaySettings = out instanceof ArkErrors ? null : out;
-  const eventNames = names.map((v) => v.event_name);
-  const defaultEvent = eventNames.find((e) => !eventDisplaySettings?.[e]?.isHidden) || eventNames[0];
-  const selectedEvent = event || defaultEvent || null;
-  const hasEvents = eventNames.length > 0;
-
-  const mostActiveEvent = allEvents.find((event) => {
-    if (!event?.event_name) return false;
-    const eventSettings = eventDisplaySettings?.[event.event_name];
-    return eventSettings ? !eventSettings.isHidden : true;
+  const query = buildEventsDashboardQuery({
+    projectId,
+    ...parsedParams,
   });
 
-  const [events, eventsStats, chartData] =
-    hasEvents && selectedEvent
-      ? await Promise.all([
-          fetchEventsStatsData({ eventName: selectedEvent, projectId, range: timeRange, deviceType }),
-          fetchTotalStatsEvents({ projectId, range: timeRange, deviceType }),
-          fetchConversionTrend({ projectId, range: timeRange, eventName: selectedEvent, deviceType }),
-        ])
-      : [null, null, null];
+  const result = await eventsService.getDashboardData(query);
+
+  if (result.kind === "project-not-found") notFound();
+  if (result.kind === "error") throw new Error(result.message);
+
+  const { displaySettings, mostActiveEvent, totalStats, chartData, eventStats, eventNames, queriedEvents } =
+    result.data;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Events" description="Track conversions and manage custom events" />
 
       <EventsCards
-        eventDisplaySettings={eventDisplaySettings}
+        eventDisplaySettings={displaySettings}
         mostActiveEvent={mostActiveEvent}
-        totalEventData={eventsStats}
+        totalEventData={totalStats}
       />
       <EventsTabs
         chartData={chartData}
-        eventDisplaySettings={eventDisplaySettings}
-        eventStats={events}
+        eventDisplaySettings={displaySettings}
+        eventStats={eventStats}
         events={eventNames}
         projectId={projectId}
-        selectedEvent={selectedEvent}
+        selectedEvents={queriedEvents}
       />
     </div>
   );

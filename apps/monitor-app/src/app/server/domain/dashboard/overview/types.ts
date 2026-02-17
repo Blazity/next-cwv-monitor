@@ -1,5 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
+import { sql } from "@/app/server/lib/clickhouse/client";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 
@@ -23,6 +24,12 @@ export const INTERVALS = [
 ] as const;
 export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
+export const PAGE_VIEW_EVENT_NAME = "$page_view";
+
+export function normalizeEventName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export const timeRangeToIntervals = {
   "24h": ["hour"],
   "7d": ["hour", "day", "week"],
@@ -36,6 +43,18 @@ export type DateRange = {
 };
 
 export type SortDirection = "asc" | "desc";
+export type SortField = "route" | "views" | "metric";
+
+export type SqlFragment = ReturnType<typeof sql<Record<string, unknown>>>;
+
+export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
+export type Percentile = (typeof PERCENTILES)[number];
+
+export type BaseFilters = {
+  projectId: string;
+  range: DateRange;
+  deviceType: DeviceFilter;
+};
 
 export type GetDashboardOverviewQuery = {
   projectId: string;
@@ -132,5 +151,8 @@ export function getEffectiveInterval(
     : getDefaultInterval(timeRange);
 }
 
-export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
-export type Percentile = (typeof PERCENTILES)[number];
+export function toDateOnlyString(date: Date | string | number, fallback = new Date()): string {
+  const d = new Date(date);
+  const finalDate = Number.isNaN(d.getTime()) ? fallback : d;
+  return finalDate.toISOString().slice(0, 10);
+}

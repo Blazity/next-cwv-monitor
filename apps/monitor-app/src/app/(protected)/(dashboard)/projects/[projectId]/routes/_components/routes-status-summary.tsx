@@ -3,7 +3,7 @@
 import { Eye } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import type { StatusDistribution } from "@/app/server/domain/routes/list/types";
+import type { StatusDistribution } from "@/app/server/domain/dashboard/routes/list/types";
 
 type RoutesStatusSummaryProps = {
   percentileLabel: string;
