@@ -239,7 +239,7 @@ type ChartTooltipProps = {
 };
 
 const ChartTooltipContent = ({ point, metric, percentile, overlays = [], isPartialData }: ChartTooltipProps) => {
-  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.id]);
+  const hasOverlayData = overlays.some((ov) => point.rawOverlays?.[ov.id]);
   const hasPrimaryData = point.value !== null;
 
   if (!hasPrimaryData && !hasOverlayData) {
@@ -261,7 +261,7 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [], isParti
         {isPartialData && <Badge type="warning" size="sm" label="Partial" />}
       </div>
       <div className="space-y-2">
-        {hasPrimaryData &&
+        {hasPrimaryData && (
           <>
             <div className="flex items-center justify-between gap-4">
               <span className="text-foreground text-sm">
@@ -275,10 +275,11 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [], isParti
               </div>
             </div>
             <div className="text-muted-foreground text-xs">
-              {point.samples.toLocaleString()} samples {isPartialData && <span className="italic">(Still collecting)</span>}
+              {point.samples.toLocaleString()} samples{" "}
+              {isPartialData && <span className="italic">(Still collecting)</span>}
             </div>
           </>
-        }
+        )}
 
         {/* Dynamic Overlays */}
         {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
@@ -288,7 +289,7 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [], isParti
           const showSeparator = hasPrimaryData || idx > 0;
 
           return (
-            <div key={ov.id} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
+            <div key={ov.id} className={cn(showSeparator && "border-border mt-2 border-t pt-2")}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -347,19 +348,12 @@ type IslandDotProps = {
   index?: number;
   visibilityArray: boolean[];
   color: string;
-} & Partial<DotItemDotProps>
+} & Partial<DotItemDotProps>;
 
 const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
   if (index === undefined || !visibilityArray[index]) return null;
-  
-  return (
-    <circle 
-      cx={cx} 
-      cy={cy} 
-      r={2} 
-      fill={color}
-    />
-  );
+
+  return <circle cx={cx} cy={cy} r={2} fill={color} />;
 };
 
 export function TimeSeriesChart({
@@ -392,31 +386,30 @@ export function TimeSeriesChart({
   const thresholds = getMetricThresholds(metric);
   const dotVisibility = useMemo(() => {
     const len = chartData.length;
-    const primary = Array.from<boolean>({length: len});
+    const primary = Array.from<boolean>({ length: len });
     const overlaysMap: Record<string, boolean[]> = {};
-  
+
     for (const ov of overlays) {
-      overlaysMap[ov.id] = Array.from<boolean>({length: len});
+      overlaysMap[ov.id] = Array.from<boolean>({ length: len });
     }
-  
+
     for (let i = 0; i < len; i++) {
       const curr = chartData[i];
-      
+
       const prev = i > 0 ? chartData[i - 1] : undefined;
       const next = i < len - 1 ? chartData[i + 1] : undefined;
-  
+
       const hasVal = curr.value != null;
       primary[i] = hasVal && prev?.value == null && next?.value == null;
-  
+
       for (const ov of overlays) {
         const key = `overlay_${ov.id}` as keyof ChartDataPoint;
         const hasOverlayVal = curr[key] != null;
-        
-        overlaysMap[ov.id][i] = 
-          hasOverlayVal && prev?.[key] == null && next?.[key] == null;
+
+        overlaysMap[ov.id][i] = hasOverlayVal && prev?.[key] == null && next?.[key] == null;
       }
     }
-  
+
     return { primary, overlays: overlaysMap };
   }, [chartData, overlays]);
 
@@ -465,7 +458,8 @@ export function TimeSeriesChart({
     }
 
     const hasPartialMetricValues =
-      visibleChartData.slice(currentPeriodIndex).some((point) => typeof point.value === "number") || anchorValue !== null;
+      visibleChartData.slice(currentPeriodIndex).some((point) => typeof point.value === "number") ||
+      anchorValue !== null;
 
     let carryForwardPartialValue = anchorValue;
 
@@ -602,7 +596,7 @@ export function TimeSeriesChart({
 
           {overlays.map((ov, idx) => {
             const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
-            
+
             return (
               <Area
                 key={ov.id}
@@ -613,7 +607,12 @@ export function TimeSeriesChart({
                 strokeWidth={2}
                 fill="url(#overlayGradient)"
                 connectNulls={false}
-                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.id]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                dot={
+                  <IslandDot
+                    visibilityArray={dotVisibility.overlays[ov.id]}
+                    color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]}
+                  />
+                }
                 activeDot={ACTIVE_DOT_CONFIG(color)}
               />
             );
