@@ -5,6 +5,7 @@ import {
   Area,
   CartesianGrid,
   ComposedChart,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -53,6 +54,9 @@ type TimeSeriesChartProps = {
 type ChartDataPoint = {
   timestamp: string;
   value: number | null;
+  completeValue?: number | null;
+  partialMetricValue?: number | null;
+  isPartialData?: boolean;
   samples: number;
   status: WebVitalRatingV1 | null;
   time: string;
@@ -228,11 +232,11 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
   if (point.value === null) {
     return (
       <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-        <p className="text-muted-foreground text-sm">{point.time}</p>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-muted-foreground text-sm">{point.time}</p>
+          {isPartialData && <Badge type="warning" size="sm" label="Partial" />}
+        </div>
         <p className="text-muted-foreground mt-1 text-sm">No data</p>
-        {isPartialData && (
-          <p className="text-muted-foreground mt-1 text-xs italic">Partial data – period still in progress</p>
-        )}
       </div>
     );
   }
@@ -241,7 +245,10 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
 
   return (
     <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-      <p className="text-muted-foreground mb-2 text-sm">{point.time}</p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-muted-foreground text-sm">{point.time}</p>
+        {isPartialData && <Badge type="warning" size="sm" label="Partial" />}
+      </div>
       <div className="space-y-2">
         {/* Metric Value Row */}
         <div className="flex items-center justify-between gap-4">
@@ -257,12 +264,9 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
         </div>
 
         {/* Sample Count */}
-        <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
-
-        {/* Partial data notice */}
-        {isPartialData && (
-          <div className="text-muted-foreground text-xs italic">Partial data – period still in progress</div>
-        )}
+        <div className="text-muted-foreground text-xs">
+          {point.samples.toLocaleString()} samples {isPartialData && <span className="italic">(Still collecting)</span>}
+        </div>
 
         {/* Overlay Data */}
         {hasOverlayData && (
@@ -271,8 +275,12 @@ const ChartTooltipContent = ({ point, metric, percentile, overlay, isPartialData
               <span className="text-foreground text-sm">{overlay.label}</span>
               <span className="text-foreground font-mono text-sm">{point.overlayRatePct?.toFixed(2)}%</span>
             </div>
-            <div className="text-muted-foreground mt-1 text-xs">
-              {point.overlayConversions?.toLocaleString()} events / {point.overlayViews?.toLocaleString()} tracked views
+            <div className="text-muted-foreground mt-1 flex items-center justify-between gap-4 text-xs">
+              <span>
+                {point.overlayConversions?.toLocaleString()} events / {point.overlayViews?.toLocaleString()} tracked
+                views
+              </span>
+              {isPartialData && <span className="italic">(Still collecting)</span>}
             </div>
           </div>
         )}
@@ -302,6 +310,10 @@ const ChartGradients = () => (
   <defs>
     <linearGradient id="metricGradient" x1="0" y1="0" x2="0" y2="1">
       <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+      <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
+    </linearGradient>
+    <linearGradient id="partialMetricGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.18} />
       <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
     </linearGradient>
     <linearGradient id="overlayGradient" x1="0" y1="0" x2="0" y2="1">
@@ -358,17 +370,74 @@ export function TimeSeriesChart({
     return Math.min(100, maxRate * 1.1);
   }, [overlay]);
 
-  // Find the incomplete (partial) data point for the current period
-  const incompletePointLabel = useMemo(() => {
+  // Identify the current (potentially incomplete) period and derive chart series for complete/partial styling.
+  const currentPeriodIndex = useMemo(() => {
     const currentKey = CURRENT_PERIOD_KEY_GETTERS[interval]();
-    const point = chartData.find((p) => p.timestamp === currentKey);
-    return point?.time ?? null;
+    return chartData.findIndex((p) => p.timestamp === currentKey);
   }, [chartData, interval]);
+
+  const visibleChartData = useMemo(() => {
+    if (interval !== "hour" || currentPeriodIndex < 0) {
+      return chartData;
+    }
+    // Non-24h ranges end at end-of-day; trim hourly rendering to current bucket.
+    return chartData.slice(0, currentPeriodIndex + 1);
+  }, [chartData, currentPeriodIndex, interval]);
+
+  const chartDataWithPartialSegment = useMemo(() => {
+    if (currentPeriodIndex < 0) {
+      return visibleChartData.map((point) => ({
+        ...point,
+        completeValue: point.value,
+        partialMetricValue: null,
+        isPartialData: false,
+      }));
+    }
+
+    let anchorValue: number | null = null;
+    for (let index = currentPeriodIndex - 1; index >= 0; index--) {
+      const candidateValue = visibleChartData[index]?.value;
+      if (typeof candidateValue === "number") {
+        anchorValue = candidateValue;
+        break;
+      }
+    }
+
+    const hasPartialMetricValues =
+      visibleChartData.slice(currentPeriodIndex).some((point) => typeof point.value === "number") || anchorValue !== null;
+
+    let carryForwardPartialValue = anchorValue;
+
+    return visibleChartData.map((point, index) => {
+      const isPartialData = index >= currentPeriodIndex;
+      const isPartialAnchorPoint = index === currentPeriodIndex - 1;
+      const hasMetricValue = typeof point.value === "number";
+      const shouldRenderPartialPoint = isPartialData || isPartialAnchorPoint;
+
+      let partialMetricValue: number | null = null;
+      if (hasPartialMetricValues && shouldRenderPartialPoint) {
+        if (hasMetricValue) {
+          partialMetricValue = point.value;
+          carryForwardPartialValue = point.value;
+        } else if (carryForwardPartialValue !== null) {
+          // Continue the dashed segment only from the immediate anchor or latest partial value.
+          partialMetricValue = carryForwardPartialValue;
+        }
+      }
+
+      return {
+        ...point,
+        completeValue: index < currentPeriodIndex ? point.value : null,
+        partialMetricValue,
+        isPartialData,
+      };
+    });
+  }, [visibleChartData, currentPeriodIndex]);
 
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartData} margin={CHART_MARGINS}>
+        <ComposedChart data={chartDataWithPartialSegment} margin={CHART_MARGINS}>
           <ChartGradients />
 
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -434,7 +503,7 @@ export function TimeSeriesChart({
                   metric={metric}
                   percentile={percentile}
                   overlay={overlay}
-                  isPartialData={point.time === incompletePointLabel}
+                  isPartialData={point.isPartialData}
                 />
               );
             }}
@@ -444,10 +513,35 @@ export function TimeSeriesChart({
           <Area
             yAxisId="metric"
             type="monotone"
-            dataKey="value"
+            dataKey="completeValue"
             stroke="var(--chart-1)"
             strokeWidth={2}
             fill="url(#metricGradient)"
+            connectNulls={false}
+            dot={false}
+            activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
+          />
+
+          {/* Subtle area fill for the partial/incomplete segment */}
+          <Area
+            yAxisId="metric"
+            type="monotone"
+            dataKey="partialMetricValue"
+            stroke="none"
+            fill="url(#partialMetricGradient)"
+            connectNulls={false}
+            dot={false}
+            activeDot={false}
+          />
+
+          {/* Dashed segment connecting complete data to partial/incomplete data */}
+          <Line
+            yAxisId="metric"
+            type="monotone"
+            dataKey="partialMetricValue"
+            stroke="var(--chart-1)"
+            strokeWidth={2}
+            strokeDasharray="6 4"
             connectNulls={false}
             dot={false}
             activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
@@ -465,17 +559,6 @@ export function TimeSeriesChart({
               connectNulls={false}
               dot={false}
               activeDot={ACTIVE_DOT_CONFIG("var(--chart-5)")}
-            />
-          )}
-
-          {/* Incomplete data indicator */}
-          {incompletePointLabel && (
-            <ReferenceLine
-              yAxisId="metric"
-              x={incompletePointLabel}
-              stroke="var(--muted-foreground)"
-              strokeDasharray="4 4"
-              strokeOpacity={0.5}
             />
           )}
 

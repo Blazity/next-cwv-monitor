@@ -1,17 +1,18 @@
 "use client";
 import { fetchConversionTrend } from "@/app/server/lib/clickhouse/repositories/custom-events-repository";
+import { Badge } from "@/components/badge";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMemo } from "react";
 import {
+  Area,
   CartesianGrid,
   ComposedChart,
-  ReferenceLine,
+  Line,
   ResponsiveContainer,
   Scatter,
+  Tooltip as RechartsTooltip,
   XAxis,
   YAxis,
-  Tooltip as RechartsTooltip,
-  Area,
 } from "recharts";
 
 type Props = {
@@ -22,6 +23,9 @@ type ChartPoint = {
   dayKey: string;
   date: string;
   rate: number | null;
+  completeRate?: number | null;
+  partialRate?: number | null;
+  isPartialData?: boolean;
   events: number;
   views: number;
   hoverTarget?: number;
@@ -48,19 +52,70 @@ export function AnalyticsChart({ chartData }: Props) {
     [chartData],
   );
 
-  // Find the incomplete (partial) data point for today
-  const incompletePointLabel = useMemo(() => {
+  const currentPeriodIndex = useMemo(() => {
     const todayKey = utcDateFormatter.format(new Date());
-    const point = memoizedChartData.find((p) => p.dayKey === todayKey);
-    return point?.date ?? null;
+    return memoizedChartData.findIndex((p) => p.dayKey === todayKey);
   }, [memoizedChartData]);
+
+  const chartDataWithPartialSegment = useMemo(() => {
+    if (currentPeriodIndex < 0) {
+      return memoizedChartData.map((point) => ({
+        ...point,
+        completeRate: point.rate,
+        partialRate: null,
+        isPartialData: false,
+      }));
+    }
+
+    let anchorRate: number | null = null;
+    for (let index = currentPeriodIndex - 1; index >= 0; index--) {
+      const candidateRate = memoizedChartData[index]?.rate;
+      if (typeof candidateRate === "number") {
+        anchorRate = candidateRate;
+        break;
+      }
+    }
+
+    const hasPartialRates =
+      memoizedChartData.slice(currentPeriodIndex).some((point) => typeof point.rate === "number") || anchorRate !== null;
+
+    let carryForwardPartialRate = anchorRate;
+
+    return memoizedChartData.map((point, index) => {
+      const isPartialData = index >= currentPeriodIndex;
+      const isPartialAnchorPoint = index === currentPeriodIndex - 1;
+      const hasRateValue = typeof point.rate === "number";
+      const shouldRenderPartialPoint = isPartialData || isPartialAnchorPoint;
+
+      let partialRate: number | null = null;
+      if (hasPartialRates && shouldRenderPartialPoint) {
+        if (hasRateValue) {
+          partialRate = point.rate;
+          carryForwardPartialRate = point.rate;
+        } else if (carryForwardPartialRate !== null) {
+          partialRate = carryForwardPartialRate;
+        }
+      }
+
+      return {
+        ...point,
+        completeRate: index < currentPeriodIndex ? point.rate : null,
+        partialRate,
+        isPartialData,
+      };
+    });
+  }, [memoizedChartData, currentPeriodIndex]);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={memoizedChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+      <ComposedChart data={chartDataWithPartialSegment} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="conversionGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="partialConversionGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.18} />
             <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -89,34 +144,35 @@ export function AnalyticsChart({ chartData }: Props) {
           content={({ active, payload }) => {
             if (!active || payload.length === 0) return null;
             const point = payload[0].payload as ChartPoint;
-            const isPartial = point.date === incompletePointLabel;
+            const isPartial = Boolean(point.isPartialData);
 
             if (point.rate === null) {
               return (
                 <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-                  <p className="text-muted-foreground text-sm">{point.date}</p>
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <p className="text-muted-foreground text-sm">{point.date}</p>
+                    {isPartial && <Badge type="warning" size="sm" label="Partial" />}
+                  </div>
                   <p className="text-muted-foreground mt-1 text-sm">No data</p>
-                  {isPartial && (
-                    <p className="text-muted-foreground mt-1 text-xs italic">Partial data – period still in progress</p>
-                  )}
                 </div>
               );
             }
 
             return (
               <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-                <p className="text-muted-foreground mb-2 text-sm">{point.date}</p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-muted-foreground text-sm">{point.date}</p>
+                  {isPartial && <Badge type="warning" size="sm" label="Partial" />}
+                </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-foreground text-sm">Conversion Rate</span>
                     <span className="text-foreground font-mono text-sm font-medium">{point.rate.toFixed(2)}%</span>
                   </div>
                   <div className="text-muted-foreground text-xs">
-                    {point.events.toLocaleString()} events / {point.views.toLocaleString()} views
+                    {point.events.toLocaleString()} events / {point.views.toLocaleString()} views{" "}
+                    {isPartial && <span className="italic">(Still collecting)</span>}
                   </div>
-                  {isPartial && (
-                    <div className="text-muted-foreground text-xs italic">Partial data – period still in progress</div>
-                  )}
                 </div>
               </div>
             );
@@ -124,7 +180,7 @@ export function AnalyticsChart({ chartData }: Props) {
         />
         <Area
           type="monotone"
-          dataKey="rate"
+          dataKey="completeRate"
           stroke="var(--chart-1)"
           strokeWidth={2}
           fill="url(#conversionGradient)"
@@ -136,15 +192,32 @@ export function AnalyticsChart({ chartData }: Props) {
             strokeWidth: 2,
           }}
         />
-        {/* Incomplete data indicator */}
-        {incompletePointLabel && (
-          <ReferenceLine
-            x={incompletePointLabel}
-            stroke="var(--muted-foreground)"
-            strokeDasharray="4 4"
-            strokeOpacity={0.5}
-          />
-        )}
+
+        <Area
+          type="monotone"
+          dataKey="partialRate"
+          stroke="none"
+          fill="url(#partialConversionGradient)"
+          connectNulls={false}
+          dot={false}
+          activeDot={false}
+        />
+
+        <Line
+          type="monotone"
+          dataKey="partialRate"
+          stroke="var(--chart-1)"
+          strokeWidth={2}
+          strokeDasharray="6 4"
+          connectNulls={false}
+          dot={false}
+          activeDot={{
+            r: 4,
+            fill: "var(--chart-1)",
+            stroke: "var(--background)",
+            strokeWidth: 2,
+          }}
+        />
 
         {/* Invisible scatter points for days with no data, enabling tooltip on hover */}
         <Scatter dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />

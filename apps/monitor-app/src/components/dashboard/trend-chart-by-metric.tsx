@@ -57,9 +57,21 @@ export function TrendChartByMetric({
             <span>Poor threshold</span>
           </div>
           <div className="flex items-center gap-2">
-            <div
-              className="border-muted-foreground h-4 w-px border-l border-dashed opacity-50"
-            />
+            <div className="h-3 w-8">
+              <svg viewBox="0 0 32 12" className="h-full w-full opacity-60" aria-hidden>
+                <line
+                  x1="4"
+                  y1="6"
+                  x2="28"
+                  y2="6"
+                  stroke="var(--muted-foreground)"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 3"
+                />
+                <circle cx="4" cy="6" r="1.5" fill="var(--muted-foreground)" />
+                <circle cx="28" cy="6" r="1.5" fill="var(--muted-foreground)" />
+              </svg>
+            </div>
             <span>Partial data</span>
           </div>
         </div>
