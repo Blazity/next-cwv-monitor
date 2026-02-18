@@ -35,7 +35,7 @@ services:
       - clickhouse-dev-logs:/var/log/clickhouse-server
 
   migrations:
-    image: node:20-alpine
+    image: node:24-alpine
     container_name: cwv-migrations-dev
     working_dir: /workspace
     volumes:
@@ -57,7 +57,7 @@ services:
     restart: "no"
 
   seed-demo:
-    image: node:20-alpine
+    image: node:24-alpine
     container_name: cwv-seed-dev
     working_dir: /workspace
     volumes:
