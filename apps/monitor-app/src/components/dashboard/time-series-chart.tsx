@@ -5,6 +5,7 @@ import {
   Area,
   CartesianGrid,
   ComposedChart,
+  Line,
   ReferenceLine,
   ResponsiveContainer,
   Scatter,
@@ -58,6 +59,9 @@ export type TimeSeriesChartProps = {
 export type ChartDataPoint = {
   timestamp: string;
   value: number | null;
+  completeValue?: number | null;
+  partialMetricValue?: number | null;
+  isPartialData?: boolean;
   samples: number;
   status: WebVitalRatingV1 | null;
   time: string;
@@ -212,21 +216,42 @@ const INTERVAL_GENERATORS: Record<IntervalKey, (ctx: GeneratorContext) => ChartD
   month: generateMonthlyPoints,
 };
 
+/**
+ * Returns the timestamp key for the current (incomplete) period based on the interval.
+ * Used to identify chart data points that represent partial/incomplete data.
+ */
+const CURRENT_PERIOD_KEY_GETTERS: Record<IntervalKey, () => string> = {
+  hour: () => toHourKeyUTC(new Date()),
+  day: () => toISODateUTC(new Date()),
+  week: () => {
+    const weekStart = getStartOfWeekUTC(toUTCTimestamp(new Date()));
+    return toISODateUTC(new Date(weekStart));
+  },
+  month: () => {
+    const { year, month } = getUTCYearMonth(new Date());
+    return toISODateUTC(new Date(Date.UTC(year, month, 1)));
+  },
+};
+
 type ChartTooltipProps = {
   point: ChartDataPoint;
   metric: MetricName;
   percentile: Percentile;
   overlays?: TimeSeriesOverlay[];
+  isPartialData?: boolean;
 };
 
-const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: ChartTooltipProps) => {
-  const hasOverlayData = overlays.some(ov => point.rawOverlays?.[ov.id]);
+const ChartTooltipContent = ({ point, metric, percentile, overlays = [], isPartialData }: ChartTooltipProps) => {
+  const hasOverlayData = overlays.some((ov) => point.rawOverlays?.[ov.id]);
   const hasPrimaryData = point.value !== null;
 
   if (!hasPrimaryData && !hasOverlayData) {
     return (
       <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-        <p className="text-muted-foreground text-sm">{point.time}</p>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <p className="text-muted-foreground text-sm">{point.time}</p>
+          {isPartialData && <Badge type="warning" size="sm" label="Partial" />}
+        </div>
         <p className="text-muted-foreground mt-1 text-sm">No data</p>
       </div>
     );
@@ -234,10 +259,12 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
 
   return (
     <div className="bg-popover border-border rounded-lg border p-3 shadow-lg">
-      <p className="text-muted-foreground mb-2 text-sm">{point.time}</p>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-muted-foreground text-sm">{point.time}</p>
+        {isPartialData && <Badge type="warning" size="sm" label="Partial" />}
+      </div>
       <div className="space-y-2">
-        {/* Metric Value Row */}
-        {hasPrimaryData &&
+        {hasPrimaryData && (
           <>
             <div className="flex items-center justify-between gap-4">
               <span className="text-foreground text-sm">
@@ -250,11 +277,12 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
                 {point.status && <Badge {...statusToBadge[point.status]} label={undefined} size="sm" />}
               </div>
             </div>
-
-            {/* Sample Count */}
-            <div className="text-muted-foreground text-xs">{point.samples.toLocaleString()} samples</div>
+            <div className="text-muted-foreground text-xs">
+              {point.samples.toLocaleString()} samples{" "}
+              {isPartialData && <span className="italic">(Still collecting)</span>}
+            </div>
           </>
-        }
+        )}
 
         {/* Dynamic Overlays */}
         {overlays.map((ov: TimeSeriesOverlay, idx: number) => {
@@ -264,7 +292,7 @@ const ChartTooltipContent = ({ point, metric, percentile, overlays = [] }: Chart
           const showSeparator = hasPrimaryData || idx > 0;
 
           return (
-            <div key={ov.id} className={cn(showSeparator && "border-t border-border mt-2 pt-2")}>
+            <div key={ov.id} className={cn(showSeparator && "border-border mt-2 border-t pt-2")}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -308,6 +336,10 @@ const ChartGradients = () => (
       <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
       <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
     </linearGradient>
+    <linearGradient id="partialMetricGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.18} />
+      <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
+    </linearGradient>
     <linearGradient id="overlayGradient" x1="0" y1="0" x2="0" y2="1">
       <stop offset="5%" stopColor="var(--chart-5)" stopOpacity={0.3} />
       <stop offset="95%" stopColor="var(--chart-5)" stopOpacity={0} />
@@ -319,7 +351,7 @@ type IslandDotProps = {
   index?: number;
   visibilityArray: boolean[];
   color: string;
-} & Partial<DotItemDotProps>
+} & Partial<DotItemDotProps>;
 
 const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
   if (index === undefined || cx === undefined || cy === undefined || !visibilityArray[index]) return null;
@@ -374,11 +406,11 @@ export function TimeSeriesChart({
     const len = chartPoints.length;
     const primary = Array.from<boolean>({length: len}).fill(false);
     const overlaysMap: Record<string, boolean[]> = {};
-  
+
     for (const ov of overlays) {
       overlaysMap[ov.id] = Array.from<boolean>({length: len}).fill(false);
     }
-  
+
     for (let i = 0; i < len; i++) {
       const curr = chartPoints[i];
       
@@ -387,16 +419,15 @@ export function TimeSeriesChart({
   
       const hasVal = curr.value != null;
       primary[i] = hasVal && prev?.value == null && next?.value == null;
-  
+
       for (const ov of overlays) {
         const key = `overlay_${ov.id}` as keyof ChartDataPoint;
         const hasOverlayVal = curr[key] != null;
-        
-        overlaysMap[ov.id][i] = 
-          hasOverlayVal && prev?.[key] == null && next?.[key] == null;
+
+        overlaysMap[ov.id][i] = hasOverlayVal && prev?.[key] == null && next?.[key] == null;
       }
     }
-  
+
     return { primary, overlays: overlaysMap };
   }, [chartPoints, overlays]);
 
@@ -447,11 +478,76 @@ export function TimeSeriesChart({
     return Math.min(100, Math.max(...allRates, 1) * 1.1);
   }, [overlays]);
 
+  // Identify the current (potentially incomplete) period and derive chart series for complete/partial styling.
+  const currentPeriodIndex = useMemo(() => {
+    const currentKey = CURRENT_PERIOD_KEY_GETTERS[interval]();
+    return chartPoints.findIndex((p) => p.timestamp === currentKey);
+  }, [chartPoints, interval]);
+
+  const visibleChartData = useMemo(() => {
+    if (interval !== "hour" || currentPeriodIndex < 0) {
+      return chartPoints;
+    }
+    // Non-24h ranges end at end-of-day; trim hourly rendering to current bucket.
+    return chartPoints.slice(0, currentPeriodIndex + 1);
+  }, [chartPoints, currentPeriodIndex, interval]);
+
+  const chartDataWithPartialSegment = useMemo(() => {
+    if (currentPeriodIndex < 0) {
+      return visibleChartData.map((point) => ({
+        ...point,
+        completeValue: point.value,
+        partialMetricValue: null,
+        isPartialData: false,
+      }));
+    }
+
+    let anchorValue: number | null = null;
+    for (let index = currentPeriodIndex - 1; index >= 0; index--) {
+      const candidateValue = visibleChartData[index]?.value;
+      if (typeof candidateValue === "number") {
+        anchorValue = candidateValue;
+        break;
+      }
+    }
+
+    const hasPartialMetricValues =
+      visibleChartData.slice(currentPeriodIndex).some((point) => typeof point.value === "number") ||
+      anchorValue !== null;
+
+    let carryForwardPartialValue = anchorValue;
+
+    return visibleChartData.map((point, index) => {
+      const isPartialData = index >= currentPeriodIndex;
+      const isPartialAnchorPoint = index === currentPeriodIndex - 1;
+      const hasMetricValue = typeof point.value === "number";
+      const shouldRenderPartialPoint = isPartialData || isPartialAnchorPoint;
+
+      let partialMetricValue: number | null = null;
+      if (hasPartialMetricValues && shouldRenderPartialPoint) {
+        if (hasMetricValue) {
+          partialMetricValue = point.value;
+          carryForwardPartialValue = point.value;
+        } else if (carryForwardPartialValue !== null) {
+          // Continue the dashed segment only from the immediate anchor or latest partial value.
+          partialMetricValue = carryForwardPartialValue;
+        }
+      }
+
+      return {
+        ...point,
+        completeValue: index < currentPeriodIndex ? point.value : null,
+        partialMetricValue,
+        isPartialData,
+      };
+    });
+  }, [visibleChartData, currentPeriodIndex]);
+
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart 
-          data={chartPoints}
+        <ComposedChart
+          data={chartDataWithPartialSegment}
           margin={CHART_MARGINS}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
@@ -512,7 +608,13 @@ export function TimeSeriesChart({
               const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
               return (
-                <ChartTooltipContent point={point} metric={metric} percentile={percentile} overlays={overlays} />
+                <ChartTooltipContent
+                  point={point}
+                  metric={metric}
+                  percentile={percentile}
+                  overlays={overlays}
+                  isPartialData={point.isPartialData}
+                />
               );
             }}
           />
@@ -520,7 +622,7 @@ export function TimeSeriesChart({
           <Area
             yAxisId="metric"
             type="monotone"
-            dataKey="value"
+            dataKey="completeValue"
             stroke="var(--chart-1)"
             strokeWidth={2}
             fill="url(#metricGradient)"
@@ -528,9 +630,35 @@ export function TimeSeriesChart({
             dot={<IslandDot visibilityArray={dotVisibility.primary} color="var(--chart-1)" />}
             activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
           />
+
+          {/* Subtle area fill for the partial/incomplete segment */}
+          <Area
+            yAxisId="metric"
+            type="monotone"
+            dataKey="partialMetricValue"
+            stroke="none"
+            fill="url(#partialMetricGradient)"
+            connectNulls={false}
+            dot={false}
+            activeDot={false}
+          />
+
+          {/* Dashed segment connecting complete data to partial/incomplete data */}
+          <Line
+            yAxisId="metric"
+            type="monotone"
+            dataKey="partialMetricValue"
+            stroke="var(--chart-1)"
+            strokeWidth={2}
+            strokeDasharray="6 4"
+            connectNulls={false}
+            dot={false}
+            activeDot={ACTIVE_DOT_CONFIG("var(--chart-1)")}
+          />
+
           {overlays.map((ov, idx) => {
             const color = OVERLAY_COLORS[idx % OVERLAY_COLORS.length];
-            
+
             return (
               <Area
                 key={ov.id}
@@ -541,7 +669,12 @@ export function TimeSeriesChart({
                 strokeWidth={2}
                 fill="url(#overlayGradient)"
                 connectNulls={false}
-                dot={<IslandDot visibilityArray={dotVisibility.overlays[ov.id]} color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]} />}
+                dot={
+                  <IslandDot
+                    visibilityArray={dotVisibility.overlays[ov.id]}
+                    color={OVERLAY_COLORS[idx % OVERLAY_COLORS.length]}
+                  />
+                }
                 activeDot={ACTIVE_DOT_CONFIG(color)}
               />
             );
