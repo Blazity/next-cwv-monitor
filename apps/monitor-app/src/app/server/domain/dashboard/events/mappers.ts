@@ -14,22 +14,27 @@ import {
 } from "@/components/dashboard/time-series-chart";
 import { eventsSearchParamsCache } from "@/lib/search-params";
 import { toQuantileSummary } from "@/app/server/lib/quantiles";
-import { getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 import { MetricSeriesRow } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
 import { GetEventsDashboardQuery } from "@/app/server/domain/dashboard/events/types";
 import { EventDisplaySettings } from "@/app/server/lib/clickhouse/schema";
 import { capitalize } from "@/lib/utils";
+import { getRatingForValue } from "@/app/server/lib/cwv-thresholds";
 
 export type BuildEventsDashboardQueryInput = {
   projectId: string;
 } & ReturnType<typeof eventsSearchParamsCache.all>;
 
 export function buildEventsDashboardQuery(input: BuildEventsDashboardQueryInput): GetEventsDashboardQuery {
-  const interval = getEffectiveInterval(input.interval, input.timeRange);
+  const interval = getEffectiveInterval(input.interval, input.timeRange, { 
+    from: input.from, 
+    to: input.to 
+  });
 
   return {
     projectId: input.projectId,
     range: input.timeRange,
+    customStart: input.from,
+    customEnd: input.to,
     metric: input.metric,
     deviceType: input.deviceType,
     selectedEvents: input.events,

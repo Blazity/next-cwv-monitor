@@ -6,6 +6,7 @@ import {
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
+  parseAsIsoDateTime,
 } from "nuqs/server";
 import { TIME_RANGES, OVERVIEW_DEVICE_TYPES, METRIC_NAMES, SortDirection, INTERVALS } from "@/app/server/domain/dashboard/overview/types";
 import { PERCENTILES } from "@/app/server/domain/dashboard/overview/types";
@@ -38,6 +39,8 @@ export const dashboardSearchParsers = {
   deviceType: parseAsStringLiteral(OVERVIEW_DEVICE_TYPES).withDefault("all"),
   metric: parseAsStringLiteral(METRIC_NAMES).withDefault("LCP"),
   autoRefresh: autoRefreshParser,
+  from: parseAsIsoDateTime,
+  to: parseAsIsoDateTime,
 };
 
 export const dashboardSearchParamsCache = createSearchParamsCache(dashboardSearchParsers);

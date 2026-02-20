@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { TimeSeriesChart, TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
+import { ChartDataPoint, TimeSeriesChart, TimeSeriesOverlay } from "@/components/dashboard/time-series-chart";
 import { MetricSelector } from "@/components/dashboard/metric-selector";
-import type { DailySeriesPoint, DateRange, IntervalKey } from "@/app/server/domain/dashboard/overview/types";
+import { getValidIntervalsForCustomRange, type DailySeriesPoint, type DateRange, type IntervalKey } from "@/app/server/domain/dashboard/overview/types";
 import type { MetricName } from "@/app/server/domain/dashboard/overview/types";
 import { dashboardSearchParsers, QUERY_STATE_OPTIONS } from "@/lib/search-params";
 import { useQueryStates } from "nuqs";
@@ -20,6 +20,13 @@ type TrendChartByMetricProps = {
   multiOverlay?: TimeSeriesOverlay[];
 };
 
+const intervalMutators: Record<IntervalKey, (d: Date) => void> = {
+  month: (d) => d.setUTCMonth(d.getUTCMonth() + 1),
+  week: (d) => d.setUTCDate(d.getUTCDate() + 7),
+  day: (d) => d.setUTCDate(d.getUTCDate() + 1),
+  hour: (d) => d.setUTCHours(d.getUTCHours() + 1),
+};
+
 export function TrendChartByMetric({
   data,
   title = "Trend Over Time",
@@ -34,10 +41,29 @@ export function TrendChartByMetric({
     {...QUERY_STATE_OPTIONS, startTransition}
   );
 
-  const activeMetric = metric;
-
   const handleMetricChange = (newMetric: MetricName) => {
     void setQuery({ metric: newMetric });
+  };
+
+  const handleRangeSelect = (start: ChartDataPoint, end: ChartDataPoint) => {
+    const startDate = new Date(start.timestamp);
+    let endDate = new Date(end.timestamp);
+    
+    if (startDate.getTime() === endDate.getTime()) {
+      const mutate = intervalMutators[interval];
+      endDate = new Date(startDate);
+      mutate(endDate);
+    }
+    const exclusiveEndDate = new Date(endDate.getTime() - 1);
+    const validIntervals = getValidIntervalsForCustomRange(startDate, endDate);
+    const nextInterval: IntervalKey = validIntervals[0] ?? "day";
+
+    void setQuery({ 
+      from: startDate,
+      to: exclusiveEndDate,
+      interval: nextInterval,
+      timeRange: null
+    });
   };
 
   return (
@@ -51,7 +77,7 @@ export function TrendChartByMetric({
             </CardTitle>
             <CardDescription>{description}</CardDescription>
           </div>
-          <MetricSelector selected={activeMetric} onChange={handleMetricChange} disabled={isPending} showOtherMetrics />
+          <MetricSelector selected={metric} onChange={handleMetricChange} disabled={isPending} showOtherMetrics />
         </div>
       </CardHeader>
       <CardContent>
@@ -63,11 +89,12 @@ export function TrendChartByMetric({
         >
           <TimeSeriesChart
             data={data}
-            metric={activeMetric}
+            metric={metric}
             height={300}
             dateRange={dateRange}
             interval={interval}
             overlays={multiOverlay}
+            onRangeSelect={isPending ? undefined : handleRangeSelect}
           />
         </div>
         <div className="text-muted-foreground mt-4 flex items-center gap-4 text-xs">

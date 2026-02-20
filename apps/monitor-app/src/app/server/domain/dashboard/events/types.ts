@@ -11,6 +11,8 @@ import {
 export type GetEventsDashboardQuery = {
   projectId: string;
   range: TimeRangeKey;
+  customStart: Date | null;
+  customEnd: Date | null;
   deviceType: DeviceFilter;
   metric: MetricName;
   selectedEvents: string[] | null;

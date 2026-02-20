@@ -20,7 +20,6 @@ async function EventsPage({ params, searchParams }: PageProps<"/projects/[projec
   });
 
   const result = await eventsService.getDashboardData(query);
-
   if (result.kind === "project-not-found") notFound();
   if (result.kind === "error") throw new Error(result.message);
 

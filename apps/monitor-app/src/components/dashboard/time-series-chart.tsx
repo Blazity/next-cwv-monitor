@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   CartesianGrid,
@@ -13,6 +13,8 @@ import {
   XAxis,
   YAxis,
   DotItemDotProps,
+  ReferenceArea,
+  MouseHandlerDataParam,
 } from "recharts";
 import { format, addDays, addHours } from "date-fns";
 
@@ -51,9 +53,10 @@ export type TimeSeriesChartProps = {
   height?: number;
   dateRange: { start: Date; end: Date };
   interval: IntervalKey;
+  onRangeSelect?: (start: ChartDataPoint, end: ChartDataPoint) => void;
 };
 
-type ChartDataPoint = {
+export type ChartDataPoint = {
   timestamp: string;
   value: number | null;
   completeValue?: number | null;
@@ -351,9 +354,16 @@ type IslandDotProps = {
 } & Partial<DotItemDotProps>;
 
 const IslandDot = ({ index, cx, cy, visibilityArray, color }: IslandDotProps) => {
-  if (index === undefined || !visibilityArray[index]) return null;
-
-  return <circle cx={cx} cy={cy} r={2} fill={color} />;
+  if (index === undefined || cx === undefined || cy === undefined || !visibilityArray[index]) return null;
+  
+  return (
+    <circle 
+      cx={cx} 
+      cy={cy} 
+      r={2} 
+      fill={color}
+    />
+  );
 };
 
 export function TimeSeriesChart({
@@ -364,16 +374,19 @@ export function TimeSeriesChart({
   height = 300,
   dateRange,
   interval,
+  onRangeSelect,
 }: TimeSeriesChartProps) {
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const [refAreaLeft, setRefAreaLeft] = useState<string | null>(null);
+  const [refAreaRight, setRefAreaRight] = useState<string | null>(null);
 
   // Generate chart data points based on interval
-  const chartData = useMemo(() => {
+  const { chartPoints, chartPointsMap } = useMemo(() => {
     const dataByDate = new Map(data.map((p) => [p.date, p]));
     const overlayMaps = new Map(overlays.map((o) => [o.id, new Map(o.series.map((s) => [s.date, s]))]));
-
+  
     const generator = INTERVAL_GENERATORS[interval];
-    return generator({
+    const points = generator({
       start: new Date(dateRange.start),
       end: new Date(dateRange.end),
       dataByDate,
@@ -381,24 +394,29 @@ export function TimeSeriesChart({
       percentile,
       metric,
     });
+  
+    return {
+      chartPoints: points,
+      chartPointsMap: new Map(points.map(p => [p.timestamp, p]))
+    };
   }, [data, metric, overlays, percentile, dateRange, interval]);
 
   const thresholds = getMetricThresholds(metric);
   const dotVisibility = useMemo(() => {
-    const len = chartData.length;
-    const primary = Array.from<boolean>({ length: len });
+    const len = chartPoints.length;
+    const primary = Array.from<boolean>({length: len}).fill(false);
     const overlaysMap: Record<string, boolean[]> = {};
 
     for (const ov of overlays) {
-      overlaysMap[ov.id] = Array.from<boolean>({ length: len });
+      overlaysMap[ov.id] = Array.from<boolean>({length: len}).fill(false);
     }
 
     for (let i = 0; i < len; i++) {
-      const curr = chartData[i];
-
-      const prev = i > 0 ? chartData[i - 1] : undefined;
-      const next = i < len - 1 ? chartData[i + 1] : undefined;
-
+      const curr = chartPoints[i];
+      
+      const prev = i > 0 ? chartPoints[i - 1] : undefined;
+      const next = i < len - 1 ? chartPoints[i + 1] : undefined;
+  
       const hasVal = curr.value != null;
       primary[i] = hasVal && prev?.value == null && next?.value == null;
 
@@ -411,7 +429,43 @@ export function TimeSeriesChart({
     }
 
     return { primary, overlays: overlaysMap };
-  }, [chartData, overlays]);
+  }, [chartPoints, overlays]);
+
+  const handleMouseDown = (state: MouseHandlerDataParam, event: React.SyntheticEvent) => {
+    const { nativeEvent } = event;
+    if ('button' in nativeEvent && nativeEvent.button !== 0) return;
+    if (!state.activeLabel) return;
+    
+    setRefAreaLeft(String(state.activeLabel));
+  };
+
+  const handleMouseMove = (state: MouseHandlerDataParam) => {
+    if (refAreaLeft && state.activeLabel) {
+      setRefAreaRight(String(state.activeLabel));
+    }
+  };
+  
+  const handleMouseUp = (_: MouseHandlerDataParam, event: React.SyntheticEvent) => {
+    if ('button' in event.nativeEvent && event.nativeEvent.button !== 0) {
+        setRefAreaLeft(null);
+        setRefAreaRight(null);
+        return;
+      }
+  
+    if (onRangeSelect && refAreaLeft && refAreaRight && refAreaLeft !== refAreaRight) {
+      const leftPoint = chartPointsMap.get(refAreaLeft);
+      const rightPoint = chartPointsMap.get(refAreaRight);
+  
+      if (leftPoint && rightPoint) {
+        const isLeftEarlier = new Date(leftPoint.timestamp) < new Date(rightPoint.timestamp);
+        const [start, end] = isLeftEarlier ? [leftPoint, rightPoint] : [rightPoint, leftPoint];
+        onRangeSelect(start, end);
+      }
+    }
+    
+    setRefAreaLeft(null);
+    setRefAreaRight(null);
+  };
 
   const maxMetricValue = useMemo(() => {
     const values = data.map((d) => d.quantiles?.[percentile] ?? null).filter((v): v is number => v !== null);
@@ -420,23 +474,23 @@ export function TimeSeriesChart({
 
   const overlayDomainMax = useMemo(() => {
     if (overlays.length === 0) return 100;
-    const allRates = overlays.flatMap((o) => o.series.map((s) => s.conversionRatePct || 0));
+    const allRates = overlays.flatMap((o) => o.series.map((s) => s.conversionRatePct ?? 0));
     return Math.min(100, Math.max(...allRates, 1) * 1.1);
   }, [overlays]);
 
   // Identify the current (potentially incomplete) period and derive chart series for complete/partial styling.
   const currentPeriodIndex = useMemo(() => {
     const currentKey = CURRENT_PERIOD_KEY_GETTERS[interval]();
-    return chartData.findIndex((p) => p.timestamp === currentKey);
-  }, [chartData, interval]);
+    return chartPoints.findIndex((p) => p.timestamp === currentKey);
+  }, [chartPoints, interval]);
 
   const visibleChartData = useMemo(() => {
     if (interval !== "hour" || currentPeriodIndex < 0) {
-      return chartData;
+      return chartPoints;
     }
     // Non-24h ranges end at end-of-day; trim hourly rendering to current bucket.
-    return chartData.slice(0, currentPeriodIndex + 1);
-  }, [chartData, currentPeriodIndex, interval]);
+    return chartPoints.slice(0, currentPeriodIndex + 1);
+  }, [chartPoints, currentPeriodIndex, interval]);
 
   const chartDataWithPartialSegment = useMemo(() => {
     if (currentPeriodIndex < 0) {
@@ -492,15 +546,23 @@ export function TimeSeriesChart({
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={chartDataWithPartialSegment} margin={CHART_MARGINS}>
+        <ComposedChart
+          data={chartDataWithPartialSegment}
+          margin={CHART_MARGINS}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{ cursor: refAreaLeft ? 'crosshair' : 'default' }}
+        >
           <ChartGradients />
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           {/* X-Axis */}
           <XAxis
-            dataKey="time"
+            dataKey="timestamp"
             {...AXIS_STYLES}
             interval="preserveStartEnd"
             minTickGap={isMobile ? 40 : 60}
+            tickFormatter={(value) => chartPointsMap.get(value)?.time ?? value}
             angle={0}
             allowDuplicatedCategory={false}
           />
@@ -542,7 +604,7 @@ export function TimeSeriesChart({
           {/* Tooltip */}
           <RechartsTooltip
             content={({ active, payload }) => {
-              if (!active || payload.length === 0) return null;
+              if (!active || payload.length === 0 || refAreaLeft) return null;
               const point = payload[0].payload as ChartDataPoint | undefined;
               if (!point) return null;
               return (
@@ -617,6 +679,17 @@ export function TimeSeriesChart({
               />
             );
           })}
+          {refAreaLeft && refAreaRight && (
+            <ReferenceArea
+              yAxisId="metric"
+              x1={refAreaLeft}
+              x2={refAreaRight}
+              fill="var(--chart-1)"
+              fillOpacity={0.15}
+              stroke="var(--chart-1)"
+              strokeOpacity={0.4}
+            />
+          )}
           {/* Invisible scatter for tooltip on empty data points */}
           <Scatter yAxisId="metric" dataKey="hoverTarget" fill="transparent" isAnimationActive={false} />
         </ComposedChart>

@@ -1,6 +1,6 @@
 import type { WebVitalRatingV1 } from "cwv-monitor-contracts";
 import type { DeviceFilter } from "@/app/server/lib/device-types";
-import { sql } from "@/app/server/lib/clickhouse/client";
+import type { sql } from "@/app/server/lib/clickhouse/client";
 
 export const OVERVIEW_DEVICE_TYPES = ["desktop", "mobile", "all"] as const;
 
@@ -24,6 +24,9 @@ export const INTERVALS = [
 ] as const;
 export type IntervalKey = (typeof INTERVALS)[number]["value"];
 
+export const isValidInterval = (key: string): key is IntervalKey => 
+  INTERVALS.some(i => i.value === key);
+
 export const PAGE_VIEW_EVENT_NAME = "$page_view";
 
 export function normalizeEventName(value: string): string {
@@ -32,14 +35,25 @@ export function normalizeEventName(value: string): string {
 
 export const timeRangeToIntervals = {
   "24h": ["hour"],
-  "7d": ["hour", "day", "week"],
+  "7d": ["hour", "day"],
   "30d": ["day", "week"],
   "90d": ["day", "week", "month"],
 } as const satisfies Record<TimeRangeKey, IntervalKey[]>;
 
+export function getDefaultIntervalForRange(timeRange: TimeRangeKey): IntervalKey {
+  const intervals = timeRangeToIntervals[timeRange];
+  return intervals.at(-1) ?? "day";
+}
+
 export type DateRange = {
   start: Date;
   end: Date;
+};
+
+export type DateRangeWithPrev = {
+  start: Date;
+  end: Date;
+  prevStart: Date;
 };
 
 export type SortDirection = "asc" | "desc";
@@ -128,13 +142,17 @@ export function parseTimeRange(key: unknown): DateRange {
   return { start, end };
 }
 
-export function getDefaultInterval(timeRange: TimeRangeKey): IntervalKey {
-  return timeRangeToIntervals[timeRange][0];
-}
-
 export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: TimeRangeKey): boolean {
   const validIntervals: readonly IntervalKey[] = timeRangeToIntervals[timeRange];
   return validIntervals.includes(interval);
+}
+
+export function getValidIntervalsForCustomRange(from: Date, to: Date): readonly IntervalKey[] {
+  const diffHours = Math.abs(to.getTime() - from.getTime()) / (1000 * 60 * 60);
+  if (diffHours <= 24) return ["hour"];
+  if (diffHours <= 24 * 8) return ["hour", "day"];
+  if (diffHours <= 24 * 35) return ["day", "week"];
+  return ["day", "week", "month"];
 }
 
 /**
@@ -145,13 +163,33 @@ export function isValidIntervalForTimeRange(interval: IntervalKey, timeRange: Ti
 export function getEffectiveInterval(
   interval: IntervalKey | string | null | undefined,
   timeRange: TimeRangeKey,
+  customRange?: { from: Date | null; to: Date | null }
 ): IntervalKey {
-  return interval && isValidIntervalForTimeRange(interval as IntervalKey, timeRange)
-    ? (interval as IntervalKey)
-    : getDefaultInterval(timeRange);
+  if (customRange?.from && customRange.to) {
+    const validIntervals = getValidIntervalsForCustomRange(customRange.from, customRange.to);
+    
+    const isRequestedValid = interval && 
+      isValidInterval(interval) && 
+      validIntervals.includes(interval as IntervalKey);
+
+    return isRequestedValid 
+      ? (interval as IntervalKey) 
+      : (validIntervals.at(-1) ?? "day");
+  }
+
+  const isRequestedValid = interval && 
+    isValidInterval(interval) && 
+    isValidIntervalForTimeRange(interval, timeRange);
+
+  return isRequestedValid 
+    ? (interval as IntervalKey) 
+    : getDefaultIntervalForRange(timeRange);
 }
 
-export function toDateOnlyString(date: Date | string | number, fallback = new Date()): string {
+export function toDateOnlyString(
+  date: Date | string | number, 
+  fallback = new Date()
+): string {
   const d = new Date(date);
   const finalDate = Number.isNaN(d.getTime()) ? fallback : d;
   return finalDate.toISOString().slice(0, 10);

@@ -1,3 +1,4 @@
+import { GetDashboardOverviewQuery } from "@/app/server/domain/dashboard/overview/types";
 import { getProjectById } from "@/app/server/lib/clickhouse/repositories/projects-repository";
 import { cacheTag } from "next/cache";
 
@@ -10,8 +11,8 @@ export const CACHE_LIFE_DEFAULT = {
 
 export const updateTags = {
   projectDetails: (projectId: string) => `project-${projectId}` as const,
-  dashboardOverview: (projectId: string, deviceType: string, timeRange: string, interval: string, selectedMetric: string) => 
-    `overview-${projectId}-${deviceType}-${timeRange}-${interval}-${selectedMetric}` as const,
+  dashboardOverview: (q: GetDashboardOverviewQuery) => 
+    `overview-${q.projectId}-${q.deviceType}-${q.selectedMetric}-${q.interval}-${q.range.start.getTime()}-${q.range.end.getTime()}`
 };
 
 export async function getCachedProject(projectId: string) {

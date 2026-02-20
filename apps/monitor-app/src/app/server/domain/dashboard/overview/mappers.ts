@@ -14,6 +14,8 @@ const DEFAULT_TOP_ROUTES_LIMIT = 5;
 export type BuildDashboardOverviewQueryInput = {
   projectId: string;
   timeRange?: TimeRangeKey;
+  customStart?: Date | null; 
+  customEnd?: Date | null;
   interval?: IntervalKey;
   deviceType?: DeviceFilter;
   selectedMetric?: MetricName;
@@ -30,14 +32,22 @@ export type BuildDashboardOverviewQueryInput = {
  * first valid interval for that time range.
  */
 export function buildDashboardOverviewQuery(input: BuildDashboardOverviewQueryInput): GetDashboardOverviewQuery {
-  const timeRange = input.timeRange ?? DEFAULT_TIME_RANGE;
-  const { start, end } = timeRangeToDateRange(timeRange);
-  const interval = getEffectiveInterval(input.interval, timeRange);
+
+  const isCustom = Boolean(input.customStart && input.customEnd);
+  const range = isCustom 
+  ? { start: input.customStart!, end: input.customEnd! }
+  : timeRangeToDateRange(input.timeRange ?? DEFAULT_TIME_RANGE);
+
+  const interval = getEffectiveInterval(
+    input.interval ?? null, 
+    input.timeRange ?? DEFAULT_TIME_RANGE, 
+    { from: input.customStart ?? null, to: input.customEnd ?? null }
+  );
 
   return {
     projectId: input.projectId,
     deviceType: input.deviceType ?? "all",
-    range: { start, end },
+    range,
     interval,
     selectedMetric: input.selectedMetric ?? "LCP",
     topRoutesLimit: input.topRoutesLimit ?? DEFAULT_TOP_ROUTES_LIMIT,

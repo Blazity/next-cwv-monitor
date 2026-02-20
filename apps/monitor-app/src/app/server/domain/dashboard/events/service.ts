@@ -12,16 +12,21 @@ import { ArkErrors } from "arktype";
 import { fetchAllMetricsSeries } from "@/app/server/lib/clickhouse/repositories/dashboard-overview-repository";
 import { GetEventsDashboardQuery, GetEventsDashboardResult } from "@/app/server/domain/dashboard/events/types";
 import { mapToTimeSeriesChartProps } from "@/app/server/domain/dashboard/events/mappers";
+import { DateRangeWithPrev } from "@/app/server/domain/dashboard/overview/types";
 
 export class EventsDashboardService {
   async getDashboardData(query: GetEventsDashboardQuery): Promise<GetEventsDashboardResult> {
     const project = await getProjectById(query.projectId);
     if (!project) return { kind: "project-not-found", projectId: query.projectId };
 
+    const dateRange: DateRangeWithPrev = (query.customStart && query.customEnd)
+      ? { start: query.customStart, end: query.customEnd, prevStart: new Date(query.customStart.getTime() - (query.customEnd.getTime() - query.customStart.getTime())) }
+      : timeRangeToDateRange(query.range);
+
     const [names, totalStats, activity] = await Promise.all([
       fetchProjectEventNames({ projectId: query.projectId }),
-      fetchTotalStatsEvents({ projectId: query.projectId, range: query.range, deviceType: query.deviceType }),
-      fetchEvents({ projectId: query.projectId, range: query.range, deviceType: query.deviceType }),
+      fetchTotalStatsEvents({ projectId: query.projectId, range: dateRange, deviceType: query.deviceType }),
+      fetchEvents({ projectId: query.projectId, range: dateRange, deviceType: query.deviceType }),
     ]);
 
     const out = eventDisplaySettingsSchema(project.events_display_settings);
@@ -38,22 +43,25 @@ export class EventsDashboardService {
       return displaySettings?.[e.event_name] ? !displaySettings[e.event_name].isHidden : true;
     });
 
-    const dateRange = timeRangeToDateRange(query.range);
-
+    const hasEvents = queriedEvents.length > 0;
     const [overlayRows, eventStats, metricSeriesRows] = await Promise.all([
-      fetchMultiEventOverlaySeries({
-        projectId: query.projectId,
-        range: dateRange,
-        deviceType: query.deviceType,
-        eventNames: queriedEvents,
-        interval: query.interval
-      }),
-      fetchEventsStatsData({
-        projectId: query.projectId,
-        range: query.range,
-        eventNames: queriedEvents,
-        deviceType: query.deviceType,
-      }),
+      hasEvents 
+        ? fetchMultiEventOverlaySeries({
+            projectId: query.projectId,
+            range: dateRange,
+            deviceType: query.deviceType,
+            eventNames: queriedEvents,
+            interval: query.interval
+          })
+        : Promise.resolve([]), 
+      hasEvents
+        ? fetchEventsStatsData({
+            projectId: query.projectId,
+            range: dateRange,
+            eventNames: queriedEvents,
+            deviceType: query.deviceType,
+          })
+        : Promise.resolve([]), 
       fetchAllMetricsSeries({
         projectId: query.projectId,
         start: dateRange.start.toISOString(),
