@@ -1,5 +1,17 @@
 # cwv-monitor-app
 
+## 1.4.0
+
+### Minor Changes
+
+- 86009a7: Add interactive drag-to-select range selection for time series charts
+- c22b23f: Add incomplete data indicator to charts
+  - Display a dashed line on the current (incomplete) period in time series and analytics charts
+  - Show "Partial" badge in tooltips when hovering over the incomplete data point
+  - Add legend entry for the partial data indicator in the trend chart
+
+- 860808d: Upgrade node version to current LTS
+
 ## 1.3.0
 
 ### Minor Changes
