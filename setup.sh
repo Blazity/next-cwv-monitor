@@ -209,6 +209,10 @@ echo -e "${YELLOW}Generating ClickHouse password...${NC}"
 CLICKHOUSE_PASSWORD=$(generate_secret)
 echo -e "${GREEN}✓ Generated secure password${NC}"
 
+echo -e "${YELLOW}Generating AI Analyst password...${NC}"
+AI_ANALYST_CLICKHOUSE_PASSWORD=$(generate_secret)
+echo -e "${GREEN}✓ Generated secure AI Analyst password${NC}"
+
 echo ""
 
 echo -e "${GREEN}▶ Security Settings${NC}"
@@ -326,6 +330,8 @@ CLICKHOUSE_PORT=$CLICKHOUSE_PORT
 CLICKHOUSE_DB=$CLICKHOUSE_DB
 CLICKHOUSE_USER=$CLICKHOUSE_USER
 CLICKHOUSE_PASSWORD=$CLICKHOUSE_PASSWORD
+AI_ANALYST_CLICKHOUSE_USER=ai_analyst_user
+AI_ANALYST_CLICKHOUSE_PASSWORD=$AI_ANALYST_CLICKHOUSE_PASSWORD
 
 # ─────────────────────────────────────────────────────────────────
 # Security
