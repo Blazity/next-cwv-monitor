@@ -2,6 +2,15 @@
 
 Deploy next-cwv-monitor on your own infrastructure.
 
+## Deployment Options
+
+| Method | Best For | ClickHouse | Setup Time |
+|--------|----------|------------|------------|
+| [Docker (setup wizard)](#quick-start) | Full self-hosted | Included | ~10 min |
+| [Vercel](#deploy-on-vercel) | Fast deployment, minimal ops | External required | ~15 min |
+
+---
+
 ## Quick Start
 
 Run the interactive setup wizard:
@@ -34,3 +43,216 @@ docker compose up -d
 - HTTPS in production (enable SSL mode in setup wizard, or use `AUTH_BASE_URL` with `https://`)
 - Firewall: only expose ports 80/443 (SSL mode) or `APP_PORT`
 - `TRUST_PROXY=true` only when behind a trusted proxy (auto-set in SSL mode)
+
+---
+
+## Deploy on Vercel
+
+Deploy the monitor app to Vercel and connect it to an external ClickHouse instance. This is the fastest way to get started if you don't want to manage your own infrastructure.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                          VERCEL                                 │
+│                    ┌─────────────────┐                          │
+│                    │   Monitor App   │                          │
+│                    │  (Next.js 16)   │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │ HTTPS (port 8443 or 443)
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    EXTERNAL CLICKHOUSE                          │
+│             (Self-hosted or ClickHouse Cloud)                   │
+│                                                                 │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │  CWV Events  │  │  Page Views  │  │ Custom Events│          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> ⚠️ **Important:** ClickHouse cannot run on Vercel — you need an external instance.
+
+### Step 1: Set Up ClickHouse
+
+Choose one of these options:
+
+#### Option A: ClickHouse Cloud (Recommended)
+
+1. Sign up at [clickhouse.com/cloud](https://clickhouse.com/cloud)
+2. Create a new service (the free tier works for testing)
+3. Note your connection details:
+   - **Host:** `your-instance.clickhouse.cloud`
+   - **Port:** `8443` (HTTPS)
+   - **User:** `default`
+   - **Password:** (generated during setup)
+
+#### Option B: Self-Hosted ClickHouse
+
+Run ClickHouse on your own server (e.g., a VPS, AWS EC2, etc.):
+
+```bash
+docker run -d \
+  --name clickhouse \
+  -p 8123:8123 \
+  -e CLICKHOUSE_DB=cwv_monitor \
+  -e CLICKHOUSE_USER=default \
+  -e CLICKHOUSE_PASSWORD=your-secure-password \
+  clickhouse/clickhouse-server:25.8
+```
+
+Make sure port 8123 (HTTP) or 8443 (HTTPS) is accessible from Vercel's servers.
+
+### Step 2: Run Database Migrations
+
+Before deploying to Vercel, run the ClickHouse migrations to create the required tables:
+
+```bash
+# Clone the repo
+git clone https://github.com/Blazity/next-cwv-monitor.git
+cd next-cwv-monitor
+
+# Install dependencies
+pnpm install
+
+# Set your ClickHouse connection details
+# For ClickHouse Cloud (HTTPS, default port 8443), include the protocol, e.g.:
+# export CLICKHOUSE_HOST=https://your-instance.clickhouse.cloud
+# For self-hosted HTTP on port 8123 you can omit the protocol, e.g.:
+# export CLICKHOUSE_HOST=your-clickhouse-host
+export CLICKHOUSE_HOST=https://your-clickhouse-host
+export CLICKHOUSE_PORT=8443  # or 8123 for HTTP (with http:// or no protocol)
+export CLICKHOUSE_USER=default
+export CLICKHOUSE_PASSWORD=your-password
+export CLICKHOUSE_DB=cwv_monitor
+
+# Run migrations
+pnpm --filter cwv-monitor-app clickhouse:migrate
+```
+
+### Step 3: Deploy to Vercel
+
+Click the button below to deploy:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor&env=BETTER_AUTH_SECRET,CLICKHOUSE_HOST,CLICKHOUSE_PORT,CLICKHOUSE_USER,CLICKHOUSE_PASSWORD,CLICKHOUSE_DB,INITIAL_USER_EMAIL,INITIAL_USER_PASSWORD,INITIAL_USER_NAME&envDescription=Required%20environment%20variables%20for%20the%20CWV%20Monitor.%20See%20deployment%20docs%20for%20details.&envLink=https%3A%2F%2Fgithub.com%2FBlazity%2Fnext-cwv-monitor%2Fblob%2Fmain%2FDEPLOYMENT.md%23deploy-on-vercel&project-name=cwv-monitor&repository-name=next-cwv-monitor&root-directory=apps/monitor-app)
+
+Or deploy manually:
+
+1. Fork/clone the repository
+2. Import the project in [Vercel Dashboard](https://vercel.com/new)
+3. Configure the project:
+   - **Root Directory:** `apps/monitor-app`
+   - **Framework Preset:** Next.js (auto-detected)
+   - **Build Command:** `cd ../.. && pnpm build --filter=cwv-monitor-app` (from `apps/monitor-app/vercel.json`, usually auto-detected)
+   - **Install Command:** `pnpm install`
+
+### Step 4: Configure Environment Variables
+
+Set these environment variables in Vercel's project settings:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AUTH_BASE_URL` | Your Vercel deployment URL (optional — auto-detected from `VERCEL_URL`) | `https://cwv-monitor.vercel.app` |
+| `BETTER_AUTH_SECRET` | Random 32+ character string for auth encryption | `openssl rand -base64 32` |
+| `CLICKHOUSE_HOST` | Your ClickHouse host | `your-instance.clickhouse.cloud` |
+| `CLICKHOUSE_PORT` | ClickHouse HTTP(S) port | `8443` |
+| `CLICKHOUSE_USER` | ClickHouse username | `default` |
+| `CLICKHOUSE_PASSWORD` | ClickHouse password | (your password) |
+| `CLICKHOUSE_DB` | Database name | `cwv_monitor` |
+| `INITIAL_USER_EMAIL` | Admin account email | `admin@example.com` |
+| `INITIAL_USER_PASSWORD` | Admin account password (min 8 chars) | (your password) |
+| `INITIAL_USER_NAME` | Admin display name | `Admin` |
+
+#### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TRUST_PROXY` | Trust X-Forwarded headers | `false` |
+| `MIN_PASSWORD_SCORE` | zxcvbn password strength (0-4) | `2` |
+| `LOG_LEVEL` | Logging verbosity | `info` |
+
+> 💡 **Tip:** `AUTH_BASE_URL` is automatically resolved from Vercel's `VERCEL_URL` environment variable for preview deployments, so you don't need to set it manually unless you have a custom domain.
+
+### Monorepo Settings
+
+This is a pnpm monorepo. Each app includes a `vercel.json` that configures the build correctly:
+
+```
+apps/
+├── monitor-app/
+│   └── vercel.json   # Monitor dashboard (main deployment)
+└── client-app/
+    └── vercel.json   # Demo app for testing the SDK
+```
+
+Vercel should auto-detect most settings from these files, but verify:
+
+- **Root Directory:** `apps/monitor-app`
+- **Install Command:** `pnpm install` (runs at workspace root via vercel.json)
+- **Build Command:** Auto-detected from vercel.json
+
+If you see build errors related to workspace dependencies, ensure the install command runs at the workspace root, not inside `apps/monitor-app`.
+
+### Deploy the Demo Client App (Optional)
+
+If you want to deploy the demo client app (to test the SDK integration), create a second Vercel project:
+
+1. Import the same repository
+2. Set **Root Directory** to `apps/client-app`
+3. Configure environment variables:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `NEXT_PUBLIC_MONITOR_API` | URL of your deployed monitor app | `https://cwv-monitor.vercel.app` |
+| `NEXT_PUBLIC_MONITOR_PROJECT_ID` | Project UUID from the monitor dashboard | `00000000-0000-0000-0000-000000000000` |
+
+### Troubleshooting
+
+<details>
+<summary><strong>Build fails with "Cannot find module 'cwv-monitor-contracts'"</strong></summary>
+
+Ensure Vercel's install command runs at the workspace root:
+
+1. Go to Project Settings → General
+2. Set **Root Directory** to `apps/monitor-app`
+3. Set **Install Command** to `pnpm install` (leave it to run at workspace root)
+
+</details>
+
+<details>
+<summary><strong>ClickHouse connection refused</strong></summary>
+
+- Verify your ClickHouse instance is accessible from the internet
+- Check firewall rules allow inbound connections on the HTTPS port (for example, 8443) used by your ClickHouse service; if you expose the HTTP port 8123, restrict it to internal/private networks only
+- For ClickHouse Cloud, ensure your service is running and not paused
+- Verify the host, port, username, and password are correct
+
+</details>
+
+<details>
+<summary><strong>"AUTH_BASE_URL is required" error</strong></summary>
+
+This shouldn't happen on Vercel as it's auto-detected from `VERCEL_URL`. If it does:
+
+1. Set `AUTH_BASE_URL` explicitly to your deployment URL (e.g., `https://your-project.vercel.app`)
+2. Include the protocol (`https://`)
+
+</details>
+
+<details>
+<summary><strong>Login doesn't work / redirects fail</strong></summary>
+
+- Ensure `AUTH_BASE_URL` matches your actual deployment URL exactly
+- Check that `BETTER_AUTH_SECRET` is set and consistent across deployments
+- For custom domains, update `AUTH_BASE_URL` to use the custom domain
+
+</details>
+
+<details>
+<summary><strong>Database tables don't exist</strong></summary>
+
+You need to run migrations before the app can work. See [Step 2](#step-2-run-database-migrations) above.
+
+</details>
