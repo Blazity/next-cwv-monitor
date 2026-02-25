@@ -6,7 +6,8 @@ export async function syncDatabaseRoles() {
   const aiPass = env.AI_ANALYST_CLICKHOUSE_PASSWORD;
 
   if (!aiUser || !aiPass) return;
-    await sql`
-      ALTER USER ${sql.identifier(aiUser)} IDENTIFIED WITH sha256_password BY ${aiPass}
-    `.command();
+
+  await sql`
+    ALTER USER IF EXISTS ${sql.identifier(aiUser)} IDENTIFIED WITH sha256_password BY ${aiPass}
+  `.command();
 }

@@ -145,6 +145,16 @@ export async function optimizeAggregates(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function optimizeAnomalies(sqlClient: any): Promise<void> {
+  const deadlineMs = Date.now() + 10_000;
+  while (Date.now() < deadlineMs) {
+    const rows = (await sqlClient<{ cnt: string }>`
+      SELECT toString(count()) AS cnt FROM cwv_stats_hourly
+    `) as Array<{ cnt?: string | number }>;
+    const raw = rows[0]?.cnt;
+    const count = typeof raw === "number" ? raw : Number(raw ?? 0);
+    if (count > 0) break;
+    await wait(50);
+  }
   await sqlClient`OPTIMIZE TABLE cwv_stats_hourly FINAL`.command();
 }
 

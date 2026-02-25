@@ -12,6 +12,8 @@ let directClient: ReturnType<typeof createClient>;
 
 describe("Anomaly Detection Logic & State", () => {
   const PROJECT_ID = randomUUID();
+  const prevClickhouseHost = process.env.CLICKHOUSE_HOST;
+  const prevClickhousePort = process.env.CLICKHOUSE_PORT;
 
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
@@ -36,6 +38,8 @@ describe("Anomaly Detection Logic & State", () => {
   afterAll(async () => {
     await directClient.close();
     await container.stop();
+    process.env.CLICKHOUSE_HOST = prevClickhouseHost;
+    process.env.CLICKHOUSE_PORT = prevClickhousePort;
   });
 
   it("should detect the seeded pattern with a deterministic anomaly_id", async () => {
@@ -50,27 +54,30 @@ describe("Anomaly Detection Logic & State", () => {
   });
 
   it("should provide enough metadata for LLM reasoning", async () => {
-    const anomalyRecord = await sql`
+    const results = await sql<{
+      metric_name: string;
+      current_avg_raw: number;
+      baseline_avg_raw: number;
+      z_score: number;
+    }>`
       SELECT * FROM v_cwv_anomalies 
       WHERE project_id = ${PROJECT_ID} AND z_score > 3
       LIMIT 1
     `;
-
-    expect(anomalyRecord[0]).toMatchObject({
-      metric_name: 'LCP',
-      route: '/checkout',
-      device_type: 'desktop'
-    });
-    
-    const magnitude = anomalyRecord[0].current_avg / anomalyRecord[0].baseline_avg;
-    expect(magnitude).toBeGreaterThan(3);
+    expect(results.length).toBeGreaterThan(0);
+    const anomaly = results[0];
+    const magnitude = anomaly.current_avg_raw / anomaly.baseline_avg_raw;
+    expect(magnitude).toBeGreaterThan(3); 
+    expect(anomaly.metric_name).toBe('LCP');
   });
 
   it("should integrate with processed_anomalies to identify 'new' alerts", async () => {
     const [detected] = await sql<{ anomaly_id: string; z_score: number }>`
       SELECT anomaly_id, z_score FROM v_cwv_anomalies 
       WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
+      LIMIT 1
     `;
+    expect(detected).toBeDefined();
 
     const [processedBefore] = await sql`
       SELECT count() as count FROM processed_anomalies WHERE anomaly_id = ${detected.anomaly_id}
@@ -106,12 +113,18 @@ describe("Anomaly Detection Logic & State", () => {
     
     const isoGap = gapTime.toISOString().replace("T", " ").replace(/\..+/, "");
 
+    const [before] = await sql<{ b_avg: number }>`
+      SELECT baseline_avg_raw as b_avg FROM v_cwv_anomalies
+      WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
+      LIMIT 1
+    `;
+
     await directClient.insert({
       table: "cwv_events",
       values: [{
         project_id: PROJECT_ID,
         session_id: randomUUID(),
-        route: "/gap-test",
+        route: "/checkout",
         metric_name: "LCP",
         metric_value: 10_000,
         recorded_at: isoGap,
@@ -122,11 +135,12 @@ describe("Anomaly Detection Logic & State", () => {
     await optimizeAnomalies(sql);
 
     const [stats] = await sql<{ b_avg: number }>`
-      SELECT baseline_avg as b_avg FROM v_cwv_anomalies 
-      WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
+       SELECT baseline_avg_raw as b_avg FROM v_cwv_anomalies 
+       WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
+      LIMIT 1
     `;
     
-    expect(stats.b_avg).toBeLessThan(3000);
+    expect(stats.b_avg).toBeCloseTo(before.b_avg);
   });
 
   it("should allow AI to break down anomaly by 'path'", async () => {

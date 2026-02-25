@@ -586,7 +586,7 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
 
 export async function seedAnomalyTestPattern(client, projectId) {
   const now = new Date();
-  const currentHourMark = new Date(now.setMinutes(0, 0, 0, 0));
+  const currentHourMark = new Date(now.setMinutes(0, 0, 0));
   
   const events = [];
   const route = "/checkout";
@@ -594,7 +594,7 @@ export async function seedAnomalyTestPattern(client, projectId) {
 
   for (let dayOffset = 1; dayOffset <= 3; dayOffset++) {
     const dayStart = new Date(currentHourMark.getTime() - dayOffset * 86_400_000);
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 50; i++) {
       const sessionId = randomUUID();
       const recordedAt = formatDateTime64Utc(new Date(dayStart.getTime() + i * 60_000));
       
@@ -628,6 +628,7 @@ export async function seedAnomalyTestPattern(client, projectId) {
   }
 
   await client.insert({ table: "cwv_events", values: events, format: "JSONEachRow" });
+  await client.command({ query: "OPTIMIZE TABLE cwv_events FINAL" });
   await client.command({ query: "OPTIMIZE TABLE cwv_stats_hourly FINAL" });
 }
 
