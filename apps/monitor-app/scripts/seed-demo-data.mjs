@@ -586,6 +586,8 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
 
 export async function seedAnomalyTestPattern(client, projectId) {
   const now = new Date();
+
+  const minutesPastHour = now.getMinutes();
   const currentHourMark = new Date(now.setMinutes(0, 0, 0));
   
   const events = [];
@@ -611,9 +613,20 @@ export async function seedAnomalyTestPattern(client, projectId) {
     }
   }
 
+  const intervalMs = minutesPastHour > 30 
+    ? 60_000
+    : Math.floor((minutesPastHour * 60_000) / 35);
+
   for (let i = 0; i < 30; i++) {
     const sessionId = randomUUID();
-    const recordedAt = formatDateTime64Utc(new Date(currentHourMark.getTime() + i * 60_000));
+    const offset = 5000 + (i * intervalMs);
+    const recordedAtDate = new Date(now.getTime() - offset);
+    
+    if (recordedAtDate < currentHourMark) {
+        recordedAtDate.setTime(currentHourMark.getTime() + (i * 1000));
+    }
+
+    const recordedAt = formatDateTime64Utc(recordedAtDate);
 
     events.push({
       project_id: projectId, session_id: sessionId, route, path: "/checkout",

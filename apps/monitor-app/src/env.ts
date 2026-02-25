@@ -34,7 +34,7 @@ export const env = createEnv({
     CLICKHOUSE_PASSWORD: z.string(),
     CLICKHOUSE_DB: z.string().min(1, "CLICKHOUSE_DB is required"),
     AI_ANALYST_CLICKHOUSE_USER: z.string().min(1).default("ai_analyst_user"),
-    AI_ANALYST_CLICKHOUSE_PASSWORD: z.string(),
+    AI_ANALYST_CLICKHOUSE_PASSWORD: z.string().min(1),
     BETTER_AUTH_SECRET: z.string(),
     CLICKHOUSE_ADAPTER_DEBUG_LOGS: z.coerce.boolean().default(false),
     MIN_PASSWORD_SCORE: z.coerce.number().min(0).max(4).default(2),

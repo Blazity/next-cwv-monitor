@@ -29,6 +29,20 @@ SELECT
 FROM cwv_events
 GROUP BY project_id, hour, route, device_type, metric_name;
 
+INSERT INTO cwv_stats_hourly
+SELECT
+    project_id,
+    route,
+    device_type,
+    metric_name,
+    toStartOfHour(recorded_at) AS hour,
+    avgState(log1p(metric_value)) AS avg_state,
+    varSampStableState(log1p(metric_value)) AS var_state,
+    countState() AS count_state
+FROM cwv_events
+WHERE recorded_at >= toStartOfHour(now()) - INTERVAL 7 DAY
+GROUP BY project_id, hour, route, device_type, metric_name;
+
 CREATE VIEW IF NOT EXISTS v_cwv_anomalies AS
 WITH 
     toStartOfHour(now()) AS current_hour_mark,
@@ -36,7 +50,7 @@ WITH
     current_hour_mark - INTERVAL 7 DAY AS baseline_start
 SELECT
     lower(hex(MD5(concat(
-        toString(project_id), route, metric_name, device_type, toString(current_hour_mark)
+        toString(project_id), '\0', route, '\0', metric_name, '\0', device_type, '\0', toString(current_hour_mark)
     )))) AS anomaly_id,
     project_id, route, metric_name, device_type,
     current_hour_mark AS detection_time,
@@ -67,7 +81,7 @@ CREATE TABLE IF NOT EXISTS processed_anomalies
     last_z_score Float64,
     notified_at DateTime DEFAULT now(),
     status Enum8('new' = 1, 'notified' = 2, 'acknowledged' = 3, 'resolved' = 4) DEFAULT 'new',
-    updated_at DateTime DEFAULT now()
+    updated_at DateTime64(3) DEFAULT now64(3)
 )
 ENGINE = ReplacingMergeTree(updated_at)
 ORDER BY (project_id, anomaly_id);
