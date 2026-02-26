@@ -92,6 +92,12 @@ jobs:
         env:
           CI: true
         run: pnpm --filter cwv-monitor-app test:perf
+
+      - name: Run monitor anomaly detection tests
+        if: steps.changes.outputs.monitor_changed == 'true'
+        env:
+          CI: true
+        run: pnpm --filter cwv-monitor-app test:anomaly
         
         # SDK can destroy client build, so let's verify it here too
       - name: Check demo (Build)

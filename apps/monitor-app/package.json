@@ -14,7 +14,8 @@
     "seed:demo": "node ./scripts/seed-demo-data.mjs",
     "seed:cwv-events": "node ./scripts/seed-demo-data.mjs --custom-events-only",
     "test:integration": "vitest --config vitest.integration.config.ts",
-    "test:perf": "vitest run ./src/test/performance-guardrails.test.ts --config vitest.performance.config.ts"
+    "test:perf": "vitest run ./src/test/performance-guardrails.test.ts --config vitest.performance.config.ts",
+    "test:anomaly": "vitest run ./src/test/anomaly-detection.test.ts --config vitest.anomaly.config.ts"
   },
   "dependencies": {
     "@clickhouse/client": "^1.14.0",

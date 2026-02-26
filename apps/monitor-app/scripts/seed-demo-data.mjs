@@ -584,6 +584,67 @@ export async function seedDemoData({ seedCwvEvents = true, seedCustomEvents = fa
   }
 }
 
+export async function seedAnomalyTestPattern(client, projectId) {
+  const now = new Date();
+
+  const minutesPastHour = now.getMinutes();
+  const currentHourMark = new Date(now.setMinutes(0, 0, 0));
+  
+  const events = [];
+  const route = "/checkout";
+  const device = "desktop";
+
+  for (let dayOffset = 1; dayOffset <= 3; dayOffset++) {
+    const dayStart = new Date(currentHourMark.getTime() - dayOffset * 86_400_000);
+    for (let i = 0; i < 50; i++) {
+      const sessionId = randomUUID();
+      const recordedAt = formatDateTime64Utc(new Date(dayStart.getTime() + i * 60_000));
+      
+      events.push({
+        project_id: projectId, session_id: sessionId, route, path: "/checkout",
+        device_type: device, metric_name: "LCP", metric_value: 2000 + (rng() * 300),
+        rating: "good", recorded_at: recordedAt, ingested_at: formatDateTime64Utc(new Date())
+      }, 
+      {
+        project_id: projectId, session_id: sessionId, route, path: "/checkout",
+        device_type: device, metric_name: "TTFB", metric_value: 400 + (rng() * 100),
+        rating: "good", recorded_at: recordedAt, ingested_at: formatDateTime64Utc(new Date())
+      });
+    }
+  }
+
+  const intervalMs = minutesPastHour > 30 
+    ? 60_000
+    : Math.floor((minutesPastHour * 60_000) / 35);
+
+  for (let i = 0; i < 30; i++) {
+    const sessionId = randomUUID();
+    const offset = 5000 + (i * intervalMs);
+    const recordedAtDate = new Date(now.getTime() - offset);
+    
+    if (recordedAtDate < currentHourMark) {
+        recordedAtDate.setTime(currentHourMark.getTime() + (i * 1000));
+    }
+
+    const recordedAt = formatDateTime64Utc(recordedAtDate);
+
+    events.push({
+      project_id: projectId, session_id: sessionId, route, path: "/checkout",
+      device_type: device, metric_name: "LCP", metric_value: 8000 + (rng() * 1000),
+      rating: "poor", recorded_at: recordedAt, ingested_at: formatDateTime64Utc(new Date())
+    }, 
+    {
+      project_id: projectId, session_id: sessionId, route, path: "/checkout",
+      device_type: device, metric_name: "TTFB", metric_value: 600 + (rng() * 200),
+      rating: "good", recorded_at: recordedAt, ingested_at: formatDateTime64Utc(new Date())
+    });
+  }
+
+  await client.insert({ table: "cwv_events", values: events, format: "JSONEachRow" });
+  await client.command({ query: "OPTIMIZE TABLE cwv_events FINAL" });
+  await client.command({ query: "OPTIMIZE TABLE cwv_stats_hourly FINAL" });
+}
+
 const isCliInvocation = import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isCliInvocation) {
   const { seedCwvEvents, seedCustomEvents } = parseArgs(process.argv.slice(2));

@@ -243,6 +243,8 @@ describe("Performance Guardrails", () => {
         metric: "LCP",
         selectedEvents: ["search"],
         interval: "day",
+        customStart: null,
+        customEnd: null,
       }),
     );
 
