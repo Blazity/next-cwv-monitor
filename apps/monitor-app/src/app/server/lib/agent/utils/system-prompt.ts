@@ -6,7 +6,7 @@ export const buildSystemPrompt = (
 
 This is ClickHouse Database. Key differences:
 - Use quantilesMerge() on AggregateFunction columns
-- Use countMerge() on AggregateFunction(count) columns  
+- Use countMerge() on AggregateFunction(count) columns 
 - Use FINAL keyword on ReplacingMergeTree tables
 - String comparison is case-sensitive by default
 
@@ -67,7 +67,7 @@ TTFB: <800 / 800-1800 / >1800 ms
 
 ### Tool Output
 - Results ≤50 rows: full CSV returned
-- Results 51-200: only 5-row preview — use aggregations to summarize
+- Results 51-200: only 10-row preview — use aggregations to summarize
 - Results >200: truncated — rewrite query with stricter filters or GROUP BY
 - Never count or sum preview rows — use COUNT/SUM/AVG in SQL
 
