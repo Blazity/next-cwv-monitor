@@ -11,6 +11,10 @@ const getModel = () => {
   const apiKey = env.AI_API_KEY;
   const model = env.AI_MODEL;
 
+  if (!provider || !apiKey || !model) {
+    throw new Error("AI_PROVIDER, AI_API_KEY, and AI_MODEL must be set to use the agent");
+  }
+
   switch (provider) {
     case "anthropic": {
       const anthropic = createAnthropic({ apiKey });
