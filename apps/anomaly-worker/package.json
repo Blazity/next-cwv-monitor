@@ -1,0 +1,41 @@
+{
+  "name": "anomaly-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A lightweight worker for detecting anomalies.",
+  "main": "dist/anomaly-worker/src/index.js",
+  "type": "module",
+  "scripts": {
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "start": "cross-env NODE_OPTIONS=\"-r dotenv/config\" tsx src/index.ts",
+    "dev": "tsx src/index.ts | pino-pretty",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@clickhouse/client": "^1.14.0",
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "arktype": "^2.1.28",
+    "date-fns": "^4.1.0",
+    "node-cron": "^3.0.3",
+    "pino": "^10.1.0",
+    "remeda": "^2.32.0",
+    "waddler": "^0.1.1",
+    "zod": "^4.1.13",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/node-cron": "^3.0.11",
+    "pino-pretty": "^13.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15",
+    "tsconfig-paths": "^4.2.0",
+    "cross-env": "^7.0.3"
+  }
+}

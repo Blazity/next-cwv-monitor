@@ -19,3 +19,9 @@ services:
       context: ../
       dockerfile: docker/monitor-app.prod.Dockerfile
     image: cwv-monitor:local
+
+  cwv-worker:
+    build:
+      context: ../
+      dockerfile: docker/anomaly-worker.Dockerfile
+    image: cwv-anomaly-worker:local

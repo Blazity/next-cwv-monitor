@@ -263,6 +263,16 @@ fi
 
 echo ""
 
+echo -e "${GREEN}▶ Anomaly Detection (Optional)${NC}"
+echo "─────────────────────────────────────────────────────────────"
+echo "Configure webhooks to receive alerts when performance regressions are detected."
+echo ""
+
+read -p "Slack Webhook URL (optional): " SLACK_WEBHOOK_URL
+read -p "Microsoft Teams Webhook URL (optional): " TEAMS_WEBHOOK_URL
+
+echo ""
+
 if [ "$ENABLE_SSL_BOOL" = "true" ]; then
   echo -e "${BLUE}▶ Configuring SSL...${NC}"
   echo "─────────────────────────────────────────────────────────────"
@@ -340,6 +350,12 @@ BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
 MIN_PASSWORD_SCORE=$MIN_PASSWORD_SCORE
 RATE_LIMIT_WINDOW_MS=$RATE_LIMIT_WINDOW_MS
 MAX_LOGIN_ATTEMPTS=$MAX_LOGIN_ATTEMPTS
+
+# ─────────────────────────────────────────────────────────────────
+# Anomaly Detection (Optional)
+# ─────────────────────────────────────────────────────────────────
+SLACK_WEBHOOK_URL=$SLACK_WEBHOOK_URL
+TEAMS_WEBHOOK_URL=$TEAMS_WEBHOOK_URL
 EOF
 
 if [ "$INCLUDE_DEMO_PROFILE" = "true" ]; then
@@ -387,11 +403,14 @@ if [ "$INCLUDE_DEMO_PROFILE" = "true" ]; then
   echo -e "     ${GREEN}cd $INSTALL_DIR && $COMPOSE_CMD --profile demo up -d${NC}"
   echo ""
   echo -e "     ${YELLOW}Note:${NC} The --profile demo flag seeds demo data on first startup."
-  echo -e "     For subsequent starts without re-seeding, use:"
-  echo -e "     ${GREEN}$COMPOSE_CMD up -d${NC}"
+  echo -e "     To also enable anomaly detection (if webhooks are configured):"
+  echo -e "     ${GREEN}$COMPOSE_CMD --profile demo --profile anomaly up -d${NC}"
 else
   echo "  1. Start the services:"
   echo -e "     ${GREEN}cd $INSTALL_DIR && $COMPOSE_CMD up -d${NC}"
+  echo ""
+  echo -e "     ${YELLOW}Note:${NC} To also enable anomaly detection (if webhooks are configured):"
+  echo -e "     ${GREEN}$COMPOSE_CMD --profile anomaly up -d${NC}"
 fi
 
 echo ""

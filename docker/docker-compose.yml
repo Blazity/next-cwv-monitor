@@ -103,6 +103,29 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  cwv-worker:
+    profiles: ["anomaly"]
+    build:
+      context: ../
+      dockerfile: docker/anomaly-worker.Dockerfile
+    image: ${IMAGE_REGISTRY:-ghcr.io/blazity}/cwv-anomaly-worker:${IMAGE_TAG:-latest}
+    environment:
+      <<: *clickhouse-env
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-not-for-production-123}
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-user@example.com}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-password}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-User}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-https://localhost/placeholder}
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-https://localhost/placeholder}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   clickhouse-data:
   clickhouse-logs:

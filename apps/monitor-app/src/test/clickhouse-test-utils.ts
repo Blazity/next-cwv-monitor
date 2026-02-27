@@ -1,8 +1,10 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 import { GenericContainer, type StartedTestContainer } from "testcontainers";
 import { createClient } from "@clickhouse/client";
+import type { ClickHouseSQL } from "waddler/clickhouse";
 
 export const CLICKHOUSE_IMAGE = "clickhouse/clickhouse-server:25.8-alpine";
 export const HTTP_PORT = 8123;
@@ -51,7 +53,11 @@ export async function waitForClickHouse(
   }
 }
 
-export async function execOrThrow(target: StartedTestContainer, command: string[], context: string): Promise<void> {
+export async function execOrThrow(
+    target: StartedTestContainer | { exec: (cmd: string[]) => Promise<{ exitCode: number; stderr?: string; stdout?: string; output?: string }> }, 
+    command: string[], 
+    context: string
+): Promise<void> {
   const result = await target.exec(command);
   if (result.exitCode !== 0) {
     throw new Error(`${context} failed (exit ${result.exitCode}): ${result.stderr || result.stdout || result.output}`);
@@ -82,33 +88,27 @@ export async function runClickHouseMigrations(dynamicOverrides: Record<string, s
   });
 }
 
-export async function optimizeAggregates(
-  // Using a broad type here because the ClickHouse SQL tag is both callable and thenable.
-  // For test stability we need to run both commands and small SELECT probes.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sqlClient: any,
-): Promise<void> {
+export async function optimizeAggregates(sqlClient: ClickHouseSQL): Promise<void> {
   const deadlineMs = Date.now() + 10_000;
 
   const readEventsCount = async (): Promise<number> => {
-    const rows = (await sqlClient<{ cnt: string }>`
+    const rows = await sqlClient<{ cnt: string }>`
       SELECT toString(count()) AS cnt
       FROM cwv_events
-    `) as Array<{ cnt?: string | number }>;
+    `;
     const raw = rows[0]?.cnt;
-    return typeof raw === "number" ? raw : Number(raw ?? 0);
+    return typeof raw === "number" ? raw : Number(raw);
   };
 
   const readAggregatesCount = async (): Promise<number> => {
-    const rows = (await sqlClient<{ cnt: string }>`
+    const rows = await sqlClient<{ cnt: string }>`
       SELECT toString(count()) AS cnt
       FROM cwv_daily_aggregates
-    `) as Array<{ cnt?: string | number }>;
+    `;
     const raw = rows[0]?.cnt;
-    return typeof raw === "number" ? raw : Number(raw ?? 0);
+    return typeof raw === "number" ? raw : Number(raw);
   };
 
-  // Inserts can be async depending on client/settings; wait until events are visible.
   while (Date.now() < deadlineMs) {
     const eventsCount = await readEventsCount();
     if (eventsCount === 0) {
@@ -118,14 +118,12 @@ export async function optimizeAggregates(
     break;
   }
 
-  // If there are still no events, there is nothing to materialize.
   const finalEventsCount = await readEventsCount();
   if (finalEventsCount === 0) {
     await sqlClient`OPTIMIZE TABLE cwv_daily_aggregates FINAL`.command();
     return;
   }
 
-  // Wait for the materialized view to populate daily aggregates.
   while (Date.now() < deadlineMs) {
     const aggregatesCount = await readAggregatesCount();
     if (aggregatesCount > 0) break;
@@ -139,19 +137,17 @@ export async function optimizeAggregates(
     );
   }
 
-  // Force ClickHouse to merge all parts in the aggregates table.
   await sqlClient`OPTIMIZE TABLE cwv_daily_aggregates FINAL`.command();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function optimizeAnomalies(sqlClient: any): Promise<void> {
+export async function optimizeAnomalies(sqlClient: ClickHouseSQL): Promise<void> {
   const deadlineMs = Date.now() + 10_000;
   while (Date.now() < deadlineMs) {
-    const rows = (await sqlClient<{ cnt: string }>`
+    const rows = await sqlClient<{ cnt: string }>`
       SELECT toString(count()) AS cnt FROM cwv_stats_hourly
-    `) as Array<{ cnt?: string | number }>;
+    `;
     const raw = rows[0]?.cnt;
-    const count = typeof raw === "number" ? raw : Number(raw ?? 0);
+    const count = typeof raw === "number" ? raw : Number(raw);
     if (count > 0) break;
     await wait(50);
   }
@@ -168,7 +164,64 @@ export async function setupClickHouseContainer(): Promise<{
   port: number;
 }> {
   const cfg = getClickHouseTestConfig();
+  
+  // Use existing shared global container if available
+  const globalHost = process.env.TEST_CH_HOST;
+  const globalPort = process.env.TEST_CH_PORT;
 
+  if (globalHost && globalPort) {
+    const host = globalHost;
+    const port = Number(globalPort);
+    
+    // Isolation: each test file gets its own database name
+    const uniqueDbName = `db_${randomUUID().replaceAll("-", "_")}`;
+    
+    // Create the unique database in the global container
+    const adminClient = createClient({
+        url: `http://${host}:${port}`,
+        database: "default",
+        username: cfg.username,
+        password: cfg.password,
+    });
+    
+    await adminClient.query({ query: `CREATE DATABASE IF NOT EXISTS ${uniqueDbName}` });
+    await adminClient.close();
+
+    // Set port for env.ts and set database name
+    overrideClickHousePortForTest(port);
+    process.env.CLICKHOUSE_DB = uniqueDbName;
+    process.env.CLICKHOUSE_HOST = host;
+
+    // Run migrations on this unique database
+    await runClickHouseMigrations({
+      CH_MIGRATIONS_HOST: host,
+      CH_MIGRATIONS_PORT: String(port),
+      CH_MIGRATIONS_DB: uniqueDbName,
+      CH_MIGRATIONS_USER: cfg.username,
+      CH_MIGRATIONS_PASSWORD: cfg.password,
+    });
+
+    // Mock StartedTestContainer stop() method since it's shared
+    const mockContainer = {
+        stop: async () => {
+            const cleanerClient = createClient({
+                url: `http://${host}:${port}`,
+                database: "default",
+                username: cfg.username,
+                password: cfg.password,
+            });
+            await cleanerClient.query({ query: `DROP DATABASE IF EXISTS ${uniqueDbName}` });
+            await cleanerClient.close();
+        },
+        getHost: () => host,
+        getMappedPort: () => port,
+        exec: async () => ({ exitCode: 0 })
+    } as unknown as StartedTestContainer;
+
+    return { container: mockContainer, host, port };
+  }
+
+  // Fallback to standalone container if global setup is not used
   const container = await new GenericContainer(CLICKHOUSE_IMAGE)
     .withExposedPorts(HTTP_PORT)
     .withEnvironment({
@@ -199,7 +252,6 @@ export async function setupClickHouseContainer(): Promise<{
     "CREATE DATABASE",
   );
 
-  // We only override the ClickHouse port for tests. Everything else comes from `.env.test` / `.env.ci`.
   overrideClickHousePortForTest(port);
   await runClickHouseMigrations({
     CH_MIGRATIONS_HOST: host,

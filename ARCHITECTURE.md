@@ -5,6 +5,7 @@
 ```
 apps/
   monitor-app        # Next.js dashboard & API
+  anomaly-worker     # Sidecar service for anomaly detection (new)
 
 packages/
   client-sdk              # Browser SDK for CWV collection
@@ -22,15 +23,24 @@ flowchart LR
     Ingest["POST /api/ingest<br>schema + rate limit"]
     Dashboard["Dashboard UI + auth"]
   end
+  subgraph Worker["Anomaly Worker"]
+    Poller["Poller (node-cron)"]
+    Notifier["Slack/Teams Notifier"]
+  end
   subgraph CH["ClickHouse"]
     Raw["cwv_events & custom_events<br>MergeTree, TTL 90d"]
     Agg["cwv_daily_aggregates<br>AggregatingMergeTree, 365d"]
+    Anom["v_cwv_anomalies (View)<br>Z-Score logic"]
   end
   SDK -->|"batched payload"| Ingest
   Ingest -->|"validated & enriched"| Raw
   Raw -->|"mv_cwv_daily_aggregates"| Agg
   Dashboard -->|"analytics queries"| Agg
   Dashboard -->|"drill-down"| Raw
+  Poller -->|"polls every hour"| Anom
+  Poller -->|"fetches project info"| Raw
+  Poller -->|"marks as notified"| Raw
+  Poller -->|"sends notifications"| Notifier
 ```
 
 ```mermaid
@@ -73,6 +83,16 @@ Lightweight browser SDK that collects CWV metrics (LCP, INP, CLS, TTFB, FCP), `$
 ### 3.3. Contracts (`packages/cwv-monitor-contracts`)
 
 Shared TypeScript schemas for ingest payloads. Imported by both SDK and monitor app to prevent drift.
+
+### 3.4. Anomaly Worker (`apps/anomaly-worker`)
+
+A lightweight sidecar service that periodically polls ClickHouse for statistical anomalies (z_score > 3) and sends notifications.
+
+- **Stack:** Node.js, node-cron, ClickHouse client, pino
+- **Polling:** Scheduled every hour to detect new regressions
+- **State:** Tracks notified anomalies in `processed_anomalies` table to prevent duplicates
+- **Notifications:** Supports Slack and Microsoft Teams webhooks
+- **Deployment:** Dedicated sidecar container (see `docker/anomaly-worker.Dockerfile`)
 
 ## 4. Data Store
 

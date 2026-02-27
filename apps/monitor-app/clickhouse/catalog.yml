@@ -1,0 +1,88 @@
+# ClickHouse Schema Catalog for AI Analyst
+# This file describes the tables, views, and relationships for the CWV Monitor system.
+
+tables:
+  projects:
+    description: "Stores project metadata, including domain (slug) and display settings."
+    columns:
+      id: "UUID - Unique identifier for the project"
+      domain: "String - The domain name or slug for the project"
+      name: "String - Human-readable name"
+      events_display_settings: "JSON - UI settings for metric thresholds and custom event labels"
+
+  cwv_events:
+    description: "Raw Core Web Vitals events. Use this for granular analysis and raw distributions."
+    columns:
+      project_id: "UUID - Link to projects.id"
+      session_id: "String - Unique session identifier"
+      route: "String - The URL path of the page"
+      device_type: "LowCardinality(String) - desktop, mobile, or tablet"
+      metric_name: "LowCardinality(String) - LCP, FID, CLS, INP, TTFB, FCP"
+      metric_value: "Float64 - Raw value of the metric (e.g., milliseconds for LCP)"
+      rating: "LowCardinality(String) - good, needs-improvement, poor"
+      recorded_at: "DateTime64 - When the event occurred in the browser"
+
+  custom_events:
+    description: "Raw custom user events tracked via the SDK."
+    columns:
+      project_id: "UUID - Link to projects.id"
+      event_name: "LowCardinality(String) - The custom event identifier"
+      route: "String - The URL path where the event occurred"
+      recorded_at: "DateTime64 - When the event occurred"
+
+  cwv_daily_aggregates:
+    description: "Pre-aggregated daily quantiles (p50, p75, p90, p95, p99) for Core Web Vitals."
+    usage: "Best for long-term trend analysis and dashboarding."
+    columns:
+      project_id: "UUID"
+      route: "String"
+      metric_name: "LowCardinality(String)"
+      event_date: "Date"
+      quantiles: "AggregateFunction - Use quantilesMerge(0.75)(quantiles) to get the p75"
+      sample_size: "AggregateFunction - Use countMerge(sample_size) for volume"
+
+  cwv_stats_hourly:
+    description: "Hourly aggregations of log-transformed metric values. Used for anomaly detection."
+    columns:
+      project_id: "UUID"
+      hour: "DateTime"
+      route: "String"
+      metric_name: "LowCardinality(String)"
+      avg_state: "AggregateFunction(avg, Float64) - Log-transformed mean"
+      var_state: "AggregateFunction(varSampStable, Float64) - Log-transformed variance"
+
+views:
+  v_cwv_anomalies:
+    description: "Dynamic view showing currently detected anomalies (Z-Score > 3)."
+    columns:
+      anomaly_id: "String - Unique hash for the anomaly instance"
+      project_id: "UUID"
+      metric_name: "String"
+      route: "String"
+      z_score: "Float64 - Statistical significance (higher = more anomalous)"
+      current_avg_raw: "Float64 - Mean value in the current hour"
+      baseline_avg_raw: "Float64 - Historical mean value (last 7 days)"
+
+  processed_anomalies:
+    description: "Audit log of anomalies that have been detected and their current resolution status."
+    columns:
+      anomaly_id: "String"
+      status: "Enum8 - new, notified, acknowledged, resolved"
+      notified_at: "DateTime"
+
+common_queries:
+  p75_calculation: |
+    SELECT 
+        metric_name, 
+        quantilesMerge(0.75)(quantiles) as p75 
+    FROM cwv_daily_aggregates 
+    WHERE project_id = {project_id} 
+    GROUP BY metric_name
+  
+  anomaly_deep_dive: |
+    SELECT 
+        toStartOfHour(recorded_at) as h, 
+        avg(metric_value) as val 
+    FROM cwv_events 
+    WHERE project_id = {project_id} AND metric_name = {metric_name} AND recorded_at > now() - INTERVAL 24 HOUR
+    GROUP BY h ORDER BY h ASC

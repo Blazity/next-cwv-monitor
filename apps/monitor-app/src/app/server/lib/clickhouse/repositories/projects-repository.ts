@@ -46,7 +46,7 @@ export async function getProjectById(id: string): Promise<ProjectRow | null> {
 export async function getProjectWithViewsById(id: string): Promise<ProjectWithViews | null> {
   const rows = await sql<ProjectWithViews>`
     SELECT 
-      *,
+      id, domain, name, events_display_settings, created_at, updated_at,
       ifNull(
         (
           SELECT toUInt64(countMerge(sample_size))
@@ -85,7 +85,7 @@ export async function listProjects(): Promise<ProjectRow[]> {
 export async function listProjectsWithViews(): Promise<ProjectWithViews[]> {
   return sql<ProjectWithViews>`
     SELECT 
-      p.*,
+      p.id, p.domain, p.name, p.events_display_settings, p.created_at, p.updated_at,
       ifNull(s.trackedViews, toUInt64(0)) as trackedViews
     FROM projects AS p FINAL
     LEFT JOIN (

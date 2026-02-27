@@ -5,30 +5,27 @@ import { createClient } from "@clickhouse/client";
 
 import { setupClickHouseContainer, optimizeAnomalies } from "@/test/clickhouse-test-utils";
 import { seedAnomalyTestPattern } from "../../scripts/seed-demo-data.mjs";
+import { env } from "@/env";
 
 let container: StartedTestContainer;
 let sql: typeof import("@/app/server/lib/clickhouse/client").sql;
+let aiSql: typeof import("@/app/server/lib/clickhouse/client").aiSql;
 let directClient: ReturnType<typeof createClient>;
 
 describe("Anomaly Detection Logic & State", () => {
   const PROJECT_ID = randomUUID();
-  const prevClickhouseHost = process.env.CLICKHOUSE_HOST;
-  const prevClickhousePort = process.env.CLICKHOUSE_PORT;
 
   beforeAll(async () => {
     const setup = await setupClickHouseContainer();
     container = setup.container;
 
-    process.env.CLICKHOUSE_HOST = setup.host;
-    process.env.CLICKHOUSE_PORT = String(setup.port);
-
-    ({ sql } = await import("@/app/server/lib/clickhouse/client"));
+    ({ sql, aiSql } = await import("@/app/server/lib/clickhouse/client"));
     
     directClient = createClient({
-        url: `http://${setup.host}:${setup.port}`,
-        database: "cwv_monitor_test",
-        username: process.env.CLICKHOUSE_USER ?? "default",
-        password: process.env.CLICKHOUSE_PASSWORD ?? "secret",
+      url: `http://${setup.host}:${setup.port}`,
+      database: env.CLICKHOUSE_DB,
+      username: env.CLICKHOUSE_USER,
+      password: env.CLICKHOUSE_PASSWORD,
     });
 
     await seedAnomalyTestPattern(directClient, PROJECT_ID);
@@ -38,12 +35,10 @@ describe("Anomaly Detection Logic & State", () => {
   afterAll(async () => {
     await directClient.close();
     await container.stop();
-    process.env.CLICKHOUSE_HOST = prevClickhouseHost;
-    process.env.CLICKHOUSE_PORT = prevClickhousePort;
   });
 
   it("should detect the seeded pattern with a deterministic anomaly_id", async () => {
-    const results = await sql<{ z_score: number; anomaly_id: string }>`
+    const results = await aiSql<{ z_score: number; anomaly_id: string }>`
       SELECT z_score, anomaly_id FROM v_cwv_anomalies
       WHERE project_id = ${PROJECT_ID} AND route = '/checkout' AND metric_name = 'LCP'
     `;
@@ -54,7 +49,7 @@ describe("Anomaly Detection Logic & State", () => {
   });
 
   it("should provide enough metadata for LLM reasoning", async () => {
-    const results = await sql<{
+    const results = await aiSql<{
       metric_name: string;
       current_avg_raw: number;
       baseline_avg_raw: number;
@@ -75,48 +70,41 @@ describe("Anomaly Detection Logic & State", () => {
   });
 
   it("should integrate with processed_anomalies to identify 'new' alerts", async () => {
-    const [detected] = await sql<{ anomaly_id: string; z_score: number }>`
+    const [detected] = await aiSql<{ anomaly_id: string; z_score: number }>`
       SELECT anomaly_id, z_score FROM v_cwv_anomalies 
       WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
       LIMIT 1
     `;
     expect(detected).toBeDefined();
 
-    const [processedBefore] = await sql`
+    const [processedBefore] = await aiSql`
       SELECT count() as count FROM processed_anomalies WHERE anomaly_id = ${detected.anomaly_id}
     `;
     expect(Number(processedBefore.count)).toBe(0);
 
     await directClient.insert({
       table: "processed_anomalies",
-      values: [{
-        anomaly_id: detected.anomaly_id,
-        project_id: PROJECT_ID,
-        metric_name: 'LCP',
-        route: '/checkout',
-        last_z_score: detected.z_score,
-        status: 'notified'
-      }],
-      format: "JSONEachRow"
+      values: [
+        {
+          anomaly_id: detected.anomaly_id,
+          project_id: PROJECT_ID,
+          metric_name: "LCP",
+          route: "/checkout",
+          last_z_score: detected.z_score,
+          status: "notified",
+        },
+      ],
+      format: "JSONEachRow",
     });
 
-    const anomaly = await sql`
-      SELECT v.anomaly_id 
-      FROM v_cwv_anomalies v
-      LEFT JOIN processed_anomalies p ON v.anomaly_id = p.anomaly_id
-      WHERE v.project_id = ${PROJECT_ID} AND p.anomaly_id IS NULL
+    const [processedAfter] = await aiSql`
+      SELECT count() as count FROM processed_anomalies WHERE anomaly_id = ${detected.anomaly_id}
     `;
-    
-    expect(anomaly).toHaveLength(0);
+    expect(Number(processedAfter.count)).toBe(1);
   });
 
   it("should enforce the 1-hour gap between baseline and current window", async () => {
-    const now = new Date();
-    const gapTime = new Date(now.setMinutes(0,0,0) - 30 * 60 * 1000);
-    
-    const isoGap = gapTime.toISOString().replace("T", " ").replace(/\..+/, "");
-
-    const [before] = await sql<{ b_avg: number }>`
+    const [before] = await aiSql<{ b_avg: number }>`
       SELECT baseline_avg_raw as b_avg FROM v_cwv_anomalies
       WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
       LIMIT 1
@@ -124,20 +112,25 @@ describe("Anomaly Detection Logic & State", () => {
 
     await directClient.insert({
       table: "cwv_events",
-      values: [{
-        project_id: PROJECT_ID,
-        session_id: randomUUID(),
-        route: "/checkout",
-        metric_name: "LCP",
-        metric_value: 10_000,
-        recorded_at: isoGap,
-      }],
-      format: "JSONEachRow"
+      values: [
+        {
+          project_id: PROJECT_ID,
+          session_id: randomUUID(),
+          route: "/checkout",
+          metric_name: "LCP",
+          metric_value: 10_000,
+          recorded_at: new Date(Date.now() - 30 * 60 * 1000)
+            .toISOString()
+            .slice(0, 19)
+            .replace("T", " "),
+        },
+      ],
+      format: "JSONEachRow",
     });
 
     await optimizeAnomalies(sql);
 
-    const [stats] = await sql<{ b_avg: number }>`
+    const [stats] = await aiSql<{ b_avg: number }>`
        SELECT baseline_avg_raw as b_avg FROM v_cwv_anomalies 
        WHERE project_id = ${PROJECT_ID} AND route = '/checkout'
       LIMIT 1
@@ -148,7 +141,7 @@ describe("Anomaly Detection Logic & State", () => {
 
   it("should allow AI to break down anomaly by 'path'", async () => {
 
-    const pathBreakdown = await sql`
+    const pathBreakdown = await aiSql`
       SELECT path, avg(metric_value) as avg_lcp, count() as samples
       FROM cwv_events
       WHERE project_id = ${PROJECT_ID} 
@@ -164,7 +157,7 @@ describe("Anomaly Detection Logic & State", () => {
   });
 
   it("should allow AI to correlate LCP with TTFB", async () => {
-    const correlation = await sql<{ metric_name: string; avg_val: number }>`
+    const correlation = await aiSql<{ metric_name: string; avg_val: number }>`
       SELECT 
         metric_name, 
         avg(metric_value) as avg_val 

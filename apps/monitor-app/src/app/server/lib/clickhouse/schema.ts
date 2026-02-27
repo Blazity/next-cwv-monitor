@@ -81,3 +81,35 @@ export type InsertableCustomEventRow = Omit<CustomEventRow, "recorded_at" | "ing
 export type ProjectWithViews = ProjectRow & {
   trackedViews: number;
 };
+
+export type AnomalyRow = {
+  anomaly_id: string;
+  project_id: string;
+  route: string;
+  metric_name: string;
+  device_type: string;
+  detection_time: Date | string;
+  current_avg_raw: number;
+  baseline_avg_raw: number;
+  z_score: number;
+  sample_size: number;
+  baseline_n: number;
+};
+
+export type InsertableProcessedAnomalyRow = {
+  anomaly_id: string;
+  project_id: string;
+  metric_name: string;
+  route: string;
+  device_type: string;
+  last_z_score: number;
+  notified_at?: Date;
+  status?: "new" | "notified" | "acknowledged" | "resolved";
+  updated_at?: Date;
+};
+
+export type ProcessedAnomalyRow = InsertableProcessedAnomalyRow & {
+  notified_at: Date;
+  status: "new" | "notified" | "acknowledged" | "resolved";
+  updated_at: Date;
+};

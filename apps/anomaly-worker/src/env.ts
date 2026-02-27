@@ -1,44 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
-import z from "zod";
-
-// Ensure a sane default log level even if tests or scripts haven't
-// populated LOG_LEVEL yet (avoids pino throwing on undefined levels).
-process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
+import { z } from "zod";
 
 const LOG_LEVELS = ["fatal", "error", "warn", "info", "debug", "trace", "silent"] as const;
-
-const lifecycleEvent = process.env.npm_lifecycle_event ?? "";
-const isBuildCommand = lifecycleEvent === "build" || lifecycleEvent.startsWith("build:");
-const isTest = process.env.NODE_ENV === "test" || lifecycleEvent.includes("test");
-
-/**
- * Helper to get synced ClickHouse config during tests.
- * This is the only way to reliably pass dynamic ports to parallel Vitest workers.
- */
-function getTestEnv(key: "host" | "port"): string | undefined {
-  if (!isTest) return undefined;
-
-  if (key === "host") {
-    return process.env.TEST_CH_HOST ?? process.env.CLICKHOUSE_HOST;
-  }
-  
-  return process.env.TEST_CH_PORT ?? process.env.CLICKHOUSE_PORT;
-}
-
-function resolveAuthBaseUrl(): string | undefined {
-  const explicit = process.env.AUTH_BASE_URL;
-  if (explicit && explicit.trim().length > 0) return explicit;
-
-  const vercelUrl = process.env.VERCEL_URL || process.env.VERCEL_BRANCH_URL;
-  if (vercelUrl && vercelUrl.trim().length > 0) return `https://${vercelUrl}`;
-
-  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (vercelProductionUrl && vercelProductionUrl.trim().length > 0) return `https://${vercelProductionUrl}`;
-
-  return undefined;
-}
-
-const resolvedAuthBaseUrl = resolveAuthBaseUrl();
 
 export const env = createEnv({
   server: {
@@ -65,18 +28,11 @@ export const env = createEnv({
     TEAMS_WEBHOOK_URL: z.url().optional(),
   },
   client: {},
-  skipValidation: 
-    process.env.SKIP_VALIDATION === "true" || 
-    isBuildCommand || 
-    isTest,
   runtimeEnv: {
-    MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
-    RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
-    MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
-    AUTH_BASE_URL: resolvedAuthBaseUrl,
+    AUTH_BASE_URL: process.env.AUTH_BASE_URL,
     TRUST_PROXY: process.env.TRUST_PROXY,
-    CLICKHOUSE_HOST: getTestEnv("host") ?? process.env.CLICKHOUSE_HOST,
-    CLICKHOUSE_PORT: getTestEnv("port") ?? process.env.CLICKHOUSE_PORT,
+    CLICKHOUSE_HOST: process.env.CLICKHOUSE_HOST,
+    CLICKHOUSE_PORT: process.env.CLICKHOUSE_PORT,
     CLICKHOUSE_USER: process.env.CLICKHOUSE_USER,
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
     CLICKHOUSE_DB: process.env.CLICKHOUSE_DB,
@@ -84,6 +40,9 @@ export const env = createEnv({
     AI_ANALYST_CLICKHOUSE_PASSWORD: process.env.AI_ANALYST_CLICKHOUSE_PASSWORD,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     CLICKHOUSE_ADAPTER_DEBUG_LOGS: process.env.CLICKHOUSE_ADAPTER_DEBUG_LOGS,
+    MIN_PASSWORD_SCORE: process.env.MIN_PASSWORD_SCORE,
+    RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+    MAX_LOGIN_ATTEMPTS: process.env.MAX_LOGIN_ATTEMPTS,
     INITIAL_USER_EMAIL: process.env.INITIAL_USER_EMAIL,
     INITIAL_USER_PASSWORD: process.env.INITIAL_USER_PASSWORD,
     INITIAL_USER_NAME: process.env.INITIAL_USER_NAME,

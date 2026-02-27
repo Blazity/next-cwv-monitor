@@ -101,6 +101,33 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  cwv-worker:
+    image: node:24-alpine
+    container_name: cwv-worker-dev
+    working_dir: /workspace
+    volumes:
+      - ../:/workspace
+    environment:
+      CI: "true"
+      <<: *clickhouse-env
+      NODE_ENV: development
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-https://localhost/placeholder}
+      TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL:-https://localhost/placeholder}
+      AUTH_BASE_URL: ${AUTH_BASE_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-dev-secret-not-for-production-123}
+      INITIAL_USER_EMAIL: ${INITIAL_USER_EMAIL:-user@example.com}
+      INITIAL_USER_PASSWORD: ${INITIAL_USER_PASSWORD:-password}
+      INITIAL_USER_NAME: ${INITIAL_USER_NAME:-User}
+    command: >
+      sh -c "corepack enable pnpm && pnpm install --filter anomaly-worker && pnpm --filter anomaly-worker dev"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   clickhouse-dev-data:
   clickhouse-dev-logs:
