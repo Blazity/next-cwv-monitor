@@ -143,6 +143,21 @@ export async function optimizeAggregates(
   await sqlClient`OPTIMIZE TABLE cwv_daily_aggregates FINAL`.command();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function optimizeAnomalies(sqlClient: any): Promise<void> {
+  const deadlineMs = Date.now() + 10_000;
+  while (Date.now() < deadlineMs) {
+    const rows = (await sqlClient<{ cnt: string }>`
+      SELECT toString(count()) AS cnt FROM cwv_stats_hourly
+    `) as Array<{ cnt?: string | number }>;
+    const raw = rows[0]?.cnt;
+    const count = typeof raw === "number" ? raw : Number(raw ?? 0);
+    if (count > 0) break;
+    await wait(50);
+  }
+  await sqlClient`OPTIMIZE TABLE cwv_stats_hourly FINAL`.command();
+}
+
 export function overrideClickHousePortForTest(port: number): void {
   process.env.CLICKHOUSE_PORT = String(port);
 }
@@ -160,6 +175,7 @@ export async function setupClickHouseContainer(): Promise<{
       CLICKHOUSE_DB: cfg.database,
       CLICKHOUSE_USER: cfg.username,
       CLICKHOUSE_PASSWORD: cfg.password,
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1",
     })
     .start();
 

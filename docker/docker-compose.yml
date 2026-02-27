@@ -85,6 +85,8 @@ services:
       MIN_PASSWORD_SCORE: ${MIN_PASSWORD_SCORE:-2}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
       MAX_LOGIN_ATTEMPTS: ${MAX_LOGIN_ATTEMPTS:-5}
+      AI_ANALYST_CLICKHOUSE_USER: ${AI_ANALYST_CLICKHOUSE_USER:?AI_ANALYST_CLICKHOUSE_USER is required}
+      AI_ANALYST_CLICKHOUSE_PASSWORD: ${AI_ANALYST_CLICKHOUSE_PASSWORD:?AI_ANALYST_CLICKHOUSE_PASSWORD is required}
 
       # ─────────────────────────────────────────────────────────────
       # Initial User (created on first startup)

@@ -14,9 +14,14 @@
     "seed:demo": "node ./scripts/seed-demo-data.mjs",
     "seed:cwv-events": "node ./scripts/seed-demo-data.mjs --custom-events-only",
     "test:integration": "vitest --config vitest.integration.config.ts",
-    "test:perf": "vitest run ./src/test/performance-guardrails.test.ts --config vitest.performance.config.ts"
+    "test:perf": "vitest run ./src/test/performance-guardrails.test.ts --config vitest.performance.config.ts",
+    "test:anomaly": "vitest run ./src/test/anomaly-detection.test.ts --config vitest.anomaly.config.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.47",
+    "@ai-sdk/google": "^3.0.31",
+    "@ai-sdk/openai": "^3.0.34",
+    "@ai-sdk/react": "^3.0.103",
     "@clickhouse/client": "^1.14.0",
     "@hookform/resolvers": "^5.2.2",
     "@next-safe-action/adapter-react-hook-form": "^2.0.0",
@@ -30,6 +35,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-table": "^8.21.3",
+    "ai": "^6.0.101",
     "arktype": "^2.1.28",
     "better-auth": "^1.4.9",
     "class-variance-authority": "^0.7.1",

@@ -6,6 +6,8 @@ x-clickhouse-env: &clickhouse-env
   CLICKHOUSE_DB: ${CLICKHOUSE_DB:-cwv_monitor}
   CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
   CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-secret}
+  AI_ANALYST_CLICKHOUSE_USER: ${AI_ANALYST_CLICKHOUSE_USER:-ai_analyst_user}
+  AI_ANALYST_CLICKHOUSE_PASSWORD: ${AI_ANALYST_CLICKHOUSE_PASSWORD:-analyst_secret}
 
 services:
   clickhouse:
