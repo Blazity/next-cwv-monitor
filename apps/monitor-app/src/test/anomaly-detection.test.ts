@@ -61,7 +61,10 @@ describe("Anomaly Detection Logic & State", () => {
       z_score: number;
     }>`
       SELECT * FROM v_cwv_anomalies 
-      WHERE project_id = ${PROJECT_ID} AND z_score > 3
+      WHERE project_id = ${PROJECT_ID} 
+        AND route = '/checkout'
+        AND metric_name = 'LCP'
+        AND z_score > 3
       LIMIT 1
     `;
     expect(results.length).toBeGreaterThan(0);
