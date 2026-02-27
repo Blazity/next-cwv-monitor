@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import z from "zod";
 import { logger } from "@/app/server/lib/logger";
-import { agentSql } from "@/app/server/lib/agent/agent-clickhouse-client";
+import { agentSql } from "@/app/server/lib/agent/utils/agent-clickhouse-client";
 
 const PREVIEW_ROWS = 10;
 const FULL_DATA_THRESHOLD = 50;
